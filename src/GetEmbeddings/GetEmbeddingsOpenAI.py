@@ -145,7 +145,7 @@ class GetEmbeddingsOpenAI:
         """
         This function computes the embeddings of a corpus.
         :param corpus: List of strings to embed. Where each element in the list is a document.
-        :return: Dictionary containing the embeddings as a matrix and the corpus as a list of string
+        :return: Dictionary containing the embeddings as a matrix and the corpus as a list of strings
         """
         corpus_split = self.split_long_docs(corpus)
         corpus_emb = self.get_embeddings_doc_split(corpus_split)
