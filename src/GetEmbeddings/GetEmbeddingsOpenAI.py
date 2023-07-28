@@ -141,13 +141,14 @@ class GetEmbeddingsOpenAI:
          return {"embeddings": embeddings, "corpus": corpus, "errors": errors}
 
     
-    def get_embeddings(self, corpus: list[str]) -> list[dict]:
+    def get_embeddings(self, corpus: list[str]) -> dict:
         """
         This function computes the embeddings of a corpus.
         :param corpus: List of strings to embed. Where each element in the list is a document.
-        :return: List of dictionaries. Where each dictionary contains the embedding of the document, the text of the document and a list of errors that occured during the embedding process.
+        :return: Dictionary containing the embeddings as a matrix and the corpus as a list of string
         """
         corpus_split = self.split_long_docs(corpus)
         corpus_emb = self.get_embeddings_doc_split(corpus_split)
+        self.corpus_emb = corpus_emb
         res = self.convert_api_res_list(corpus_emb)
         return res
