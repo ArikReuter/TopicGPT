@@ -69,7 +69,9 @@ class Clustering_and_DimRed():
         returns:
             np.ndarray, reduced embeddings
         """
-        return self.umap.fit_transform(embeddings)
+        dim_red_embeddings = self.umap.fit_transform(embeddings)
+        dim_red_embeddings = dim_red_embeddings/np.linalg.norm(dim_red_embeddings, axis=1).reshape(-1,1)
+        return dim_red_embeddings
     
     def cluster_hdbscan(self, embeddings: np.ndarray) -> np.ndarray:
         """

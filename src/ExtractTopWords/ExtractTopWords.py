@@ -77,12 +77,14 @@ class ExtractTopWords:
                         corpus: list[str],
                         remove_stopwords: bool = True, 
                         remove_punction:bool = True, 
-                        min_word_length:int = 2,
+                        min_word_length:int = 3,
                         max_word_length:int = 20, 
                         remove_short_words:bool = True, 
                         remove_numbers:bool = True, 
                         verbose:bool = True,
-                        min_doc_frequency: int = 3):
+                        min_doc_frequency: int = 3,
+                        min_freq: float = 0.1,
+                        max_freq: float = 0.9) -> list[str]:
         """
         compute the vocabulary of the corpus. Perform preprocessing of the corpus 
 
@@ -95,6 +97,8 @@ class ExtractTopWords:
             remove_numbers: bool, whether to remove numbers
             verbose: bool, whether to print progress and say what is happening
             min_doc_frequency: int, minimum number of documents a word should appear in to be considered in the vocab
+            min_freq: float, minimum frequency percentile of words to be considered in the vocabulary
+            max_freq: float, maximum frequency percentile of words to be considered in the vocabulary
 
         returns:
             list[str], list of words in the corpus sorted alphabetically
@@ -115,6 +119,9 @@ class ExtractTopWords:
                     continue
                 if not re.search('[a-zA-Z]', word):  # checks if word contains at least one alphabetic character
                     continue
+                # remove words that do not begin with an alphabetic character
+                if not word[0].isalpha():
+                    continue
                 if len(word) > max_word_length or (remove_short_words and len(word) < min_word_length):
                     continue
                 
@@ -122,12 +129,37 @@ class ExtractTopWords:
                 word_counter[word_lower] += 1
                 doc_frequency[word_lower].add(doc_id)
 
-        vocab = {word for word in word_counter.keys() if len(doc_frequency[word]) >= min_doc_frequency}
+        total_words = sum(word_counter.values())
+        freq_counter = {word: count / total_words for word, count in word_counter.items()}
+
+        # print most common words and their frequencies
+        if verbose:
+            print("Most common words:")
+            for word, count in word_counter.most_common(10):
+                print(f"{word}: {count}")
+
+        freq_arr = np.array(list(freq_counter.values()))
+
+        min_freq_value = np.quantile(freq_arr, min_freq, method="lower")
+        max_freq_value = np.quantile(freq_arr, max_freq, method="higher")
+        
+
+        vocab = {}
+
+        for word in freq_counter.keys():
+            if min_freq_value <= freq_counter[word] <= max_freq_value and len(doc_frequency[word]) >= min_doc_frequency:
+                vocab[word] = freq_counter[word]
+
+        vocab = {word for word in freq_counter.keys() 
+                if min_freq_value <= freq_counter[word] <= max_freq_value 
+                and len(doc_frequency[word]) >= min_doc_frequency}
 
         # Sorting the vocabulary alphabetically
         vocab = sorted(list(vocab))
         
         return vocab
+
+    
     
 
     def compute_words_topics(self, corpus: list[str], vocab: list[str], labels: np.ndarray) -> dict:
@@ -177,23 +209,24 @@ class ExtractTopWords:
 
         res_dict = {}
         for word, emb in zip(vocab, result["embeddings"]):
-            print(word)
             res_dict[word] = emb
         return res_dict
     
-    def compute_bow_representation(self, document: str, vocab: list[str]) -> np.ndarray:
+    def compute_bow_representation(self, document: str, vocab: list[str], vocab_set: set[str]) -> np.ndarray:
         """
         compute the bag-of-words representation of a document
 
         params:
             document: str, document to compute the bag-of-words representation of
             vocab: list[str], list of words in the corpus sorted alphabetically
+            vocab_set: set[str], set of words in the corpus sorted alphabetically
         returns:
             np.ndarray, bag-of-words representation of the document
         """
         bow = np.zeros(len(vocab))
         words = word_tokenize(document)
-        vocab_set = set(vocab)
+        if vocab_set is None:
+            vocab_set = set(vocab)
         for word in words:
             if word.lower() in vocab_set:
                 bow[vocab.index(word.lower())] += 1
@@ -202,7 +235,6 @@ class ExtractTopWords:
     
     def extract_topics_tfidf(self, corpus: list[str], vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> dict:
         """
-        UNDER CONSTRUCTION 
         extract the top-words for each topic using a class-based tf-idf score
 
         params: 
@@ -215,9 +247,10 @@ class ExtractTopWords:
         """
         # compute for each cluster how often each word occurs in the cluster
         word_topic_mat = np.zeros((len(vocab), len((np.unique(labels))) - 1))
+        vocab_set = set(vocab)
         for i, doc in tqdm(enumerate(corpus), desc="Computing word-topic matrix", total=len(corpus)):
             if labels[i] != -1:
-                bow = self.compute_bow_representation(doc, vocab)
+                bow = self.compute_bow_representation(doc, vocab, vocab_set)
                 word_topic_mat[:, labels[i]] += bow
 
         tf = word_topic_mat / np.sum(word_topic_mat, axis=0)
@@ -226,7 +259,7 @@ class ExtractTopWords:
         print(tf.shape, idf.shape)
 
         tfidf = tf * idf[:, np.newaxis]
-
+    
         # set tfidf to zero if tf is nan (happens if word does not occur in any document or topic does not have any words)
         tfidf[np.isnan(tf)] = 0
 
@@ -234,7 +267,7 @@ class ExtractTopWords:
         top_words = {}
         for i, topic in enumerate(np.unique(labels)):
             if topic != -1:
-                top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(tfidf[:, i - 1])[-top_n_words:][::-1]]
+                top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-tfidf[:, i - 1])[:top_n_words]]
 
 
         return top_words, tfidf
