@@ -1,12 +1,15 @@
-from octis.evaluation_metrics.metrics import AbstractMetric
 from sentence_transformers import SentenceTransformer
 
 from tqdm import tqdm
 import pickle
 import numpy as np
 import pandas as pd
+import nltk
 
 from sklearn.metrics.pairwise import cosine_similarity
+
+from gensim.models.coherencemodel import CoherenceModel
+from gensim.corpora import Dictionary
 
 
 
@@ -31,6 +34,35 @@ def Embed_corpus(dataset, embedder = SentenceTransformer("paraphrase-MiniLM-L6-v
         for doc in dataset.get_corpus():
             for word in doc:
                 word_list.append(word)
+
+        word_list = set(word_list)
+        for word in tqdm(word_list):
+            emb_dic[word] = embedder.encode(word)
+
+        with open(f'{emb_path}{emb_filename}.pickle', "wb") as handle:
+            pickle.dump(emb_dic, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return emb_dic
+
+def Embed_vocab(vocab, embedder = SentenceTransformer("paraphrase-MiniLM-L6-v2"), emb_filename= None, emb_path = "Embeddings/"):
+    """
+    Create a dictionary with the word embedding of every word in the dataset. 
+    Use the embedder. 
+    If the file 'Embeddings/{emb_filename}.pickle' is available, read the embeddings from this file. 
+    
+    Otherwise create new embeddings.
+    Returns the embedding dict
+    """
+    
+    if emb_filename is None:
+        emb_filename = str(vocab)
+    try: 
+        emb_dic = pickle.load(open(f'{emb_path}{emb_filename}.pickle', 'rb'))
+    except FileNotFoundError:
+        emb_dic = {}
+        word_list = []
+        for word in vocab:
+            word_list.append(word)
 
         word_list = set(word_list)
         for word in tqdm(word_list):
@@ -120,7 +152,7 @@ def cos_sim_pw(mat):
     sim = cosine_similarity(mat)
     return mean_over_diag(sim)
 
-class Embedding_Coherence(AbstractMetric):
+class Embedding_Coherence( ):
     """
     Average cosine similarity between all top words in a topic
     """
@@ -158,7 +190,7 @@ class Embedding_Coherence(AbstractMetric):
         res = self.score_per_topic(model_output)
         return sum(res)/len(res)
 
-class Embedding_Topic_Diversity(AbstractMetric):
+class Embedding_Topic_Diversity( ):
     """
     Measure the diversity of the topics by calculating the mean cosine similarity 
     of the mean vectors of the top words of all topics
@@ -215,7 +247,7 @@ class Embedding_Topic_Diversity(AbstractMetric):
 
         return sim_mean
 
-class Null_Space_Distance(AbstractMetric):
+class Null_Space_Distance( ):
     """
     Measure the distance of the mean of the topic topwords to the mean of the embedding of the stop words
     """
@@ -262,7 +294,7 @@ class Null_Space_Distance(AbstractMetric):
 
         return np.array(topword_sims)
 
-class Embedding_Intruder_avg_cos_sim(AbstractMetric):
+class Embedding_Intruder_avg_cos_sim( ):
     """
     For each topic, draw several intruder words that are not from the same topic by first selecting some topics that are not the specific topic and 
     then selecting one word from each of those topics. 
@@ -347,7 +379,7 @@ class Embedding_Intruder_avg_cos_sim(AbstractMetric):
         """
         return float(np.mean(self.score_per_topic(model_output)))
 
-class Embedding_Intruder_cos_sim_accuracy(AbstractMetric):
+class Embedding_Intruder_cos_sim_accuracy( ):
     """
     For each topic, draw several intruder words that are not from the same topic by first selecting some topics that are not the specific topic and 
     then selecting one word from each of those topics. 
@@ -442,4 +474,50 @@ class Embedding_Intruder_cos_sim_accuracy(AbstractMetric):
 
     
 
+class NPMI_coherence_gensim():
+    """
+    Compute NPMI coherence according to gensim: https://radimrehurek.com/gensim/models/coherencemodel.html
+    """
 
+    def __init__(self, corpus, vocab, coherence = 'u_mass'):
+        """
+        corpus: list of strings that represent document 
+        coherence: type of coherence to compute
+        vocab: list of all unique words in the corpus
+        """
+        self.corpus = corpus
+        self.coherence = coherence 
+
+        
+        vocab_set = set(vocab)
+        new_corpus = []
+        for doc in corpus:
+            new_doc = []
+            for word in nltk.tokenize.word_tokenize(doc):
+                if word in vocab_set:
+                    new_doc.append(word)
+            new_corpus.append(new_doc)
+        dictionary = Dictionary(new_corpus)
+
+        tokenized_corpus = []
+        for doc in new_corpus:
+            tokenized_doc = dictionary.doc2bow(doc)
+            tokenized_corpus.append(tokenized_doc)
+
+        
+        self.corpus = tokenized_corpus
+        self.dictionary = dictionary
+
+    def score(self, model_output):
+        """
+        Compute coherence score
+        """
+        topics_tw = model_output['topics']
+        print(self.corpus), print(self.dictionary)
+        cm = CoherenceModel(topics = topics_tw, corpus = self.corpus, dictionary= self.dictionary, coherence = self.coherence)
+        coherence_per_topic = cm.get_coherence_per_topic()
+        coherence = np.nanmean(coherence_per_topic)
+        return coherence
+                
+
+        
