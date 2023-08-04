@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import umap.plot
 from copy import deepcopy
+from sklearn.cluster import AgglomerativeClustering
 
 class Clustering_and_DimRed():
 
@@ -22,6 +23,7 @@ class Clustering_and_DimRed():
                  min_cluster_size_hdbscan:int = 15,
                  metric_hdbscan:str = "euclidean",
                  cluster_selection_method_hdbscan:str = "eom",
+                 number_clusters_hdbscan:int = None,
                  random_state:int = 42,
                  verbose:bool = True,
                  UMAP_hyperparams:dict = {},
@@ -35,6 +37,7 @@ class Clustering_and_DimRed():
             min_cluster_size_hdbscan: int, minimal cluster size for HDBSCAN
             metric_hdbscan: str, metric for HDBSCAN
             cluster_selection_method_hdbscan: str, cluster selection method for HDBSCAN
+            number_clusters_hdbscan: int, number of clusters for HDBSCAN. If None, HDBSCAN will determine the number of clusters automatically. Make sure that min_cluster_size is not too big to find enough clusters.
             random_state: int, random state for UMAP and HDBSCAN
             verbose: bool, whether to print progress
             UMAP_hyperparams: dict, further hyperparameters for UMAP
@@ -58,6 +61,7 @@ class Clustering_and_DimRed():
         self.HDBSCAN_hyperparams["min_cluster_size"] = min_cluster_size_hdbscan
         self.HDBSCAN_hyperparams["metric"] = metric_hdbscan
         self.HDBSCAN_hyperparams["cluster_selection_method"] = cluster_selection_method_hdbscan
+        self.number_clusters_hdbscan = number_clusters_hdbscan
         self.hdbscan = hdbscan.HDBSCAN(**self.HDBSCAN_hyperparams)
 
     
@@ -68,22 +72,33 @@ class Clustering_and_DimRed():
             embeddings: np.ndarray, embeddings to reduce
         returns:
             np.ndarray, reduced embeddings
+            umap.UMAP, UMAP mapper to transform new embeddings, especially embeddings of the vocabulary (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
         """
-        dim_red_embeddings = self.umap.fit_transform(embeddings)
+        mapper = umap.UMAP(**self.UMAP_hyperparams).fit(embeddings)
+        dim_red_embeddings = mapper.transform(embeddings)
         dim_red_embeddings = dim_red_embeddings/np.linalg.norm(dim_red_embeddings, axis=1).reshape(-1,1)
-        return dim_red_embeddings
+        return dim_red_embeddings, mapper
     
     def cluster_hdbscan(self, embeddings: np.ndarray) -> np.ndarray:
         """
         Cluster embeddings with HDBSCAN.
+        If self.number_clusters_hdbscan is not None, further clusters the data with AgglomerativeClustering to achieve a fixed number of clusters.
         params:
             embeddings: np.ndarray, embeddings to cluster
         returns:
             np.ndarray, cluster labels
         """
-        return self.hdbscan.fit_predict(embeddings)
+        labels = self.hdbscan.fit_predict(embeddings)
+        outliers = np.where(labels == -1)[0]
+
+        if self.number_clusters_hdbscan is not None:
+            clusterer = AgglomerativeClustering(n_clusters=self.number_clusters_hdbscan)
+            labels = clusterer.fit_predict(embeddings)
+            labels[outliers] = -1
+
+        return labels
     
-    def cluster_and_reduce(self, embeddings: np.ndarray) -> np.ndarray:
+    def cluster_and_reduce(self, embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray, umap.UMAP]:
         """
         Cluster embeddings with HDBSCAN and reduce dimensions with UMAP.
         params:
@@ -91,10 +106,11 @@ class Clustering_and_DimRed():
         returns:
             np.ndarray, reduced embeddings
             np.ndarray, cluster labels
+            umap.UMAP, UMAP mapper to transform new embeddings, especially embeddings of the vocabulary (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
         """
-        dim_red_embeddings = self.reduce_dimensions_umap(embeddings)
+        dim_red_embeddings, umap_mapper = self.reduce_dimensions_umap(embeddings)
         clusters = self.cluster_hdbscan(dim_red_embeddings)
-        return dim_red_embeddings, clusters
+        return dim_red_embeddings, clusters, umap_mapper
     
     def visualize_clusters_static(self, embeddings: np.ndarray, labels: np.ndarray):
         """
