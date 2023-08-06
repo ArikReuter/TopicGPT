@@ -75,7 +75,6 @@ class TopwordEnhancement:
 
         # if too many topwords are given, use only the first part of the topwords that fits into the context length
         tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(tw + ", ")) for tw in topwords]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
-        print(tokens_cumsum[-1])
         if tokens_cumsum[-1] > self.max_context_length:
             print("Too many topwords given. Using only the first part of the topwords that fits into the context length. Number of topwords used: ", np.argmax(tokens_cumsum > self.max_context_length))
             n_words = np.argmax(tokens_cumsum > self.max_context_length)
@@ -109,3 +108,50 @@ class TopwordEnhancement:
         """
         completion = self.describe_topic_topwords_completion_object(topwords, n_words, query_function)
         return completion.choices[0].message["content"]
+
+
+    def describe_topic_documents_completion_object(self, 
+                                 documents: list[str],
+                                 truncate_doc_thresh = 100,
+                                 n_documents: int = None,
+                                 query_function: Callable = lambda docs: f"Please give me the common topic of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
+        """
+        Describe the given topic based on its documents by using the openai model. The given query is used together with the base query to query the model.
+        params:
+            documents: list of documents
+            truncate_doc_thresh: threshold for the number of words in a document. If a document has more words than this threshold, it is pruned to this threshold.
+            n_documents: number of documents to use for the query. If None, all documents are used
+            query_function: function to query the model. The function should take a list of documents and return a string
+        returns:
+            A description of the topics by the model in form of an openai.ChatCompletion object
+        """
+        if n_documents is None:
+            n_documents = len(documents)
+        documents = documents[:n_documents]
+
+        # prune documents based on number of tokens they contain 
+        new_doc_lis = []
+        for doc in documents:
+            doc = doc.split(" ")
+            if len(doc) > truncate_doc_thresh:
+                doc = doc[:truncate_doc_thresh]
+            new_doc_lis.append(" ".join(doc))
+        documents = new_doc_lis
+
+        # if too many documents are given, use only the first part of the documents that fits into the context length
+        tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(doc + ", ")) for doc in documents]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
+        if tokens_cumsum[-1] > self.max_context_length:
+            print("Too many documents given. Using only the first part of the documents that fits into the context length. Number of documents used: ", np.argmax(tokens_cumsum > self.max_context_length))
+            n_documents = np.argmax(tokens_cumsum > self.max_context_length)
+            documents = documents[:n_documents]
+        
+        completion = openai.ChatCompletion.create(
+            model=self.openai_model,
+            messages=[
+                {"role": "system", "content": self.basic_model_instruction + " " + self.corpus_instruction},
+                {"role": "user", "content": query_function(documents)},
+            ],
+            temperature = self.openai_model_temperature
+        )
+
+        return completion
