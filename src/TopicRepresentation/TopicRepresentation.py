@@ -98,11 +98,10 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
 
     vocab = extractor.compute_corpus_vocab(corpus, **compute_vocab_hyperparams)  # compute the vocabulary of the corpus
     if "tfidf" in topword_extraction_methods:
-        tfidf_topwords, tfidf_mat = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
+        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
     if "cosine_similarity" in topword_extraction_methods:
-        cosine_topwords, cosine_mat = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False)
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, corpus, labels, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False)
                                                                                      
-    print(tfidf_mat.shape, cosine_mat.shape)
     topics = []
     for i, label in enumerate(np.unique(labels)):
         if label == -1: # dont include outliers
@@ -126,8 +125,8 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
             "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None
         }
         top_word_scores = {
-            "tfidf": tfidf_mat[label] if "tfidf" in topword_extraction_methods else None,
-            "cosine_similarity": cosine_mat[label] if "cosine_similarity" in topword_extraction_methods else None
+            "tfidf": tfidf_dict[label] if "tfidf" in topword_extraction_methods else None,
+            "cosine_similarity": cosine_dict[label] if "cosine_similarity" in topword_extraction_methods else None
         }
 
         topic = Topic(topic_name = topic_name,
