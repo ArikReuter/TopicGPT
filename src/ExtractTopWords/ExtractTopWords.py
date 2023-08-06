@@ -13,7 +13,6 @@ import umap
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-print(parentdir)
 sys.path.insert(0, parentdir) 
 
 from GetEmbeddings import GetEmbeddingsOpenAI
@@ -206,8 +205,6 @@ class ExtractTopWords:
             embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(api_key)
         result = embedder.get_embeddings(vocab)
 
-        print(result)
-
         res_dict = {}
         for word, emb in zip(vocab, result["embeddings"]):
             res_dict[word] = emb
@@ -234,7 +231,7 @@ class ExtractTopWords:
         return bow
 
     
-    def extract_topics_tfidf(self, corpus: list[str], vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
+    def extract_topwords_tfidf(self, corpus: list[str], vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
         """
         extract the top-words for each topic using a class-based tf-idf score
 
@@ -257,8 +254,6 @@ class ExtractTopWords:
         tf = word_topic_mat / np.sum(word_topic_mat, axis=0)
         idf = np.log(1 + (word_topic_mat.shape[1] / np.sum(word_topic_mat > 0, axis=1)))
 
-        print(tf.shape, idf.shape)
-
         tfidf = tf * idf[:, np.newaxis]
     
         # set tfidf to zero if tf is nan (happens if word does not occur in any document or topic does not have any words)
@@ -271,7 +266,7 @@ class ExtractTopWords:
                 top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-tfidf[:, i - 1])[:top_n_words]]
 
 
-        return top_words, tfidf
+        return top_words, tfidf.T
     
     def compute_embedding_similarity_centroids(self, vocab: list[str], vocab_embedding_dict: dict, umap_mapper: umap.UMAP, centroid_dict: dict, reduce_vocab_embeddings: bool = False, reduce_centroid_embeddings: bool = False) -> np.ndarray:
         """
@@ -287,10 +282,9 @@ class ExtractTopWords:
             np.ndarray, cosine similarity of each word in the vocab to each centroid. has shape (len(vocab), len(centroid_dict) - 1)
         """
         embedding_dim = umap_mapper.n_components
-        centroid_arr = np.zeros((len(centroid_dict) - 1, embedding_dim))
+        centroid_arr = np.zeros((len(centroid_dict), embedding_dim))
         for i, centroid in enumerate(centroid_dict.values()):
-            if i != -1:
-                centroid_arr[i - 1] = centroid
+            centroid_arr[i] = centroid
         if reduce_centroid_embeddings:
             centroid_arr = umap_mapper.transform(centroid_arr)
         
@@ -309,7 +303,7 @@ class ExtractTopWords:
         similarity = vocab_arr @ centroid_arr.T # cosine similarity
         return similarity
     
-    def extract_top_words_centroid_similarity(self, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False) -> (dict, np.ndarray):
+    def extract_topwords_centroid_similarity(self, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False) -> (dict, np.ndarray):
         """
         Extract the top-words for each cluster by computing the cosine similarity of the words that occur in the corpus to the centroid of the cluster
         params: 
@@ -330,6 +324,6 @@ class ExtractTopWords:
         top_words = {}
         for i, topic in enumerate(np.unique(list(centroid_dict.keys()))):
             if topic != -1:
-                top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-similarity_mat[:, i - 1])[:top_n_words]]
+                top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-similarity_mat[:, i])[:top_n_words]]
 
-        return top_words, similarity_mat
+        return top_words, similarity_mat.T
