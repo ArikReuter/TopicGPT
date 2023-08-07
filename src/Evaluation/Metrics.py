@@ -513,7 +513,6 @@ class NPMI_coherence_gensim():
         Compute coherence score
         """
         topics_tw = model_output['topics']
-        print(self.corpus), print(self.dictionary)
         cm = CoherenceModel(topics = topics_tw, corpus = self.corpus, dictionary= self.dictionary, coherence = self.coherence)
         coherence_per_topic = cm.get_coherence_per_topic()
         coherence = np.nanmean(coherence_per_topic)

@@ -189,6 +189,9 @@ class Clustering_and_DimRed():
         fig = px.scatter(df, x='x', y='y', hover_data=['text', 'class'], color='class', color_discrete_map=color_discrete_map)
         
         fig.update_traces(mode='markers', marker=dict(size=3))  # Optional: Increase the marker size
+
+        
+
     
         # make plot quadratic
         fig.update_layout(
@@ -203,6 +206,9 @@ class Clustering_and_DimRed():
             pad=4
         )
     )
+        # set title 
+        fig.update_layout(title_text='UMAP projection of the document embeddings', title_x=0.5)
+
         
         # show plot
         fig.show()

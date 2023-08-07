@@ -16,7 +16,8 @@ You are excellent at inferring information about topics discovered via topic mod
 You summarize information intelligently. 
 You use the functions you are provided with if applicable.
 You make sure that everything you output is strictly based on the provided text. If you cite documents, give their indices. 
-You always explicitly say if you don't find any useful information!"""
+You always explicitly say if you don't find any useful information!
+You only say that something is contained in the corpus if you are very sure about it!"""
 
 
 class TopicPrompting:
@@ -61,7 +62,7 @@ class TopicPrompting:
         self.function_descriptions = [
             {
                 "name": "knn_search",
-                "description": "This function can be used to find information on more detailed aspects of topics related to the query. For a given topic and a given query, it finds the k nearest neighbors among all documents belonging to the topic based on cosine similarity",
+                "description": "This function can be used to find information on more detailed aspects of topics related to the query. This can be useful to find out if a topic is also about a specific term. More specifically, for a given topic and a given query, it finds the k nearest neighbors among all documents belonging to the topic based on cosine similarity",
                 "parameters": {
                     "type": "object",
                     "properties": {
