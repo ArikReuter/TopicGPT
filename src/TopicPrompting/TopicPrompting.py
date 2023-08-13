@@ -9,6 +9,7 @@ from TopicRepresentation.TopicRepresentation import Topic
 import numpy as np
 import json
 import tiktoken
+import openai
 
 
 basic_model_instruction = """You are a helpful assistant. 
@@ -62,7 +63,7 @@ class TopicPrompting:
         self.function_descriptions = [
             {
                 "name": "knn_search",
-                "description": "This function can be used to find information on more detailed aspects of topics related to the query. This can be useful to find out if a topic is also about a specific term. More specifically, for a given topic and a given query, it finds the k nearest neighbors among all documents belonging to the topic based on cosine similarity",
+                "description": "This function can be used to find information on more detailed aspects of topics related to the query. This can be useful to find out if a topic is also about a specific term. More specifically, for a given topic and a given query, it finds the k nearest neighbors among all documents belonging to the topic based on cosine similarity. Note that it is possible that just useless documents are returned.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -146,12 +147,13 @@ class TopicPrompting:
         })
         return json_obj
     
-    def prompt_knn_search(self, llm_query: str, topic_index: int = None) -> str:
+    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 2) -> str:
         """
         Use the LLM to answer the llm query based on the documents belonging to the topic.  
         params: 
             llm_query: query string for the LLM
             topic_index: index of topic object. If None, the topic is inferred from the query
+            n_tries: number of tries to get a valid response from the LLM
         returns:
             answer string
         """
@@ -165,43 +167,48 @@ class TopicPrompting:
                 "content": llm_query
             }
             ]
-        
-        response_message = openai.ChatCompletion.create(
-            model = self.openai_prompting_model,
-            messages = messages,
-            functions = self.function_descriptions,
-            function_call = "auto")["choices"][0]["message"]
-        
-        # Step 2: check if GPT wanted to call a function
-        print(response_message)
-        function_call = response_message.get("function_call")
-        if function_call is not None:
-            print("GPT wants to the call the function: ", function_call)
-            # Step 3: call the function
-            # Note: the JSON response may not always be valid; be sure to handle errors
+        for _ in range(n_tries):
+            try: 
+                response_message = openai.ChatCompletion.create(
+                    model = self.openai_prompting_model,
+                    messages = messages,
+                    functions = self.function_descriptions,
+                    function_call = "auto")["choices"][0]["message"]
+                
+                # Step 2: check if GPT wanted to call a function
+                print(response_message)
+                function_call = response_message.get("function_call")
+                if function_call is not None:
+                    print("GPT wants to the call the function: ", function_call)
+                    # Step 3: call the function
+                    # Note: the JSON response may not always be valid; be sure to handle errors
 
-            function_name = function_call["name"]
-            function_to_call = self.functionNames2Functions[function_name]
-            function_args = json.loads(function_call["arguments"])
-            if topic_index is not None:
-                function_args["topic_index"] = topic_index
-            function_response = function_to_call(**function_args)
+                    function_name = function_call["name"]
+                    function_to_call = self.functionNames2Functions[function_name]
+                    function_args = json.loads(function_call["arguments"])
+                    if topic_index is not None:
+                        function_args["topic_index"] = topic_index
+                    function_response = function_to_call(**function_args)
 
-            # Step 4: send the info on the function call and function response to GPT
-            messages.append(response_message)  # extend conversation with assistant's reply
+                    # Step 4: send the info on the function call and function response to GPT
+                    messages.append(response_message)  # extend conversation with assistant's reply
+                    
+                
+                    messages.append(
+                        {
+                            "role": "function",
+                            "name": function_name,
+                            "content": function_response,
+                        }
+                    )  # extend conversation with function response
+
+                    print(messages)
+                    second_response = openai.ChatCompletion.create(
+                        model=self.openai_prompting_model,
+                        messages=messages,
+                    )  # get a new response from GPT where it can see the function response
+            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                print("Error occured: ", error)
+                print("Trying again...")
             
-        
-            messages.append(
-                {
-                    "role": "function",
-                    "name": function_name,
-                    "content": function_response,
-                }
-            )  # extend conversation with function response
-
-            print(messages)
-            second_response = openai.ChatCompletion.create(
-                model=self.openai_prompting_model,
-                messages=messages,
-            )  # get a new response from GPT where it can see the function response
             return second_response
