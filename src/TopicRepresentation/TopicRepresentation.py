@@ -19,7 +19,7 @@ class Topic:
     """
 
     def __init__(self, 
-                 topic_name: str, 
+                 topic_idx: str, 
                  documents: list[str], 
                  words: dict[str, int],
                  centroid_hd: np.ndarray = None, 
@@ -46,7 +46,7 @@ class Topic:
             top_words: dictionary of top-words in the topic according to different metrics
             top_word_scores: dictionary of how representative the top-words are according to different metrics
         """
-        self.topic_name = topic_name
+        self.topic_idx = topic_idx
         self.documents = documents
         self.words = words
         self.centroid_hd = centroid_hd
@@ -67,6 +67,22 @@ class Topic:
         repr = f"Topic: {self.topic_name}\n"
         
         return repr
+    
+    def set_topic_name(self, name:str):
+        """
+        add a name to the topic
+        params:
+            name: name of the topic
+        """
+        self.topic_name = name
+
+    def set_topic_description(self, text: str):
+        """
+        add a text description to the topic
+        params:
+            text: text description of the topic
+        """
+        self.topic_description = text
 
 @staticmethod
 def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 30, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}) -> list[Topic]:
@@ -107,7 +123,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
         if label == -1: # dont include outliers
             continue
         print(label)
-        topic_name = f"{label}"
+        topic_idx = f"{label}"
         documents = [doc for j, doc in enumerate(corpus) if labels[j] == label]
         embeddings_hd = document_embeddings[labels == label]
         embeddings_ld = dim_red_embeddings[labels == label]
@@ -129,7 +145,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
             "cosine_similarity": cosine_dict[label] if "cosine_similarity" in topword_extraction_methods else None
         }
 
-        topic = Topic(topic_name = topic_name,
+        topic = Topic(topic_idx = topic_idx,
                         documents = documents,
                         words = vocab,
                         centroid_hd = centroid_hd,
@@ -147,7 +163,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     return topics
 
 
-
+    
 
 
 
