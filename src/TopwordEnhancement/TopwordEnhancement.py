@@ -96,7 +96,7 @@ class TopwordEnhancement:
     def describe_topic_topwords_str(self, 
                                topwords: list[str], 
                                n_words: int = None,
-                               query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic.") -> str:
+                               query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic. Make sure the descriptions are short and concise! Do not cite more than 5 words per sub-aspect!!!") -> str:
         """
         Describe the given topic based on its topwords by using the openai model. The given query is used together with the base query to query the model.
         params:

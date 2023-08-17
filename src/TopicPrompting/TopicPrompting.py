@@ -10,6 +10,7 @@ import numpy as np
 import json
 import tiktoken
 import openai
+import re
 
 
 basic_model_instruction = """You are a helpful assistant. 
@@ -212,3 +213,67 @@ class TopicPrompting:
                 print("Trying again...")
             
             return second_response
+        
+    def identify_topic_idx(self, query: str, n_tries = 3) -> int:
+        """
+        Identify the index of the topic that the query is most likely about. This is done by asking a LLM to say which topic has the description that best fits the query. 
+        params:
+            query: query string
+            n_tries: number of tries to get a valid response from the LLM
+        returns:
+            index of the topic that the query is most likely about
+        """
+
+        topic_descriptions_str = ""
+        for i, topic in enumerate(self.topic_lis):
+            description = topic.topic_description
+            description = f"""Topic index: {i}: \n {description} \n \n"""
+            topic_descriptions_str += description
+        
+        system_prompt = f"""You are a helpful assistant."""
+        
+        user_prompt = f""" Please find the index of the topic that is about the following query: {query}. 
+        Those are the given topics: '''{topic_descriptions_str}'''.
+        Please make sure to reply ONLY with an integer number between 0 and {len(self.topic_lis) - 1}!
+        Reply with -1 if you don't find any topic that fits the query!
+        Always explicitly say if you don't find any useful information by replying with -1! If in doubt, say that you did not find any useful information!
+        Reply in the following format: "The topic index is: <index>"""
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+            ]
+        for _ in range(n_tries):
+            try: 
+                response_message = openai.ChatCompletion.create(
+                model = self.openai_prompting_model,
+                messages = messages
+                
+                )["choices"][0]["message"]
+
+            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                print("Error occured: ", error)
+                print("Trying again...")
+
+
+        
+        response_text = response_message["content"]
+        # find integer number in response text
+        match = re.search(r'(-?\d+)', response_text)
+        topic_index = int(match.group(1))
+        
+        if topic_index is None:
+            raise ValueError("No integer number found in response text! The model gave the following response: ", response_text)
+        
+        if topic_index == -1: 
+            return None
+        else:
+            return topic_index
+
+
