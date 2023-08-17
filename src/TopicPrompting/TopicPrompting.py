@@ -61,34 +61,50 @@ class TopicPrompting:
         self.corpus_instruction = corpus_instruction
 
 
-        self.function_descriptions = [
-            {
-                "name": "knn_search",
-                "description": "This function can be used to find information on more detailed aspects of topics related to the query. This can be useful to find out if a topic is also about a specific term. More specifically, for a given topic and a given query, it finds the k nearest neighbors among all documents belonging to the topic based on cosine similarity. Note that it is possible that just useless documents are returned.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "topic_index": {
-                            "type": "integer",
-                            "description": "index of the topic to search in."
+        self.function_descriptions = {
+                "knn_search": {
+                    "name": "knn_search",
+                    "description": "This function can be used to find out if a topic is about a specific subject or contains information about it. Note that it is possible that just useless documents are returned.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic_index": {
+                                "type": "integer",
+                                "description": "index of the topic to search in."
+                            },
+                            "query": {
+                                "type": "string",
+                                "description": "query string. Can be a single word or a sentence. Used to create an embedding and search a vector database for the k nearest neighbors."
+                            },
+                            "k": {
+                                "type": "integer",
+                                "description": "number of neighbors to return. Use more neighbors to get a more diverse and comprehensive set of results."
+                            }
                         },
-                        "query": {
-                            "type": "string",
-                            "description": "query string. Can be a single word or a sentence. Used to create an embedding and search a vector database for the k nearest neighbors."
-                        },
-                        "k": {
-                            "type": "integer",
-                            "description": "number of neighbors to return. Use more neighbors to get a more diverse and comprehensive set of results."
-                        }
-                    },
-                    "required": ["topic_index", "query"]
+                        "required": ["topic_index", "query"]
 
+                    }
+                },
+                "identify_topic_idx": {
+                    "name": "identify_topic_idx",
+                    "description": "This function can be used to identify the index of the topic that the query is most likely about. This is useful if the topic index is needed for other functions. It should NOT be used to find more detailed information on topics. Note that it is possible that the model does not find any topic that fits the query. In this case, the function returns None.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "query string. Can be a single word or a sentence. Used to find the index of the topic that is most likely about the query."
+                            }
+                        },
+                        "required": ["query"]
+
+                    }
                 }
-            }
-        ]
+        }
 
         self.functionNames2Functions = {
-            "knn_search": self.knn_search_openai
+            "knn_search": self.knn_search_openai,
+            "identify_topic_idx": self.identify_topic_idx_openai
         }
 
 
@@ -173,7 +189,7 @@ class TopicPrompting:
                 response_message = openai.ChatCompletion.create(
                     model = self.openai_prompting_model,
                     messages = messages,
-                    functions = self.function_descriptions,
+                    functions = [self.function_descriptions["knn_search"]],
                     function_call = "auto")["choices"][0]["message"]
                 
                 # Step 2: check if GPT wanted to call a function
@@ -276,4 +292,81 @@ class TopicPrompting:
         else:
             return topic_index
 
+    def identify_topic_idx_openai(self, query: str, n_tries = 3) -> json:
+        """
+        A version of the identify_topic_idx function that returns a json file to be used with the openai API
+        params:
+            query: query string
+            n_tries: number of tries to get a valid response from the LLM
+        returns:
+            json object to be used with the openai API
+        """
+        topic_index = self.identify_topic_idx(query, n_tries)
+        json_obj = json.dumps({
+            "topic index": topic_index
+        })
+        return json_obj
 
+
+    def general_prompt(self, prompt: str, n_tries = 2) -> str:
+        """
+        Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
+        Use n_tries in case the LLM does not give a valid response.
+        params:
+            prompt: prompt string
+            n_tries: number of tries to get a valid response from the LLM
+        returns:
+            response string
+        """
+        messages = [
+            {
+                "role": "system",
+                "content": self.basic_model_instruction + " " + self.corpus_instruction
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+            ]
+        for _ in range(n_tries):
+            try: 
+                response_message = openai.ChatCompletion.create(
+                    model = self.openai_prompting_model,
+                    messages = messages,
+                    functions = [self.function_descriptions[key] for key in self.function_descriptions.keys()],
+                    function_call = "auto")["choices"][0]["message"]
+                
+                # Step 2: check if GPT wanted to call a function
+                print(response_message)
+                function_call = response_message.get("function_call")
+                if function_call is not None:
+                    print("GPT wants to the call the function: ", function_call)
+                    # Step 3: call the function
+                    # Note: the JSON response may not always be valid; be sure to handle errors
+
+                    function_name = function_call["name"]
+                    function_to_call = self.functionNames2Functions[function_name]
+                    function_args = json.loads(function_call["arguments"])
+                    function_response = function_to_call(**function_args)
+
+                    # Step 4: send the info on the function call and function response to GPT
+                    messages.append(response_message)  # extend conversation with assistant's reply
+                
+                    messages.append(
+                        {
+                            "role": "function",
+                            "name": function_name,
+                            "content": function_response,
+                        }
+                    )  # extend conversation with function response
+
+                    print(messages)
+                    second_response = openai.ChatCompletion.create(
+                        model=self.openai_prompting_model,
+                        messages=messages,
+                    )  # get a new response from GPT where it can see the function response
+            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                print("Error occured: ", error)
+                print("Trying again...")
+            
+            return second_response
