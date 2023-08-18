@@ -3,12 +3,14 @@ import umap
 import sys
 import os
 import inspect
+from tqdm import tqdm
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
 from Clustering.Clustering import Clustering_and_DimRed
 from ExtractTopWords.ExtractTopWords import ExtractTopWords
+from TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
 
 
 
@@ -59,6 +61,7 @@ class Topic:
         self.top_word_scores = top_word_scores
 
 
+
     def __str__(self) -> str:
         repr = f"Topic: {self.topic_name}\n"
         
@@ -85,7 +88,7 @@ class Topic:
         self.topic_description = text
 
 @staticmethod
-def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 30, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}) -> list[Topic]:
+def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 2000, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}) -> list[Topic]:
     """
     Extract the topics from the given corpus by using the clusterer object on the embeddings
     params: 
@@ -162,9 +165,137 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     
     return topics
 
+@staticmethod 
+def extract_topic_cos_sim(documents_topic: list[str], 
+                  document_embeddings_topic: np.ndarray, 
+                  words_topic: list[str], 
+                  vocab_embeddings: dict, 
+                  umap_mapper: umap.UMAP, 
+                  topword_extraction_methods: list[str] = ["cosine_similarity"], 
+                  n_topwords: int = 2000) -> Topic:
+    """
+    create a topic object from the given documents and embeddings. i.e. compute the centroid and the top-words. Only use cosine-similarity for top-word extraction
+    params:
+        documents_topic: list of documents in the topic
+        document_embeddings_topic: high dimensional embeddings of the documents in the topic
+        words_topic: list of words in the topic
+        vocab_embeddings: embeddings of the vocabulary
+        umap_mapper: umap mapper object to map from high dimensional space to low dimensional space
+        topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
+        n_topwords: number of top-words to extract from the topics
+    returns:
+        Topic object
+    """
+    for elem in topword_extraction_methods:
+        if elem not in ["cosine_similarity"]:
+            raise ValueError("topword_extraction_methods can only contain 'cosine_similarity'")
+    if topword_extraction_methods == []:
+        raise ValueError("topword_extraction_methods cannot be empty") 
+    
+    extractor = ExtractTopWords()
+    centroid_hd = extractor.extract_centroid(document_embeddings_topic)
+    centroid_ld = umap_mapper.transform(centroid_hd.reshape(1, -1))[0]
+
+    if "cosine_similarity" in topword_extraction_methods:
+        labels = np.zeros(len(documents_topic), dtype = int) #everything has label 0
+
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab = words_topic, vocab_embedding_dict = vocab_embeddings, corpus = documents_topic, labels = labels, centroid_dict = {0: centroid_ld}, umap_mapper = umap_mapper, n_topwords = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False)
+
+    top_words = {
+        "cosine_similarity": cosine_topwords if "cosine_similarity" in topword_extraction_methods else None
+    }
+    top_word_scores = {
+        "cosine_similarity": cosine_dict if "cosine_similarity" in topword_extraction_methods else None
+    }
 
     
 
+    topic = Topic(topic_idx = None,
+                documents = documents_topic,	
+                words = words_topic,
+                centroid_hd = centroid_hd,
+                centroid_ld = centroid_ld,
+                document_embeddings_hd = None,
+                document_embeddings_ld = None,
+                document_embedding_similarity = None,
+                umap_mapper = umap_mapper,
+                top_words = top_words,
+                top_word_scores = top_word_scores
+                )
+    
+    return topic
 
 
+def extract_and_describe_topic_cos_sim(documents_topic: list[str], 
+                  document_embeddings_topic: np.ndarray, 
+                  words_topic: list[str], 
+                  vocab_embeddings: dict, 
+                  umap_mapper: umap.UMAP, 
+                  enhancer: TopwordEnhancement, 
+                  n_topwords: int = 2000, 
+                  n_topwords_description = 500) -> Topic:
+    """
+    create a topic object from the given documents and embeddings. i.e. compute the centroid and the top-words. Only use cosine-similarity for top-word extraction. Describe and name the topic with the given enhancer object
+    params:
+        documents_topic: list of documents in the topic
+        document_embeddings_topic: high dimensional embeddings of the documents in the topic
+        words_topic: list of words in the topic
+        vocab_embeddings: embeddings of the vocabulary
+        umap_mapper: umap mapper object to map from high dimensional space to low dimensional space
+        enhancer: enhancer object to enhance the top-words and generate the description
+        n_topwords: number of top-words to extract from the topics
+        n_topwords_description: number of top-words to use from the extracted topics for the description and the name
+    returns:
+        Topic object
+    """
+    topic = extract_topic_cos_sim(documents_topic, document_embeddings_topic, words_topic, vocab_embeddings, umap_mapper, ["cosine_similarity"], n_topwords)
+    topic = describe_and_name_topics([topic], enhancer, "cosine_similarity", n_topwords_description)[0]
+    return topic
 
+@staticmethod
+def describe_and_name_topics(topics: list[Topic], enhancer: TopwordEnhancement, topword_method = "tfidf", n_words = 500) -> list[Topic]:
+    """
+    Use the OpenAI API to describe and name the topics with the given enhancer object
+    params:
+        topics: list of Topic objects
+        enhancer: enhancer object to enhance the top-words and generate the description
+        topword_method: method to use for top-word extraction. Can be "tfidf" or "cosine_similarity"
+        n_words: number of topwords to extract the description and the name 
+    returns:
+        list of Topic objects with the description and name added
+    """
+    if topword_method not in ["tfidf", "cosine_similarity"]:
+        raise ValueError("topword_method can only be 'tfidf' or 'cosine_similarity'")
+   
+    for topic in tqdm(topics):
+        tws = topic.top_words[topword_method]
+        topic_name = enhancer.generate_topic_name_str(tws, n_words = n_words)
+        topic_description = enhancer.describe_topic_topwords_str(tws, n_words = n_words)
+        topic.set_topic_name(topic_name)
+        topic.set_topic_description(topic_description)
+        
+    return topics
+
+@staticmethod
+def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "tfidf") -> list[Topic]:
+    """
+    Extract the topics from the given corpus by using the clusterer object on the embeddings and describe and name them with the given enhancer object.
+    params: 
+        corpus: list of documents
+        document_embeddings: embeddings of the documents
+        clusterer: clusterer object to cluster the documents
+        vocab_embeddings: embeddings of the vocabulary
+        enhancer: enhancer object to enhance the top-words and generate the description
+        n_topwords: number of top-words to extract from the topics
+        n_topwords_description: number of top-words to use from the extracted topics for the description and the name
+        topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
+        compute_vocab_hyperparams: hyperparameters for the top-word extraction methods
+        topword_description_method: method to use for top-word extraction. Can be "tfidf" or "cosine_similarity"
+    returns:
+        list of Topic objects
+    """
+    print("Extracting topics...")
+    topics = extract_topics(corpus, document_embeddings, clusterer, vocab_embeddings, n_topwords, topword_extraction_methods, compute_vocab_hyperparams)
+    print("Describing topics...")
+    topics = describe_and_name_topics(topics, enhancer, topword_description_method, n_topwords_description)
+    return topics

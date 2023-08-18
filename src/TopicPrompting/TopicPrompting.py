@@ -5,12 +5,15 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import openai
-from TopicRepresentation.TopicRepresentation import Topic
 import numpy as np
 import json
 import tiktoken
 import openai
 import re
+import sklearn
+from TopicRepresentation.TopicRepresentation import Topic
+from TopicRepresentation.TopicRepresentation import extract_and_describe_topic_cos_sim
+from TopwordEnhancement import TopwordEnhancement
 
 
 basic_model_instruction = """You are a helpful assistant. 
@@ -36,7 +39,8 @@ class TopicPrompting:
                  openai_embedding_model = "text-embedding-ada-002",
                  max_context_length_embedding = 8191, 
                  basic_model_instruction = basic_model_instruction,
-                 corpus_instruction = ""):
+                 corpus_instruction = "",
+                 random_state = 42):
         """
         params: 
             topic_lis: list of Topic objects
@@ -49,6 +53,7 @@ class TopicPrompting:
             max_context_length_embedding: maximum context length for the embedding model
             basic_model_instruction: basic instruction for the prompting model
             corpus_instruction: instruction for the prompting model to use the corpus
+            random_state: random state for reproducibility
         """
         self.topic_lis = topic_lis
         self.openai_key = openai_key
@@ -59,7 +64,7 @@ class TopicPrompting:
         self.max_context_length_embedding = max_context_length_embedding    
         self.basic_model_instruction = basic_model_instruction
         self.corpus_instruction = corpus_instruction
-
+        self.random_state = random_state
 
         self.function_descriptions = {
                 "knn_search": {
@@ -106,7 +111,6 @@ class TopicPrompting:
             "knn_search": self.knn_search_openai,
             "identify_topic_idx": self.identify_topic_idx_openai
         }
-
 
     def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> list[str]:
         """
@@ -307,7 +311,6 @@ class TopicPrompting:
         })
         return json_obj
 
-
     def general_prompt(self, prompt: str, n_tries = 2) -> str:
         """
         Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
@@ -370,3 +373,87 @@ class TopicPrompting:
                 print("Trying again...")
             
             return second_response
+
+    def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, vocab_embedding_dict: dict, enhancer: TopwordEnhancement, inplace = False) -> list[Topic]:
+        """
+        split a topic into new topics based on new topic assignments.
+        params:
+            topic_idx: index of the topic to split
+            new_topic_assignments: new topic assignments for the documents in the topic
+            vocab_embedding_dict: dictionary mapping words to their embeddings
+            enhancer: TopwordEnhancement object fro naming and describing the new topics
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            list of new topics
+        """
+        old_topic = self.topic_lis[topic_idx]
+
+        assert len(new_topic_assignments) == len(old_topic.documents), "new_topic_assignments must have the same length as the number of documents in the topic!"
+
+        # create new topics
+        new_topics = []
+        for i in range(np.unique(new_topic_assignments)):
+            docs = [old_topic.documents[j] for j in range(len(old_topic.documents)) if new_topic_assignments[j] == i]
+            docs_embeddings = old_topic.document_embeddings_hd[new_topic_assignments == i]
+            words_raw = []
+            for doc in docs:
+                words_raw += doc.split(" ")
+            words_raw = set(words_raw)
+            words = [word for word in old_topic.words if word in words_raw]
+
+            new_topic = extract_and_describe_topic_cos_sim(
+                documents_topic = docs,
+                document_embeddings_topic = docs_embeddings,
+                words_topic = words,
+                vocab_embeddings = vocab_embedding_dict,
+                umap_mapper = old_topic.umap_mapper,
+                enhancer=enhancer,
+                topword_extraction_methods = ["cosine_similarity"],
+                n_topwords = 2000
+            )
+            # TODO: also add tfidf topwords
+            new_topic.topic_idx = len(self.topic_lis) + i + 1
+            new_topics.append(new_topic)
+        
+        if inplace:
+            self.topic_lis.pop(topic_idx)
+            self.topic_lis += new_topics
+        else:
+            new_topic_lis = self.topic_lis.copy()
+            new_topic_lis.pop(topic_idx)
+            new_topic_lis += new_topics
+            return new_topic_lis
+
+    def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace = False) -> list[Topic]:
+        """
+        Split an existing topic into several subtopics using kmeans clustering. 
+        params:
+            topic_idx: index of the topic to split
+            n_clusters: number of clusters to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        """
+        old_topic = self.topic_lis[topic_idx]
+        embeddings = old_topic.document_embeddings_ld  # embeddings to split into clusters
+
+        kmeans_res = sklearn.cluster.KMeans(n_clusters = n_clusters, random_state = self.random_state).fit(embeddings)
+        cluster_labels = kmeans_res.labels_
+
+        new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, old_topic.vocab_embedding_dict, old_topic.enhancer, inplace)
+
+        return new_topics
+
+    
+    def split_topic_keyword():
+        pass 
+
+    def combine_topics():
+        pass 
+
+    def create_new_topic_keyword():
+        """
+        Create a new topic based on a keyword. Remove all documents belonging to the other topics from them and add them to the new topic.
+        """
+        pass
+
+# implement function for proper chatting 
+# Add description to plot of topics
