@@ -70,8 +70,13 @@ class TopwordEnhancement:
         """
         if n_words is None:
             n_words = len(topwords)
+        
+        if type(topwords) == dict:
+            topwords = topwords[0]
+
         topwords = topwords[:n_words]
         topwords = np.array(topwords)
+    
 
         # if too many topwords are given, use only the first part of the topwords that fits into the context length
         tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(tw + ", ")) for tw in topwords]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
