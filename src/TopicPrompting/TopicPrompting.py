@@ -240,6 +240,18 @@ class TopicPrompting:
             "add_new_topic_keyword": self.add_new_topic_keyword_openai
         }
 
+    def show_topic_list(self) -> str:
+        """
+        Show the list of topics
+        returns:
+            string representation of the list of topics
+        """
+        res = ""
+        for idx, topic in enumerate(self.topic_lis):
+            res += str(topic)
+
+        print(res)
+
     def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> list[str]:
         """
         find the k nearest neighbors of the query in the given topic based on cosine similarity in the original embedding space
@@ -296,7 +308,7 @@ class TopicPrompting:
         })
         return json_obj, (topk_docs, topk_doc_indices)
     
-    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 2) -> str:
+    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 2) -> (json, (list[str], list[int])):
         """
         Use the LLM to answer the llm query based on the documents belonging to the topic.  
         params: 
@@ -304,7 +316,7 @@ class TopicPrompting:
             topic_index: index of topic object. If None, the topic is inferred from the query
             n_tries: number of tries to get a valid response from the LLM
         returns:
-            answer string
+            answer string. Also returns the topk_docs and topk_doc_indices
         """
         messages = [
             {
@@ -338,6 +350,10 @@ class TopicPrompting:
                     if topic_index is not None:
                         function_args["topic_index"] = topic_index
                     function_response = function_to_call(**function_args)
+                    function_response_json = function_response[0]
+                    function_response_return_output = function_response[1]
+
+
 
                     # Step 4: send the info on the function call and function response to GPT
                     messages.append(response_message)  # extend conversation with assistant's reply
@@ -347,7 +363,7 @@ class TopicPrompting:
                         {
                             "role": "function",
                             "name": function_name,
-                            "content": function_response,
+                            "content": function_response_json,
                         }
                     )  # extend conversation with function response
 
@@ -360,7 +376,7 @@ class TopicPrompting:
                 print("Error occured: ", error)
                 print("Trying again...")
             
-            return second_response
+            return second_response, function_response_return_output
         
     def identify_topic_idx(self, query: str, n_tries = 3) -> int:
         """
@@ -832,5 +848,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics 
 
-# implement function for proper chatting 
-# Add description to plot of topics
+# TODO: Check if inplace argument works correctly
+# TODO: Fix errors with indexing
+# TODO: mplement function for proper chatting 
+# TODO: Add description to plot of topics
