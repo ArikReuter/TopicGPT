@@ -193,7 +193,7 @@ class TopicPrompting:
                 },
                 "combine_topics": {
                     "name": "combine_topics",
-                    "description": "This function can be used to combine several topics into one topic.",
+                    "description": "This function can be used to combine several topics into one topic. It returns the newly formed topic and removes the old topics from the list of topics.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -696,7 +696,7 @@ class TopicPrompting:
             documents_topic = new_topic_docs,
             document_embeddings_topic = new_topic_document_embeddings_hd,
             words_topic = new_topic_words,
-            vocab_embeddings = self.vocab_embedding_dict,
+            vocab_embeddings = self.vocab_embeddings,
             umap_mapper = self.topic_lis[0].umap_mapper,
             enhancer=self.enhancer,
             n_topwords = 2000
@@ -726,7 +726,7 @@ class TopicPrompting:
         """
         new_topics = self.combine_topics(topic_idx_lis, inplace)
         json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics]
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
         })
         return json_obj, new_topics
 
@@ -798,6 +798,11 @@ class TopicPrompting:
             enhancer = self.enhancer
         )
 
+        # switch the last and the first topic
+        first_topic = new_topics[0]
+        new_topics[0] = new_topics[-1]
+        new_topics[-1] = first_topic
+
         if rename_new_topic:
             new_topics[0].topic_name = keyword
 
@@ -823,7 +828,7 @@ class TopicPrompting:
         """
         new_topics = self.add_new_topic_keyword(keyword, inplace, rename_new_topic)
         json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics]
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
         })
         return json_obj, new_topics 
 

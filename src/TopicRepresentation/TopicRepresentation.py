@@ -66,8 +66,11 @@ class Topic:
 
 
     def __str__(self) -> str:
-        repr = f"Topic: {self.topic_name}\n"
-        
+        if self.topic_idx is None:
+            repr = f"Topic: {self.topic_name}\n"
+        else: 
+            repr = f"Topic {self.topic_idx}: {self.topic_name}\n"
+
         return repr
     def __repr__(self) -> str:
         repr = f"Topic: {self.topic_name}\n"
