@@ -89,10 +89,11 @@ class GetEmbeddingsOpenAI:
 
 
     
-    def get_embeddings_doc_split(self, corpus: list[list[str]]) -> list[dict]:
+    def get_embeddings_doc_split(self, corpus: list[list[str]], n_tries = 3) -> list[dict]:
         """
         This function computes the embeddings of a corpus for splitted documents.
         :param corpus: List of strings to embed. Where each element in the list is a document that is represented by the list of its chunks.
+        :param n_tries: Number of tries to make an API call.
         :return: List of dictionaries. Where each dictionary contains the embedding of the document, the text of the document and a list of errors that occured during the embedding process.
         """
         api_res_list = [] 
@@ -100,20 +101,26 @@ class GetEmbeddingsOpenAI:
             chunk_lis = corpus[i]
             api_res_doc = []
             for chunk_n, chunk in enumerate(chunk_lis):
-                
-                try: 
-                    api_res_doc.append(
-                         {"api_res": self.make_api_call(chunk), 
-                         "error": None }
+
+                for i in range(n_tries + 1):
+                    try: 
+                        api_res_doc.append(
+                            {"api_res": self.make_api_call(chunk), 
+                            "error": None }
                          )
-                except Exception as e:
-                     print(f"Error {e} occured for chunk {chunk_n} of document {i}")
-                     print(chunk)
-                     api_res_doc.append(
-                        {"api_res": None, 
-                        "error": e }
-                        )
-                     
+                        break
+                    except Exception as e:
+                            print(f"Error {e} occured for chunk {chunk_n} of document {i}")
+                            print(chunk)
+                            print("Trying again.")
+                    if i == n_tries: 
+                        print("Maximum number of tries reached. Skipping chunk.")
+                        api_res_doc.append(
+                            {"api_res": None, 
+                            "error": e }
+                            )
+                         
+
             # average the embeddings of the chunks
             emb_lis = []
             for api_res in api_res_doc:

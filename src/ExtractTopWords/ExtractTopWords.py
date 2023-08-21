@@ -254,8 +254,7 @@ class ExtractTopWords:
 
         if not -1 in np.unique(labels):
             word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
-
-        print(word_topic_mat.shape)
+            
         vocab_set = set(vocab)
         for i, doc in tqdm(enumerate(corpus), desc="Computing word-topic matrix", total=len(corpus)):
             if labels[i] != -1:

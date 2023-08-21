@@ -129,7 +129,6 @@ class TopwordEnhancement:
         """
         return self.describe_topic_topwords_str(topwords, n_words, query_function)
 
-
     def describe_topic_documents_completion_object(self, 
                                  documents: list[str],
                                  truncate_doc_thresh = 100,
@@ -198,6 +197,7 @@ class TopwordEnhancement:
             np.random.permutation(n_docs)
         """
         return np.random.permutation(n_docs)
+    
     @staticmethod
     def sample_poisson(n_docs: int) -> np.ndarray:
         """

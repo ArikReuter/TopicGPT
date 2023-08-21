@@ -239,6 +239,13 @@ class TopicPrompting:
             "combine_topics": self.combine_topics_openai,
             "add_new_topic_keyword": self.add_new_topic_keyword_openai
         }
+    
+    def reindex_topics(self) -> None:
+        """
+        simply give the topics in self.topic_lis correct new indices
+        """
+        for idx, topic in enumerate(self.topic_lis):
+            topic.topic_idx = idx
 
     def show_topic_list(self) -> str:
         """
@@ -246,11 +253,26 @@ class TopicPrompting:
         returns:
             string representation of the list of topics
         """
+        self.reindex_topics()
         res = ""
         for idx, topic in enumerate(self.topic_lis):
             res += str(topic)
 
         print(res)
+
+    def get_topic_lis(self) -> list[Topic]:
+        """
+        return the list of topics
+        """
+        self.reindex_topics()
+        return self.topic_lis
+    
+    def set_topic_lis(self, topic_lis: list[Topic]) -> None:
+        """
+        set the list of topics
+        """
+        self.topic_lis = topic_lis
+        self.reindex_topics()
 
     def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> list[str]:
         """
@@ -571,6 +593,12 @@ class TopicPrompting:
         if inplace:
             self.topic_lis.pop(topic_idx)
             self.topic_lis += new_topics
+            self.reindex_topics()
+
+            new_topic_lis = self.topic_lis.copy()
+            new_topic_lis.pop(topic_idx)
+            new_topic_lis += new_topics
+            return new_topic_lis
         else:
             new_topic_lis = self.topic_lis.copy()
             new_topic_lis.pop(topic_idx)
@@ -579,7 +607,7 @@ class TopicPrompting:
 
     def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace = False) -> list[Topic]:
         """
-        Split an existing topic into several subtopics using kmeans clustering. 
+        Split an existing topic into several subtopics using kmeans clustering  on the document embeddings of the topic. 
         params:
             topic_idx: index of the topic to split
             n_clusters: number of clusters to split the topic into
@@ -638,7 +666,7 @@ class TopicPrompting:
 
         if not inplace:
             return new_topics
-    
+
     def split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
         """
         A version of the split_topic_keywords function that returns a json file to be used with the openai API
@@ -724,6 +752,14 @@ class TopicPrompting:
             for topic_idx in sorted(topic_idx_lis, reverse = True):
                 self.topic_lis.pop(topic_idx)
             self.topic_lis.append(new_topic)
+            self.reindex_topics()
+
+            new_topic_lis = self.topic_lis.copy()
+            for topic_idx in sorted(topic_idx_lis, reverse = True):
+                new_topic_lis.pop(topic_idx)
+            new_topic_lis.append(new_topic)
+            return new_topic_lis
+        
         else:
             new_topic_lis = self.topic_lis.copy()
             for topic_idx in sorted(topic_idx_lis, reverse = True):
@@ -824,6 +860,8 @@ class TopicPrompting:
 
         if inplace:
             self.topic_lis = new_topics
+            self.reindex_topics()
+            return self.topic_lis
         else:
             return new_topics
 
@@ -848,7 +886,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics 
 
-# TODO: Check if inplace argument works correctly
-# TODO: Fix errors with indexing
-# TODO: mplement function for proper chatting 
+
+# TODO: Add functionality to delete topic
+# TODO: Implement function for proper chatting 
 # TODO: Add description to plot of topics

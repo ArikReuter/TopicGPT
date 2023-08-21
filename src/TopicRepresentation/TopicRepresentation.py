@@ -73,8 +73,11 @@ class Topic:
 
         return repr
     def __repr__(self) -> str:
-        repr = f"Topic: {self.topic_name}\n"
-        
+        if self.topic_idx is None:
+            repr = f"Topic: {self.topic_name}\n"
+        else: 
+            repr = f"Topic {self.topic_idx}: {self.topic_name}\n"
+
         return repr
     
     def to_json(self) -> str:
@@ -219,6 +222,30 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
                       
         topics.append(topic)
     
+    return topics
+
+@staticmethod
+def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "tfidf") -> list[Topic]:
+    """
+    Extract the topics from the given corpus by using the clusterer object on the embeddings and describe and name them with the given enhancer object.
+    params: 
+        corpus: list of documents
+        document_embeddings: embeddings of the documents
+        clusterer: clusterer object to cluster the documents
+        vocab_embeddings: embeddings of the vocabulary
+        enhancer: enhancer object to enhance the top-words and generate the description
+        n_topwords: number of top-words to extract from the topics
+        n_topwords_description: number of top-words to use from the extracted topics for the description and the name
+        topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
+        compute_vocab_hyperparams: hyperparameters for the top-word extraction methods
+        topword_description_method: method to use for top-word extraction. Can be "tfidf" or "cosine_similarity"
+    returns:
+        list of Topic objects
+    """
+    print("Extracting topics...")
+    topics = extract_topics(corpus, document_embeddings, clusterer, vocab_embeddings, n_topwords, topword_extraction_methods, compute_vocab_hyperparams)
+    print("Describing topics...")
+    topics = describe_and_name_topics(topics, enhancer, topword_description_method, n_topwords_description)
     return topics
 
 @staticmethod
@@ -438,26 +465,3 @@ def describe_and_name_topics(topics: list[Topic], enhancer: TopwordEnhancement, 
         
     return topics
 
-@staticmethod
-def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "tfidf") -> list[Topic]:
-    """
-    Extract the topics from the given corpus by using the clusterer object on the embeddings and describe and name them with the given enhancer object.
-    params: 
-        corpus: list of documents
-        document_embeddings: embeddings of the documents
-        clusterer: clusterer object to cluster the documents
-        vocab_embeddings: embeddings of the vocabulary
-        enhancer: enhancer object to enhance the top-words and generate the description
-        n_topwords: number of top-words to extract from the topics
-        n_topwords_description: number of top-words to use from the extracted topics for the description and the name
-        topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
-        compute_vocab_hyperparams: hyperparameters for the top-word extraction methods
-        topword_description_method: method to use for top-word extraction. Can be "tfidf" or "cosine_similarity"
-    returns:
-        list of Topic objects
-    """
-    print("Extracting topics...")
-    topics = extract_topics(corpus, document_embeddings, clusterer, vocab_embeddings, n_topwords, topword_extraction_methods, compute_vocab_hyperparams)
-    print("Describing topics...")
-    topics = describe_and_name_topics(topics, enhancer, topword_description_method, n_topwords_description)
-    return topics
