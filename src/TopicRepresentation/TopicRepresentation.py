@@ -170,6 +170,10 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
 
     dim_red_embeddings, labels, umap_mapper = clusterer.cluster_and_reduce(document_embeddings)  # get dimensionality reduced embeddings, their labels and the umap mapper object
 
+    unique_labels = np.unique(labels)  # In case the cluster labels are not consecutive numbers, we need to map them to consecutive 
+    label_mapping = {label: i for i, label in enumerate(unique_labels)}
+    labels = np.array([label_mapping[label] for label in labels])
+
     extractor = ExtractTopWords()
     centroid_dict = extractor.extract_centroids(document_embeddings, labels)  # get the centroids of the clusters
     dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
@@ -458,8 +462,16 @@ def describe_and_name_topics(topics: list[Topic], enhancer: TopwordEnhancement, 
    
     for topic in tqdm(topics):
         tws = topic.top_words[topword_method]
-        topic_name = enhancer.generate_topic_name_str(tws, n_words = n_words)
-        topic_description = enhancer.describe_topic_topwords_str(tws, n_words = n_words)
+        try: 
+            topic_name = enhancer.generate_topic_name_str(tws, n_words = n_words)
+            topic_description = enhancer.describe_topic_topwords_str(tws, n_words = n_words)
+        except Exception as e:
+            print(f"Error in topic {topic.topic_idx}: {e}")
+            print("Trying again...")
+            topic_name = enhancer.generate_topic_name_str(tws, n_words = n_words)
+            topic_description = enhancer.describe_topic_topwords_str(tws, n_words = n_words)
+
+
         topic.set_topic_name(topic_name)
         topic.set_topic_description(topic_description)
         

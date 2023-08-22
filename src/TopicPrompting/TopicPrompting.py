@@ -70,7 +70,7 @@ class TopicPrompting:
         self.openai_embedding_model = openai_embedding_model
         self.max_context_length_embedding = max_context_length_embedding    
         self.basic_model_instruction = basic_model_instruction
-        self.corpus_instruction = corpus_instruction
+        self.corpus_instruction = f" The following information is available about the corpus used to identify the topics: {corpus_instruction}.\n"
         self.enhancer = enhancer
         self.vocab = vocab
         self.vocab_embeddings = vocab_embeddings
@@ -546,7 +546,8 @@ class TopicPrompting:
 
     def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, inplace = False) -> list[Topic]:
         """
-        split a topic into new topics based on new topic assignments.
+        split a topic into new topics based on new topic assignments. Note that this method only computes topwords based on the cosine-similarity method because tf-idf topwords need expensive computation on the entire corpus. 
+        The topwords of the old topic are also just split among the new ones. No new topwords are computed in this step. 
         params:
             topic_idx: index of the topic to split
             new_topic_assignments: new topic assignments for the documents in the topic
@@ -586,7 +587,6 @@ class TopicPrompting:
                 enhancer=enhancer,
                 n_topwords = 2000
             )
-            # TODO: also add tfidf topwords
             new_topic.topic_idx = len(self.topic_lis) + i + 1
             new_topics.append(new_topic)
         
@@ -607,7 +607,8 @@ class TopicPrompting:
 
     def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace = False) -> list[Topic]:
         """
-        Split an existing topic into several subtopics using kmeans clustering  on the document embeddings of the topic. 
+        Split an existing topic into several subtopics using kmeans clustering  on the document embeddings of the topic. Note that no new topwords are computed in this step and the topwords 
+        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
         params:
             topic_idx: index of the topic to split
             n_clusters: number of clusters to split the topic into
@@ -640,7 +641,9 @@ class TopicPrompting:
 
     def split_topic_keywords(self, topic_idx: int, keywords: str, inplace = False) -> list[Topic]:
         """
-        Split the topic into subtopics according to the keywords. This is achieved by computing the cosine similarity between the keywords and the documents in the topic.
+        Split the topic into subtopics according to the keywords. This is achieved by computing the cosine similarity between the keywords and the documents in the topic. 
+        Note that no new topwords are computed in this step and the topwords 
+        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
         params:
             topic_idx: index of the topic to split
             keywords: keywords to split the topic into. Needs to be a list of at least two keywords
@@ -686,6 +689,8 @@ class TopicPrompting:
     def split_topic_single_keyword(self, topic_idx: int, keyword: str, inplace = False) -> list[Topic]:
         """
         Split the topic with a single keyword. Split the topic such that all documents closer to the original topic name stay in the old topic while all documents closer to the keyword are moved to the new topic.
+        Note that no new topwords are computed in this step and the topwords 
+        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
         params:
             topic_idx: index of the topic to split
             keyword: keyword to split the topic into
@@ -718,6 +723,8 @@ class TopicPrompting:
     def combine_topics(self, topic_idx_lis: list[int], inplace = False) -> list[Topic]:
         """
         Combine several topics into one topic.
+        Note that no new topwords are computed in this step and the topwords 
+        of the old topics are just combined. Also just the cosine-similarity method for topwords extraction is used. 
         params:
             topic_idx_lis: list of topic indices to combine
             inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
@@ -786,6 +793,7 @@ class TopicPrompting:
         """
         Create a new topic based on a keyword. Remove all documents belonging to the other topics from them and add them to the new topic. Note that this needs to recompute the entire topics for the entire corpus. 
         Note that the new topic does not automatically get the name of the keyword to reflect that the topic is not necessarily about the keyword. 
+        This method actually computed completely new topwords with both the tf-idf and the cosine-similarity method.
         params:
             keyword: keyword to create the new topic from
             vocab: vocabulary of the corpus
