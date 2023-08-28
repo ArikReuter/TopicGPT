@@ -96,6 +96,13 @@ class Clustering_and_DimRed():
             labels = clusterer.fit_predict(embeddings)
             labels[outliers] = -1
 
+        # reindex to make the labels consecutive numbers from -1 to the number of clusters. -1 is reserved for outliers
+        unique_labels = np.unique(labels)
+        unique_labels_no_outliers = unique_labels[unique_labels != -1]
+        map2newlabel = {label: i for i, label in enumerate(unique_labels_no_outliers)}
+        map2newlabel[-1] = -1
+        labels = np.array([map2newlabel[label] for label in labels])
+
         return labels
     
     def cluster_and_reduce(self, embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray, umap.UMAP]:

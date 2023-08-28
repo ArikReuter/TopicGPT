@@ -11,6 +11,9 @@ import tiktoken
 import openai
 import re
 import sklearn
+import hdbscan
+from copy import deepcopy
+
 from TopicRepresentation.TopicRepresentation import Topic
 from TopicRepresentation.TopicRepresentation import extract_and_describe_topic_cos_sim
 from TopicRepresentation.TopicRepresentation import extract_describe_topics_labels_vocab
@@ -227,6 +230,44 @@ class TopicPrompting:
                         },
                         "required": ["keyword"]
                     }
+                },
+                "delete_topic": {
+                    "name": "delete_topic",
+                    "description": "This function can be used to delete a topic and assign the documents of this topic to the other topics based on centroid similarity. This is useful if the topic is not needed anymore. Note that this method is computationally expensive.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic_idx": {
+                                "type": "integer",
+                                "description": "index of the topic to delete."
+                            },
+                            "inplace": {
+                                "type": "boolean",
+                                "description": "if True, the topic is split inplace. Otherwise, a new list of topics is created and returned. ALWAYS set inplace to False unless something else is explicitly requested!",
+                                "default": False
+                            }
+
+                        },
+                        "required": ["topic_idx"]
+                    }
+                },
+                "get_topic_information": {
+                    "name": "get_topic_information",
+                    "description": "This function can be used to get information about several topics. This function can be used to COMPARE topics or to get an overview over them. It returns a list of dictionaries containing the topic index and information about the topics.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic_idx_lis": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                },
+                                "minItems": 1,
+                                "description": "list of topic indices to get information about."
+                            }
+                        },
+                        "required": ["topic_idx_lis"]
+                    }
                 }
         }
 
@@ -237,7 +278,9 @@ class TopicPrompting:
             "split_topic_keywords": self.split_topic_keywords_openai,
             "split_topic_single_keyword": self.split_topic_single_keyword_openai,
             "combine_topics": self.combine_topics_openai,
-            "add_new_topic_keyword": self.add_new_topic_keyword_openai
+            "add_new_topic_keyword": self.add_new_topic_keyword_openai,
+            "delete_topic": self.delete_topic_openai,
+            "get_topic_information": self.get_topic_information_openai
         }
     
     def reindex_topics(self) -> None:
@@ -605,7 +648,7 @@ class TopicPrompting:
             new_topic_lis += new_topics
             return new_topic_lis
 
-    def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace = False) -> list[Topic]:
+    def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace:bool = False) -> list[Topic]:
         """
         Split an existing topic into several subtopics using kmeans clustering  on the document embeddings of the topic. Note that no new topwords are computed in this step and the topwords 
         of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
@@ -619,6 +662,26 @@ class TopicPrompting:
 
         kmeans_res = sklearn.cluster.KMeans(n_clusters = n_clusters, random_state = self.random_state, n_init = "auto").fit(embeddings)
         cluster_labels = kmeans_res.labels_
+        new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, inplace)
+
+        return new_topics
+    
+    def split_topic_hdbscan(self, topic_idx: int, min_cluster_size: int = 10, inplace = False) -> list[Topic]:
+        """
+        Split an existing topic into several subtopics using hdbscan clustering  on the document embeddings of the topic. THis method does not require to specify the number of clusters to split. 
+        Note that no new topwords are computed in this step and the topwords 
+        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
+        params:
+            topic_idx: index of the topic to split
+            min_cluster_size: minimum cluster size to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        """
+        old_topic = self.topic_lis[topic_idx]
+        embeddings = old_topic.document_embeddings_ld
+
+        clusterer = hdbscan.HDBSCAN(min_cluster_size = min_cluster_size, prediction_data = True)
+        clusterer.fit(embeddings)
+        cluster_labels = clusterer.labels_
         new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, inplace)
 
         return new_topics
@@ -667,8 +730,7 @@ class TopicPrompting:
 
         new_topics = self.split_topic_new_assignments(topic_idx, new_topic_assignments, inplace = inplace)
 
-        if not inplace:
-            return new_topics
+        return new_topics
 
     def split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
         """
@@ -894,7 +956,132 @@ class TopicPrompting:
         })
         return json_obj, new_topics 
 
+    def delete_topic(self, topic_idx:int, inplace: bool = False) -> list[Topic]:
+        """
+        Delete a topic with the given index from the list of topics. Assign the documents of this topic to the remaining topics and recompute the topwords and the representations of the remaining topics.
+        params: 
+            topic_idx: index of the topic to delete
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            list of new topics
+        """
 
-# TODO: Add functionality to delete topic
+        topic_lis_new = deepcopy(self.topic_lis)
+        topic_lis_new.pop(topic_idx)
+
+        old_centroids_ld = []
+        for topic in topic_lis_new:
+            old_centroids_ld.append(topic.centroid_ld)
+        
+        old_centroids_ld = np.array(old_centroids_ld)
+        
+        document_embeddings_ld = []
+
+        for topic in self.topic_lis:
+            document_embeddings_ld.append(topic.document_embeddings_ld)
+        
+        document_embeddings_ld = np.concatenate(document_embeddings_ld, axis = 0) # has shape (n_documents, n_topics)
+
+        centroid_similarities = document_embeddings_ld @ old_centroids_ld.T / (np.linalg.norm(document_embeddings_ld, axis = 1)[:, np.newaxis] * np.linalg.norm(old_centroids_ld, axis = 1))
+        new_topic_assignments = np.argmax(centroid_similarities, axis = 1)
+
+        new_embeddings_hd = []
+        new_embeddings_ld = []
+
+        for topic in self.topic_lis:
+            new_embeddings_hd.append(topic.document_embeddings_hd)
+            new_embeddings_ld.append(topic.document_embeddings_ld)
+        
+        new_embeddings_hd = np.concatenate(new_embeddings_hd, axis = 0)
+        new_embeddings_ld = np.concatenate(new_embeddings_ld, axis = 0)
+
+        doc_lis = []
+        for topic in self.topic_lis:
+            doc_lis += topic.documents
+        
+
+    
+        new_topics = extract_describe_topics_labels_vocab(
+            corpus = doc_lis,
+            document_embeddings_hd = new_embeddings_hd,
+            document_embeddings_ld = new_embeddings_ld,
+            labels = new_topic_assignments,
+            vocab = self.vocab,
+            umap_mapper = self.topic_lis[0].umap_mapper,
+            vocab_embeddings = self.vocab_embeddings,
+            enhancer = self.enhancer
+        )
+
+        if inplace:
+            self.topic_lis = new_topics
+            self.reindex_topics()
+            return self.topic_lis
+        else:
+            return new_topics
+
+    def delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
+        """
+        A version of the delete_topic function that returns a json file to be used with the openai API
+        params: 
+            topic_idx: index of the topic to delete
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API
+        """
+        new_topics = self.delete_topic(topic_idx, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
+        })
+        return json_obj, new_topics
+    	
+    def get_topic_information(self, topic_idx_lis: list[int], max_number_topwords = 500) -> dict:
+        """
+        This function provides detailed information on the topics with indices from the topic_idx_lis. This information can be used to compare the topics.  This function simply returns a dictionary where the keys are the topic indices and the values are the strings describing the topics.
+        params:
+            topic_idx_lis: list of topic indices to compare
+            max_number_topwords: maximum number of topwords to include in the description of the topics
+        returns:
+            dictionary with the comparison results where the keys are the topic indices and the values are the strings describing the topics
+        """
+        max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.basic_model_instruction + " " + self.corpus_instruction)) - 100
+
+        topic_info = {} # dictionary with the topic indices as keys and the topic descriptions as values
+
+        for topic_idx in topic_idx_lis:
+            topic = self.topic_lis[topic_idx]
+            topic_info[topic_idx] = topic.topic_description
+
+            topic_str = f"""
+            Topic index: {topic_idx}
+            Topic name: {topic.topic_name}
+            Topic description: {topic.topic_description}
+            Topic topwords: {topic.top_words["cosine_similarity"][:max_number_topwords]}"""
+
+            topic_info[topic_idx] = topic_str
+
+        # prune all topic descriptions to the maximum number of tokens by taking away the last word until the description fits
+
+        max_number_tokens_per_topic = max_number_tokens // len(topic_idx_lis)
+        tiktoken_encodings = {idx: tiktoken.encoding_for_model(self.openai_prompting_model).encode(topic_info[idx]) for idx in topic_idx_lis}
+        pruned_encodings = {idx: tiktoken_encodings[idx][:max_number_tokens_per_topic] for idx in topic_idx_lis}
+
+        topic_info = {idx: tiktoken.encoding_for_model(self.openai_prompting_model).decode(pruned_encodings[idx]) for idx in topic_idx_lis}
+
+        return topic_info
+
+    def get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
+        """
+        A version of the get_topic_information function that returns a json file to be used with the openai API
+        params:
+            topic_idx_lis: list of topic indices to compare
+        returns:
+            json object to be used with the openai API
+        """
+        topic_info = self.get_topic_information(topic_idx_lis)
+        json_obj = json.dumps({
+            "topic info": topic_info
+        })
+        return json_obj, topic_info
+
 # TODO: Implement function for proper chatting 
 # TODO: Add description to plot of topics

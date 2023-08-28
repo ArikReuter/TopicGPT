@@ -171,7 +171,8 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     dim_red_embeddings, labels, umap_mapper = clusterer.cluster_and_reduce(document_embeddings)  # get dimensionality reduced embeddings, their labels and the umap mapper object
 
     unique_labels = np.unique(labels)  # In case the cluster labels are not consecutive numbers, we need to map them to consecutive 
-    label_mapping = {label: i for i, label in enumerate(unique_labels)}
+    label_mapping = {label: i for i, label in enumerate(unique_labels[unique_labels != -1])}
+    label_mapping[-1] = -1
     labels = np.array([label_mapping[label] for label in labels])
 
     extractor = ExtractTopWords()
@@ -187,7 +188,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
                                                                                      
     topics = []
     for i, label in enumerate(np.unique(labels)):
-        if label == -1: # dont include outliers
+        if label < -0.5: # dont include outliers
             continue
         topic_idx = f"{label}"
         documents = [doc for j, doc in enumerate(corpus) if labels[j] == label]
