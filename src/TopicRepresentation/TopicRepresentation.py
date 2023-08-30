@@ -231,6 +231,92 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     return topics
 
 @staticmethod
+def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 2000, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"]) -> list[Topic]:
+    """
+    Works like extract_topics but does not compute the vocabulary of the corpus. Instead it uses the provided vocab.
+    params: 
+        corpus: list of documents
+        vocab: vocabulary of the corpus
+        document_embeddings: embeddings of the documents
+        clusterer: clusterer object to cluster the documents
+        vocab_embeddings: embeddings of the vocabulary
+        n_topwords: number of top-words to extract from the topics
+        topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
+    returns:
+        list of Topic objects
+    """
+
+    for elem in topword_extraction_methods:
+        if elem not in ["tfidf", "cosine_similarity"]:
+            raise ValueError("topword_extraction_methods can only contain 'tfidf' and 'cosine_similarity'")
+    if topword_extraction_methods == []:
+        raise ValueError("topword_extraction_methods cannot be empty")
+
+    dim_red_embeddings, labels, umap_mapper = clusterer.cluster_and_reduce(document_embeddings)  # get dimensionality reduced embeddings, their labels and the umap mapper object
+
+    unique_labels = np.unique(labels)  # In case the cluster labels are not consecutive numbers, we need to map them to consecutive 
+    label_mapping = {label: i for i, label in enumerate(unique_labels[unique_labels != -1])}
+    label_mapping[-1] = -1
+    labels = np.array([label_mapping[label] for label in labels])
+
+    extractor = ExtractTopWords()
+    centroid_dict = extractor.extract_centroids(document_embeddings, labels)  # get the centroids of the clusters
+    dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
+    dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
+
+    if "tfidf" in topword_extraction_methods:
+        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
+    if "cosine_similarity" in topword_extraction_methods:
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, corpus, labels, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+                                                                                     
+    topics = []
+    for i, label in enumerate(np.unique(labels)):
+        if label < -0.5: # dont include outliers
+            continue
+        topic_idx = f"{label}"
+        documents = [doc for j, doc in enumerate(corpus) if labels[j] == label]
+        embeddings_hd = document_embeddings[labels == label]
+        embeddings_ld = dim_red_embeddings[labels == label]
+        centroid_hd = centroid_dict[label]
+        centroid_ld = dim_red_centroids[label]
+        
+        centroid_similarity = np.dot(embeddings_ld, centroid_ld)/(np.linalg.norm(embeddings_ld, axis = 1)*np.linalg.norm(centroid_ld))
+        similarity_sorting = np.argsort(centroid_similarity)[::-1]
+        documents = [documents[i] for i in similarity_sorting]
+        embeddings_hd = embeddings_hd[similarity_sorting]
+        embeddings_ld = embeddings_ld[similarity_sorting]
+
+        top_words = {
+            "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
+            "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None
+        }
+        top_word_scores = {
+            "tfidf": tfidf_dict[label] if "tfidf" in topword_extraction_methods else None,
+            "cosine_similarity": cosine_dict[label] if "cosine_similarity" in topword_extraction_methods else None
+        }
+
+        topic = Topic(topic_idx = topic_idx,
+                        documents = documents,
+                        words = vocab,
+                        centroid_hd = centroid_hd,
+                        centroid_ld = centroid_ld,
+                        document_embeddings_hd = embeddings_hd,
+                        document_embeddings_ld = embeddings_ld,
+                        document_embedding_similarity = centroid_similarity,
+                        umap_mapper = umap_mapper,
+                        top_words = top_words, 
+                        top_word_scores = top_word_scores
+                        )
+                      
+        topics.append(topic)
+    
+    return topics
+
+    
+
+
+
+@staticmethod
 def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "cosine_similarity") -> list[Topic]:
     """
     Extract the topics from the given corpus by using the clusterer object on the embeddings and describe and name them with the given enhancer object.

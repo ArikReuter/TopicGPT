@@ -9,7 +9,7 @@ class GetEmbeddingsOpenAI:
     This class allows to compute embeddings of text using the OpenAI API.
     """
 
-    def __init__(self, api_key:str, embedding_model:str = "text-embedding-ada-002", tokenizer:str = "cl100k_base", max_tokens:int = 8191) -> None:
+    def __init__(self, api_key:str, embedding_model:str = "text-embedding-ada-002", tokenizer:str = None, max_tokens:int = 8191) -> None:
         """
         Constructor of the class.
         :param api_key: API key to use the OpenAI API.
@@ -22,7 +22,10 @@ class GetEmbeddingsOpenAI:
         self.api_key = api_key
         openai.api_key = api_key
         self.embedding_model = embedding_model
-        self.tokenizer = tokenizer
+        
+        if tokenizer is None:
+             self.tokenizer = tiktoken.encoding_for_model(self.embedding_model)
+
         self.max_tokens = max_tokens
 
     @staticmethod

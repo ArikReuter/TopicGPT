@@ -38,7 +38,7 @@ class TopicPrompting:
                  topic_lis: list[Topic], 
                  openai_key: str, 
                  openai_prompting_model: str = "gpt-3.5-turbo-16k", 
-                 max_context_length_promting = 16000, 
+                 max_context_length_promting:int = 16000, 
                  openai_model_temperature_prompting:float = 0.5,
                  openai_embedding_model = "text-embedding-ada-002",
                  max_context_length_embedding = 8191, 
