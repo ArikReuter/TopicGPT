@@ -72,6 +72,7 @@ class Topic:
             repr = f"Topic {self.topic_idx}: {self.topic_name}\n"
 
         return repr
+    
     def __repr__(self) -> str:
         if self.topic_idx is None:
             repr = f"Topic: {self.topic_name}\n"
@@ -119,6 +120,7 @@ class Topic:
             text: text description of the topic
         """
         self.topic_description = text
+
 def topic_to_json(topic: Topic) -> str:
     """
     return a json representation of the topic
@@ -145,7 +147,6 @@ def topic_lis_to_json(topics: list[Topic]) -> str:
 
     json_object = json.dumps(repr_dict, indent = 4)
     return json_object
-
 
 @staticmethod
 def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 2000, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}) -> list[Topic]:
@@ -230,7 +231,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     return topics
 
 @staticmethod
-def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "tfidf") -> list[Topic]:
+def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "cosine_similarity") -> list[Topic]:
     """
     Extract the topics from the given corpus by using the clusterer object on the embeddings and describe and name them with the given enhancer object.
     params: 
@@ -337,7 +338,7 @@ def extract_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.nd
     return topics
 
 @staticmethod
-def extract_describe_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.ndarray, document_embeddings_ld: np.ndarray, labels: np.ndarray, umap_mapper: umap.UMAP, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, vocab: list[str] = None, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], topword_description_method = "tfidf") -> list[Topic]:
+def extract_describe_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.ndarray, document_embeddings_ld: np.ndarray, labels: np.ndarray, umap_mapper: umap.UMAP, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, vocab: list[str] = None, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], topword_description_method = "cosine_similarity") -> list[Topic]:
     """
     Extract the topics from the given corpus by using the provided labels that indicate the topics. (No -1 for outliers!). Also the vocab is already computed. Describe and name the topics with the given enhancer object.
     Otherwise same as extract_topics
