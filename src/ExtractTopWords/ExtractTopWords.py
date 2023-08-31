@@ -10,6 +10,7 @@ import sys
 import os
 import inspect
 import umap
+from collections import Counter
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -232,7 +233,7 @@ class ExtractTopWords:
                 bow[vocab.index(word.lower())] += 1
         return bow   
     
-    def compute_word_topic_mat(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers = False) -> np.ndarray:
+    def compute_word_topic_mat_old(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers = False) -> np.ndarray:
         """
         compute the word-topic matrix
 
@@ -258,6 +259,36 @@ class ExtractTopWords:
                 word_topic_mat[:, idx_to_add] += bow
 
         return word_topic_mat
+    
+    def compute_word_topic_mat(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers = False) -> np.ndarray:
+        """
+        compute the word-topic matrix in a more efficient way
+        params: 
+            corpus: list[str], list of documents
+            vocab: list[str], list of words in the corpus sorted alphabetically
+            labels: np.ndarray, cluster labels. -1 means outlier
+            consider_outliers: bool, whether to consider outliers when computing the top words. I.e. whether the labels contain -1 to indicate outliers
+        returns:
+            np.ndarray, word-topic matrix
+        """
+        corpus_arr = np.array(corpus) 
+
+        if consider_outliers:
+            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels))) - 1))
+        else:
+            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
+        
+        for i, label in tqdm(enumerate(np.unique(labels)), desc="Computing word-topic matrix", total=len(np.unique(labels))):
+            if label != -1:
+                topic_docs = corpus_arr[labels == label]
+                topic_doc_string = " ".join(topic_docs)
+                topic_doc_words = word_tokenize(topic_doc_string)
+                topic_doc_counter = Counter(topic_doc_words)
+
+                word_topic_mat[:, i] = np.array([topic_doc_counter.get(word, 0) for word in vocab])
+        
+        return word_topic_mat
+
 
     def extract_topwords_tfidf(self, word_topic_mat: np.ndarray, vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
         """
@@ -284,8 +315,9 @@ class ExtractTopWords:
         top_word_scores = {}
         for i, topic in enumerate(np.unique(labels)):
             if topic != -1:
-                top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-tfidf[:, i - 1])[:top_n_words]]
-                top_word_scores[topic] = [tfidf[word_idx, i - 1] for word_idx in np.argsort(-tfidf[:, i - 1])[:top_n_words]]
+                indices = np.argsort(-tfidf[:, i - 1])[:top_n_words]
+                top_words[topic] = [vocab[word_idx] for word_idx in indices]
+                top_word_scores[topic] = [tfidf[word_idx, i - 1] for word_idx in indices]
 
 
         return top_words, top_word_scores

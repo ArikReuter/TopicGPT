@@ -519,7 +519,7 @@ class TopicPrompting:
         })
         return json_obj, topic_index
 
-    def general_prompt(self, prompt: str, n_tries = 2) -> str:
+    def general_prompt(self, prompt: str, n_tries = 2) -> (list[str], object):
         """
         Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
         Use n_tries in case the LLM does not give a valid response.
@@ -527,7 +527,8 @@ class TopicPrompting:
             prompt: prompt string
             n_tries: number of tries to get a valid response from the LLM
         returns:
-            response string
+            response messages
+            response of function
         """
         messages = [
             {
@@ -553,7 +554,7 @@ class TopicPrompting:
                 #print(response_message)
                 function_call = response_message.get("function_call")
                 if function_call is not None:
-                    #print("GPT wants to the call the function: ", function_call)
+                    print("GPT wants to the call the function: ", function_call)
                     # Step 3: call the function
                     # Note: the JSON response may not always be valid; be sure to handle errors
 
@@ -815,21 +816,17 @@ class TopicPrompting:
         )
 
         new_topic.topic_idx = len(self.topic_lis) + 1
-
+        new_topic_lis = self.topic_lis.copy()
         if inplace:
             for topic_idx in sorted(topic_idx_lis, reverse = True):
                 self.topic_lis.pop(topic_idx)
             self.topic_lis.append(new_topic)
+            new_topic_lis.append(new_topic)
             self.reindex_topics()
 
-            new_topic_lis = self.topic_lis.copy()
-            for topic_idx in sorted(topic_idx_lis, reverse = True):
-                new_topic_lis.pop(topic_idx)
-            new_topic_lis.append(new_topic)
             return new_topic_lis
         
         else:
-            new_topic_lis = self.topic_lis.copy()
             for topic_idx in sorted(topic_idx_lis, reverse = True):
                 new_topic_lis.pop(topic_idx)
             new_topic_lis.append(new_topic)
@@ -1090,4 +1087,3 @@ class TopicPrompting:
             if type(topic.top_words["cosine_similarity"]) == dict:
                 topic.top_words["cosine_similarity"] = topic.top_words["cosine_similarity"][0]
 
-# TODO: Implement function for proper chatting 

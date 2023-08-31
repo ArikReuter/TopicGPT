@@ -187,6 +187,7 @@ class TopicGPT:
 
         self.topic_prompting.topic_lis = self.topic_lis
         self.topic_prompting.vocab_embeddings = self.vocab_embeddings
+        self.topic_prompting.vocab = self.vocab
 
     def visualize_clusters(self):
         """
@@ -242,6 +243,8 @@ class TopicGPT:
         function_result = result[1]
 
         answer = f"""{answer} \n\nused function call: {function_call} \n"""
+
+        self.topic_prompting._fix_dictionary_topwords()
 
         return answer, function_result
     
