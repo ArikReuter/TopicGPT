@@ -63,23 +63,21 @@ class Topic:
         self.top_words = top_words
         self.top_word_scores = top_word_scores
 
-
+        self.topic_name = None # initialize the name of the topic as none
 
     def __str__(self) -> str:
-        if self.topic_idx is None:
-            repr = f"Topic: {self.topic_name}\n"
+
+        if self.topic_idx and self.topic_name is None:
+            repr = f"Topic {hash(self)}\n"
+        if self.topic_name is None:
+            repr = f"Topic: {self.topic_idx}\n"
         else: 
             repr = f"Topic {self.topic_idx}: {self.topic_name}\n"
-
+        
         return repr
     
     def __repr__(self) -> str:
-        if self.topic_idx is None:
-            repr = f"Topic: {self.topic_name}\n"
-        else: 
-            repr = f"Topic {self.topic_idx}: {self.topic_name}\n"
-
-        return repr
+        return self.__str__()
     
     def to_json(self) -> str:
         """
@@ -311,10 +309,6 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
         topics.append(topic)
     
     return topics
-
-    
-
-
 
 @staticmethod
 def extract_and_describe_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, enhancer: TopwordEnhancement, n_topwords: int = 2000, n_topwords_description = 500, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], compute_vocab_hyperparams: dict = {}, topword_description_method = "cosine_similarity") -> list[Topic]:

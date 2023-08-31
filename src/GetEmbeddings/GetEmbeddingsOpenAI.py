@@ -26,17 +26,19 @@ class GetEmbeddingsOpenAI:
         if tokenizer is None:
              self.tokenizer = tiktoken.encoding_for_model(self.embedding_model)
 
+        else: 
+             self.tokenizer = tiktoken.get_encoding(tokenizer)
+
         self.max_tokens = max_tokens
 
     @staticmethod
-    def num_tokens_from_string(string: str, encoding_name: str) -> int:
+    def num_tokens_from_string(string: str, encoding) -> int:
             """
             Returns the number of tokens in a text string.
             :param string: Text string to compute the number of tokens.
-            :param encoding_name: Name of the encoding to use.
+            :param encoding: function to encode the string into tokens.
             :return: Number of tokens in the text string.
             """
-            encoding = tiktoken.get_encoding(encoding_name)
             num_tokens = len(encoding.encode(string))
             return num_tokens
 
@@ -116,13 +118,12 @@ class GetEmbeddingsOpenAI:
                             print(f"Error {e} occured for chunk {chunk_n} of document {i}")
                             print(chunk)
                             print("Trying again.")
-                    if i == n_tries: 
-                        print("Maximum number of tries reached. Skipping chunk.")
-                        api_res_doc.append(
-                            {"api_res": None, 
-                            "error": e }
-                            )
-                         
+                            if i == n_tries: 
+                                print("Maximum number of tries reached. Skipping chunk.")
+                                api_res_doc.append(
+                                    {"api_res": None, 
+                                    "error": e })
+                        
 
             # average the embeddings of the chunks
             emb_lis = []

@@ -92,12 +92,12 @@ class TopicGPT:
             self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics)
         
         if enhancer is None:
-            self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_number_of_tokens = self.max_number_of_tokens)
+            self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens)
 
         if topic_prompting is None:
-            self.topic_prompting = TopicPrompting(openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_number_of_tokens_embedding = self.max_numer_of_tokens_embedding)
+            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_numer_of_tokens_embedding)
         
-        self.extractor = ExtractTopWords.ExtractTopWords()
+        self.extractor = ExtractTopWords()
     
     def compute_embeddings(self, corpus: list[str]) -> (np.ndarray, dict[str, np.ndarray]):
         """
@@ -109,7 +109,7 @@ class TopicGPT:
             vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings.
         """
         
-        self.document_embeddings = self.embedder.get_embeddings(corpus)
+        self.document_embeddings = self.embedder.get_embeddings(corpus)["embeddings"]
 
         self.vocab = self.extractor.compute_corpus_vocab(self.corpus, **self.compute_vocab_hyperparams)
 
@@ -163,18 +163,27 @@ class TopicGPT:
 
         return self.topic_lis
     
-    def fit(self, corpus): 
+    def fit(self, corpus, verbose = True): 
         """
         This function computes the embeddings if necessary, extracts the topics, and describes them.
         params:
             corpus: List of strings to embed. Where each element in the list is a document.
+            verbose: Whether to print what is happening.
         """
         self.corpus = corpus 
 
         if self.vocab_embeddings is None or self.document_embeddings is None:
+            if verbose:
+                print("Computing embeddings...")
             self.compute_embeddings(corpus = self.corpus)
         
+        if verbose: 
+            print("Extracting topics...")
         self.topic_lis = self.extract_topics(corpus = self.corpus)
+
+        if verbose:
+            print("Describing topics...")
         self.topic_lis = self.describe_topics(topics = self.topic_lis)
 
-        
+        self.topic_prompting.topic_lis = self.topic_lis
+
