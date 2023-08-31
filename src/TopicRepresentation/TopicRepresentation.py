@@ -180,10 +180,12 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
     vocab = extractor.compute_corpus_vocab(corpus, **compute_vocab_hyperparams)  # compute the vocabulary of the corpus
+
+    word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
     if "tfidf" in topword_extraction_methods:
-        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
+        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
-        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, corpus, labels, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = vocab, vocab_embedding_dict = vocab_embeddings, centroid_dict= dim_red_centroid_dict, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
                                                                                      
     topics = []
     for i, label in enumerate(np.unique(labels)):
@@ -265,11 +267,12 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
     dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
+    word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
     if "tfidf" in topword_extraction_methods:
-        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
+        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
-        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, corpus, labels, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
-                                                                                     
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = vocab, vocab_embedding_dict = vocab_embeddings, centroid_dict= dim_red_centroid_dict, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+                                                                                           
     topics = []
     for i, label in enumerate(np.unique(labels)):
         if label < -0.5: # dont include outliers
@@ -289,7 +292,7 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
 
         if type(cosine_topwords[label]) == dict:
             cosine_topwords[label] = cosine_topwords[label][0]
-            
+
         top_words = {
             "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
             "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None
@@ -375,11 +378,12 @@ def extract_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.nd
     dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
+    word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
     if "tfidf" in topword_extraction_methods:
-        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(corpus, vocab, labels, n_topwords)
+        tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
-        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab, vocab_embeddings, corpus, labels, dim_red_centroid_dict, umap_mapper, n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
-                                                                                     
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = vocab, vocab_embedding_dict = vocab_embeddings, centroid_dict= dim_red_centroid_dict, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+                                                                                                 
     topics = []
     for i, label in enumerate(np.unique(labels)):
         if label == -1: # dont include outliers
@@ -477,10 +481,13 @@ def extract_topic_cos_sim(documents_topic: list[str],
     centroid_hd = extractor.extract_centroid(document_embeddings_topic)
     centroid_ld = umap_mapper.transform(centroid_hd.reshape(1, -1))[0]
 
-    if "cosine_similarity" in topword_extraction_methods:
-        labels = np.zeros(len(documents_topic), dtype = int) #everything has label 0
+    labels = np.zeros(len(documents_topic), dtype = int) #everything has label 0   
 
-        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(vocab = words_topic, vocab_embedding_dict = vocab_embeddings, corpus = documents_topic, labels = labels, centroid_dict = {0: centroid_ld}, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False)
+    word_topic_mat = extractor.compute_word_topic_mat(documents_topic, words_topic, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
+    if "cosine_similarity" in topword_extraction_methods:
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = words_topic, vocab_embedding_dict = vocab_embeddings, centroid_dict= {0: centroid_ld}, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+
+    
 
     top_words = {
         "cosine_similarity": cosine_topwords if "cosine_similarity" in topword_extraction_methods else None

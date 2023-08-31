@@ -1082,4 +1082,12 @@ class TopicPrompting:
         })
         return json_obj, topic_info
 
+    def _fix_dictionary_topwords(self):
+        """
+        Fix an issue with topic representation where the topwords are in another dictionary withing the actual dictionary defining them
+        """
+        for topic in self.topic_lis:
+            if type(topic.top_words["cosine_similarity"]) == dict:
+                topic.top_words["cosine_similarity"] = topic.top_words["cosine_similarity"][0]
+
 # TODO: Implement function for proper chatting 
