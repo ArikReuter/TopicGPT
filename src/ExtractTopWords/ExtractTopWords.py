@@ -21,8 +21,7 @@ nltk.download('stopwords')
 nltk.download('punkt')
 
 class ExtractTopWords:
-
-
+    
     def extract_centroids(self, embedddings: np.ndarray, labels: np.ndarray) -> dict:
         """
         Extract centroids of clusters 
@@ -165,9 +164,6 @@ class ExtractTopWords:
         
         return vocab
 
-    
-    
-
     def compute_words_topics(self, corpus: list[str], vocab: list[str], labels: np.ndarray) -> dict:
         """
         compute the words per topic
@@ -234,9 +230,29 @@ class ExtractTopWords:
         for word in words:
             if word.lower() in vocab_set:
                 bow[vocab.index(word.lower())] += 1
-        return bow
-
+        return bow   
     
+    def compute_word_topic_mat(self, corpus: list[str], vocab: list[str], labels: np.ndarray) -> np.ndarray:
+        """
+        compute the word-topic matrix
+
+        params:
+            corpus: list[str], list of documents
+            vocab: list[str], list of words in the corpus sorted alphabetically
+            labels: np.ndarray, cluster labels. -1 means outlier
+        returns:
+            np.ndarray, word-topic matrix
+        """
+        word_topic_mat = np.zeros((len(vocab), len((np.unique(labels))) - 1))
+
+        vocab_set = set(vocab)
+        for i, doc in tqdm(enumerate(corpus), desc="Computing word-topic matrix", total=len(corpus)):
+            if labels[i] != -1:
+                bow = self.compute_bow_representation(doc, vocab, vocab_set)
+                word_topic_mat[:, labels[i]] += bow
+
+        return word_topic_mat
+
     def extract_topwords_tfidf(self, corpus: list[str], vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
         """
         extract the top-words for each topic using a class-based tf-idf score
@@ -254,12 +270,14 @@ class ExtractTopWords:
 
         if not -1 in np.unique(labels):
             word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
-            
+        
         vocab_set = set(vocab)
         for i, doc in tqdm(enumerate(corpus), desc="Computing word-topic matrix", total=len(corpus)):
             if labels[i] != -1:
                 bow = self.compute_bow_representation(doc, vocab, vocab_set)
                 word_topic_mat[:, labels[i]] += bow
+
+        self.word_topic_mat = word_topic_mat
 
         tf = word_topic_mat / np.sum(word_topic_mat, axis=0)
         idf = np.log(1 + (word_topic_mat.shape[1] / np.sum(word_topic_mat > 0, axis=1)))

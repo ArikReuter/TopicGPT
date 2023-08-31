@@ -202,6 +202,9 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
         embeddings_hd = embeddings_hd[similarity_sorting]
         embeddings_ld = embeddings_ld[similarity_sorting]
 
+        if type(cosine_topwords[label]) == dict:
+            cosine_topwords[label] = cosine_topwords[label][0]
+
         top_words = {
             "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
             "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None
@@ -284,6 +287,9 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
         embeddings_hd = embeddings_hd[similarity_sorting]
         embeddings_ld = embeddings_ld[similarity_sorting]
 
+        if type(cosine_topwords[label]) == dict:
+            cosine_topwords[label] = cosine_topwords[label][0]
+            
         top_words = {
             "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
             "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None
@@ -391,6 +397,8 @@ def extract_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.nd
         embeddings_hd = embeddings_hd[similarity_sorting]
         embeddings_ld = embeddings_ld[similarity_sorting]
 
+        if type(cosine_topwords[label]) == dict:
+            cosine_topwords[label] = cosine_topwords[label][0]
         top_words = {
             "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
             "cosine_similarity": cosine_topwords[label] if "cosine_similarity" in topword_extraction_methods else None

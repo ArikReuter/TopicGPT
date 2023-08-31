@@ -84,7 +84,7 @@ class TopicPrompting:
         self.function_descriptions = {
                 "knn_search": {
                     "name": "knn_search",
-                    "description": "This function can be used to find out if a topic is about a specific subject or contains information about it. It should also be used to infer the subtopics of a given topic. Note that it is possible that just useless documents are returned.",
+                    "description": "This function is the best choice to find out if a topic is about a specific subject or keyword or contains information about it. It should also be used to infer the subtopics of a given topic. Note that it is possible that just useless documents are returned.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -272,15 +272,15 @@ class TopicPrompting:
         }
 
         self.functionNames2Functions = {
-            "knn_search": self.knn_search_openai,
-            "identify_topic_idx": self.identify_topic_idx_openai,
+            "knn_search": self._knn_search_openai,
+            "identify_topic_idx": self._identify_topic_idx_openai,
             "split_topic_kmeans": self.split_topics_kmeans_openai,
-            "split_topic_keywords": self.split_topic_keywords_openai,
-            "split_topic_single_keyword": self.split_topic_single_keyword_openai,
-            "combine_topics": self.combine_topics_openai,
-            "add_new_topic_keyword": self.add_new_topic_keyword_openai,
-            "delete_topic": self.delete_topic_openai,
-            "get_topic_information": self.get_topic_information_openai
+            "split_topic_keywords": self._split_topic_keywords_openai,
+            "split_topic_single_keyword": self._split_topic_single_keyword_openai,
+            "combine_topics": self._combine_topics_openai,
+            "add_new_topic_keyword": self._add_new_topic_keyword_openai,
+            "delete_topic": self._delete_topic_openai,
+            "get_topic_information": self._get_topic_information_openai
         }
     
     def reindex_topics(self) -> None:
@@ -356,7 +356,7 @@ class TopicPrompting:
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
     
-    def knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
+    def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
         """"
         A version of the knn_search function that returns a json file to be used with the openai API
         params:
@@ -402,10 +402,9 @@ class TopicPrompting:
                     function_call = "auto")["choices"][0]["message"]
                 
                 # Step 2: check if GPT wanted to call a function
-                print(response_message)
                 function_call = response_message.get("function_call")
                 if function_call is not None:
-                    print("GPT wants to the call the function: ", function_call)
+                    #print("GPT wants to the call the function: ", function_call)
                     # Step 3: call the function
                     # Note: the JSON response may not always be valid; be sure to handle errors
 
@@ -432,7 +431,7 @@ class TopicPrompting:
                         }
                     )  # extend conversation with function response
 
-                    print(messages)
+                    #print(messages)
                     second_response = openai.ChatCompletion.create(
                         model=self.openai_prompting_model,
                         messages=messages,
@@ -505,7 +504,7 @@ class TopicPrompting:
         else:
             return topic_index
 
-    def identify_topic_idx_openai(self, query: str, n_tries = 3) -> (json, int):
+    def _identify_topic_idx_openai(self, query: str, n_tries = 3) -> (json, int):
         """
         A version of the identify_topic_idx function that returns a json file to be used with the openai API
         params:
@@ -551,10 +550,10 @@ class TopicPrompting:
                     function_call = "auto")["choices"][0]["message"]
                 
                 # Step 2: check if GPT wanted to call a function
-                print(response_message)
+                #print(response_message)
                 function_call = response_message.get("function_call")
                 if function_call is not None:
-                    print("GPT wants to the call the function: ", function_call)
+                    #print("GPT wants to the call the function: ", function_call)
                     # Step 3: call the function
                     # Note: the JSON response may not always be valid; be sure to handle errors
 
@@ -576,7 +575,7 @@ class TopicPrompting:
                         }
                     )  # extend conversation with function response
 
-                    print(messages)
+                    #print(messages)
                     second_response = openai.ChatCompletion.create(
                         model=self.openai_prompting_model,
                         messages=messages,
@@ -585,7 +584,7 @@ class TopicPrompting:
                 print("Error occured: ", error)
                 print("Trying again...")
             
-            return second_response, function_response_return_output
+            return [response_message, second_response], function_response_return_output
 
     def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, inplace = False) -> list[Topic]:
         """
@@ -732,7 +731,7 @@ class TopicPrompting:
 
         return new_topics
 
-    def split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
+    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
         """
         A version of the split_topic_keywords function that returns a json file to be used with the openai API
         params:
@@ -766,7 +765,7 @@ class TopicPrompting:
         if not inplace:
             return res
 
-    def split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
+    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
         """
         A version of the split_topic_single_keyword function that returns a json file to be used with the openai API
         params:
@@ -836,7 +835,7 @@ class TopicPrompting:
             new_topic_lis.append(new_topic)
             return new_topic_lis
 
-    def combine_topics_openai(self, topic_idx_lis: list[int], inplace = False) -> (json, list[Topic]):
+    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace = False) -> (json, list[Topic]):
         """
         A version of the combine_topics function that returns a json file to be used with the openai API
         params:
@@ -935,7 +934,7 @@ class TopicPrompting:
         else:
             return new_topics
 
-    def add_new_topic_keyword_openai(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> (json, list[Topic]):
+    def _add_new_topic_keyword_openai(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> (json, list[Topic]):
         """
         A version of the add_new_topic_keyword function that returns a json file to be used with the openai API
         params:
@@ -1019,7 +1018,7 @@ class TopicPrompting:
         else:
             return new_topics
 
-    def delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
+    def _delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the delete_topic function that returns a json file to be used with the openai API
         params: 
@@ -1069,7 +1068,7 @@ class TopicPrompting:
 
         return topic_info
 
-    def get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
+    def _get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
         """
         A version of the get_topic_information function that returns a json file to be used with the openai API
         params:
@@ -1084,4 +1083,3 @@ class TopicPrompting:
         return json_obj, topic_info
 
 # TODO: Implement function for proper chatting 
-# TODO: Add description to plot of topics

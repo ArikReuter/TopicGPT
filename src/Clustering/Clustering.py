@@ -166,13 +166,14 @@ class Clustering_and_DimRed():
         plt.show()
 
 
-    def visualize_clusters_dynamic(self, embeddings: np.ndarray, labels: np.ndarray, texts: list[str]):
+    def visualize_clusters_dynamic(self, embeddings: np.ndarray, labels: np.ndarray, texts: list[str], class_names: list[str] = None):
         """
         visualize clusters with plotly and allow to hover over clusters to see the beginning of the texts of the documents
         params:
             embeddings: np.ndarray, embeddings whose clustering to plot
             labels: np.ndarray, cluster labels
             texts: list[str], texts of the documents
+            class_names: list[str], names of the classes
         """
 
         # Reduce dimensionality with UMAP
@@ -180,8 +181,11 @@ class Clustering_and_DimRed():
         embeddings_2d = reducer.fit_transform(embeddings)
 
         df = pd.DataFrame(embeddings_2d, columns=['x', 'y'])
-        df['text'] = [text[:100] for text in texts] 
+        df['text'] = [text[:200] for text in texts] 
         df["class"] = labels
+
+        if class_names is not None:
+            df["class"] = [class_names[label] for label in labels]
 
         # Create a color palette, then map the labels to the colors.
         # Exclude the outlier (-1) label from color palette assignment

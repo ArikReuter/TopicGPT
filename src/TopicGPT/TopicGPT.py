@@ -18,7 +18,7 @@ import TopicRepresentation.TopicRepresentation as TopicRepresentation
 
 class TopicGPT:
     """
-    This is the main class for doing topic modelling with TopicGPT. It contains all the major methods.
+    This is the main class for doing topic modelling with TopicGPT. 
     """
 
     def __init__(self, 
@@ -80,13 +80,8 @@ class TopicGPT:
         self.enhancer = enhancer
         self.topic_prompting = topic_prompting	
 
-        self.document_embeddings = None # document embeddings for the corpus
-
         for elem in topword_extraction_methods:
             assert elem in ["tfidf", "cosine_similarity", "topword_enhancement"], "Invalid topword extraction method. Valid methods are 'tfidf', 'cosine_similarity', and 'topword_enhancement'."
-
-        if embedding_model is not None and document_embeddings is not None and vocab_embeddings is not None:
-            raise ValueError("You cannot provide document and vocab embeddings and an embedding object at the same time.")
         
         if clusterer is None:
             self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics)
@@ -110,8 +105,6 @@ class TopicGPT:
         """
         
         self.document_embeddings = self.embedder.get_embeddings(corpus)["embeddings"]
-
-        self.vocab = self.extractor.compute_corpus_vocab(self.corpus, **self.compute_vocab_hyperparams)
 
         self.vocab_embeddings = self.extractor.embed_vocab_openAI(self.openai_api_key, self.vocab, embedder = self.embedder)
 
@@ -172,6 +165,13 @@ class TopicGPT:
         """
         self.corpus = corpus 
 
+        if verbose:
+                print("Computing vocabulary...")
+        if self.vocab_embeddings is None:
+            self.vocab = self.extractor.compute_corpus_vocab(self.corpus, **self.compute_vocab_hyperparams)
+        else:
+            self.vocab = list(self.vocab_embeddings.keys())
+
         if self.vocab_embeddings is None or self.document_embeddings is None:
             if verbose:
                 print("Computing embeddings...")
@@ -186,4 +186,78 @@ class TopicGPT:
         self.topic_lis = self.describe_topics(topics = self.topic_lis)
 
         self.topic_prompting.topic_lis = self.topic_lis
+        self.topic_prompting.vocab_embeddings = self.vocab_embeddings
 
+    def visualize_clusters(self):
+        """
+        This function visualizes the identified clusters that constitute the topics in a Scatterplot.
+        """
+
+        assert self.topic_lis is not None, "You need to extract the topics first."
+
+        all_document_embeddings = np.concatenate([topic.document_embeddings_hd for topic in self.topic_lis], axis = 0)
+        all_texts = np.concatenate([topic.documents for topic in self.topic_lis], axis = 0)
+        all_document_indices = np.concatenate([np.repeat(i, topic.document_embeddings_hd.shape[0]) for i, topic in enumerate(self.topic_lis)], axis = 0)
+        class_names = [str(topic) for topic in self.topic_lis]
+
+        self.clusterer.visualize_clusters_dynamic(all_document_embeddings, all_document_indices, all_texts, class_names)
+    
+    def repr_topics(self) -> str:
+        """
+        This function returns a string explaining the topics.
+        """
+        assert self.topic_lis is not None, "You need to extract the topics first."
+
+        repr = ""
+        for topic in self.topic_lis:
+            repr += str(topic) + "\n"
+            repr += "Topic_description: " + topic.topic_description + "\n"
+            repr += "Top words: " + str(topic.top_words["cosine_similarity"][:10]) + "\n"
+            repr += "\n"
+            repr += "-"*150 + "\n"
+
+        return repr
+
+    def print_topics(self):
+        """
+        This function prints the string explaining the topics.
+        """
+        
+        print(self.repr_topics())
+
+    def prompt(self, query: str) -> (str, object):
+        """
+        This function prompts the model with the query. Please Have a look at the TopicPrompting class for more details on available functions for prompting the model.
+        params:
+            query: The query to prompt the model with.
+        return:
+            answer: The answer from the model.
+            function_result: The result of the function call.
+        """
+
+        result = self.topic_prompting.general_prompt(query)
+
+        answer = result[0][-1]["choices"][0]["message"]["content"]
+        function_call = result[0][0]["function_call"]
+        function_result = result[1]
+
+        answer = f"""{answer} \n\nused function call: {function_call} \n"""
+
+        return answer, function_result
+    
+    def pprompt(self, query:str, return_function_result = False) -> object:
+        """
+        This function prompts the model with the query and prints the answer.
+        params:
+            query: The query to prompt the model with.
+            return_function_result: Whether to return the result of the function call by the LLM.
+        return:
+            function_result: The result of the function call.    
+        """
+
+        answer, function_result = self.prompt(query)
+
+        print(answer)
+
+        if return_function_result:
+            return function_result
