@@ -226,7 +226,13 @@ class TopicPrompting:
                             "keyword": {
                                 "type": "string",
                                 "description": "keyword to form new topic. Needs to be a single keyword."
+                            },
+                            "inplace": {
+                                "type": "boolean",
+                                "description": "if True, the topic is split inplace. Otherwise, a new list of topics is created and returned. ALWAYS set inplace to False unless something else is explicitly requested!",
+                                "default": False
                             }
+
                         },
                         "required": ["keyword"]
                     }
@@ -551,7 +557,6 @@ class TopicPrompting:
                     function_call = "auto")["choices"][0]["message"]
                 
                 # Step 2: check if GPT wanted to call a function
-                #print(response_message)
                 function_call = response_message.get("function_call")
                 if function_call is not None:
                     print("GPT wants to the call the function: ", function_call)
@@ -576,7 +581,6 @@ class TopicPrompting:
                         }
                     )  # extend conversation with function response
 
-                    #print(messages)
                     second_response = openai.ChatCompletion.create(
                         model=self.openai_prompting_model,
                         messages=messages,
@@ -763,8 +767,8 @@ class TopicPrompting:
         keywords = [self.topic_lis[topic_idx].topic_name, keyword]
 
         res = self.split_topic_keywords(topic_idx, keywords, inplace)
-        if not inplace:
-            return res
+        
+        return res
 
     def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
         """
@@ -916,18 +920,13 @@ class TopicPrompting:
             enhancer = self.enhancer
         )
 
-        # switch the last and the first topic
-        first_topic = new_topics[0]
-        new_topics[0] = new_topics[-1]
-        new_topics[-1] = first_topic
-
         if rename_new_topic:
-            new_topics[0].topic_name = keyword
+            new_topics[-1].topic_name = keyword
 
         if inplace:
             self.topic_lis = new_topics
             self.reindex_topics()
-            return self.topic_lis
+            return new_topics
         else:
             return new_topics
 

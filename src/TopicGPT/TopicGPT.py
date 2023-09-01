@@ -26,12 +26,12 @@ class TopicGPT:
                  n_topics: int = None,
                  openai_prompting_model: str = "gpt-3.5-turbo-16k",
                  max_number_of_tokens: int = 16384,
-                 corpus_intruction: str = "",
+                 corpus_intruction: str = "",    # TODO: Change the name 
                  document_embeddings: np.ndarray = None,
                  vocab_embeddings: dict[str, np.ndarray] = None,
                  embedding_model: str = "text-embedding-ada-002",
                  max_numer_of_tokens_embedding: int = 8191,
-                 clusterer: Clustering_and_DimRed = None,
+                 clusterer: Clustering_and_DimRed = None,  #TODO number of topics here and as argument 
                  n_topwords: int = 2000,
                  n_topwords_description: int = 500,
                  topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], 
@@ -172,7 +172,7 @@ class TopicGPT:
         else:
             self.vocab = list(self.vocab_embeddings.keys())
 
-        if self.vocab_embeddings is None or self.document_embeddings is None:
+        if self.vocab_embeddings is None or self.document_embeddings is None:  #TODO differentiate for vocab 
             if verbose:
                 print("Computing embeddings...")
             self.compute_embeddings(corpus = self.corpus)
@@ -222,8 +222,7 @@ class TopicGPT:
     def print_topics(self):
         """
         This function prints the string explaining the topics.
-        """
-        
+        """   
         print(self.repr_topics())
 
     def prompt(self, query: str) -> (str, object):
@@ -242,13 +241,16 @@ class TopicGPT:
         function_call = result[0][0]["function_call"]
         function_result = result[1]
 
+        print(f"result in prompt of TopicGPT: {result}")
+
         answer = f"""{answer} \n\nused function call: {function_call} \n"""
 
         self.topic_prompting._fix_dictionary_topwords()
+        self.topic_lis = self.topic_prompting.topic_lis
 
         return answer, function_result
     
-    def pprompt(self, query:str, return_function_result = False) -> object:
+    def pprompt(self, query:str, return_function_result: bool = True) -> object:
         """
         This function prompts the model with the query and prints the answer.
         params:
