@@ -289,7 +289,6 @@ class ExtractTopWords:
         
         return word_topic_mat
 
-
     def extract_topwords_tfidf(self, word_topic_mat: np.ndarray, vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
         """
         extract the top-words for each topic using a class-based tf-idf score

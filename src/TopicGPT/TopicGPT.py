@@ -26,7 +26,7 @@ class TopicGPT:
                  n_topics: int = None,
                  openai_prompting_model: str = "gpt-3.5-turbo-16k",
                  max_number_of_tokens: int = 16384,
-                 corpus_intruction: str = "",    # TODO: Change the name 
+                 corpus_instruction: str = "",    # TODO: Change the name 
                  document_embeddings: np.ndarray = None,
                  vocab_embeddings: dict[str, np.ndarray] = None,
                  embedding_model: str = "text-embedding-ada-002",
@@ -48,7 +48,7 @@ class TopicGPT:
             n_topics: number of topics to find. If None, then it will be automatically determined using the Hdbscan algorithm (https://pypi.org/project/hdbscan/). 
             openai_prompting_model: Model provided by Openai to describe the topics and answer the prompts. For available models see https://platform.openai.com/docs/models. 
             max_number_of_tokens: maximum number of tokens to use for the OpenAI API.
-            corpus_intruction: If further information on the given corpus are available, it can be beneficial to let the model know about it. 
+            corpus_instruction: If further information on the given corpus are available, it can be beneficial to let the model know about it. 
             document_embeddings: document embeddings for the corpus. If None, then it will be computed using the openAI API.
             vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings. If None, then it will be computed using the openAI API.
             embedding_model: Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
@@ -66,7 +66,7 @@ class TopicGPT:
         self.n_topics = n_topics
         self.openai_prompting_model = openai_prompting_model
         self.max_number_of_tokens = max_number_of_tokens
-        self.corpus_intruction = corpus_intruction
+        self.corpus_instruction = corpus_instruction
         self.document_embeddings = document_embeddings
         self.vocab_embeddings = vocab_embeddings
         self.embedding_model = embedding_model
@@ -87,10 +87,10 @@ class TopicGPT:
             self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics)
         
         if enhancer is None:
-            self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens)
+            self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens, corpus_instruction = self.corpus_instruction)
 
         if topic_prompting is None:
-            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_numer_of_tokens_embedding)
+            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_numer_of_tokens_embedding, corpus_instruction = corpus_instruction)
         
         self.extractor = ExtractTopWords()
     
@@ -240,11 +240,6 @@ class TopicGPT:
         answer = result[0][-1]["choices"][0]["message"]["content"]
         function_call = result[0][0]["function_call"]
         function_result = result[1]
-
-        print(f"result in prompt of TopicGPT: {result}")
-
-        answer = f"""{answer} \n\nused function call: {function_call} \n"""
-
         self.topic_prompting._fix_dictionary_topwords()
         self.topic_lis = self.topic_prompting.topic_lis
 

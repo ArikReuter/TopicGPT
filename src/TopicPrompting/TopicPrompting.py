@@ -274,19 +274,45 @@ class TopicPrompting:
                         },
                         "required": ["topic_idx_lis"]
                     }
+                },
+
+                "split_topic_hdbscan": {
+                    "name": "split_topic_hdbscan",
+                    "description": "This function can be used to split a topic into several subtopics using hdbscan clustering. This method should be used if the number of clusters to split the topic into is not known.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic_idx": {
+                                "type": "integer",
+                                "description": "index of the topic to split."
+                            },
+                            "min_cluster_size": {
+                                "type": "integer",
+                                "description": "minimum number of documents in a cluster. The higher the number, the more fine-grained the splitting.",
+                                "default": 10
+                            },
+                            "inplace": {
+                                "type": "boolean",
+                                "description": "if True, the topic is split inplace. Otherwise, a new list of topics is created and returned. ALWAYS set inplace to False unless something else is explicitly requested!",
+                                "default": False
+                            }
+                        },
+                        "required": ["topic_idx"]
+                    }
                 }
         }
 
         self.functionNames2Functions = {
             "knn_search": self._knn_search_openai,
             "identify_topic_idx": self._identify_topic_idx_openai,
-            "split_topic_kmeans": self.split_topics_kmeans_openai,
+            "split_topic_kmeans": self._split_topics_kmeans_openai,
             "split_topic_keywords": self._split_topic_keywords_openai,
             "split_topic_single_keyword": self._split_topic_single_keyword_openai,
             "combine_topics": self._combine_topics_openai,
             "add_new_topic_keyword": self._add_new_topic_keyword_openai,
             "delete_topic": self._delete_topic_openai,
-            "get_topic_information": self._get_topic_information_openai
+            "get_topic_information": self._get_topic_information_openai,
+            "split_topic_hdbscan": self._split_topic_hdbscan_openai
         }
     
     def reindex_topics(self) -> None:
@@ -689,8 +715,24 @@ class TopicPrompting:
         new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, inplace)
 
         return new_topics
+    
+    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace = False) -> (json, list[Topic]):
+        """
+        A version of the split_topic_hdbscan function that returns a json file to be used with the openai API
+        params:
+            topic_idx: index of the topic to split
+            min_cluster_size: minimum cluster size to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API. Also returns the new topics.
+        """
+        new_topics = self.split_topic_hdbscan(topic_idx, min_cluster_size, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-len(new_topics):]
+        })
+        return json_obj, new_topics
 
-    def split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace = False) -> (json, list[Topic]):
+    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace = False) -> (json, list[Topic]):
         """
         A version of the split_topic_kmeans function that returns a json file to be used with the openai API
         params:
