@@ -51,6 +51,13 @@ class Topic:
             top_words: dictionary of top-words in the topic according to different metrics
             top_word_scores: dictionary of how representative the top-words are according to different metrics
         """
+        # do some checks on the input
+
+        assert len(documents) == len(document_embeddings_hd) == len(document_embeddings_ld) == len(document_embedding_similarity), "documents, document_embeddings_hd, document_embeddings_ld and document_embedding_similarity must have the same length"
+        assert len(documents) > 0, "documents must not be empty"
+        assert len(words) > 0, "words must not be empty"
+        
+
         self.topic_idx = topic_idx
         self.documents = documents
         self.words = words

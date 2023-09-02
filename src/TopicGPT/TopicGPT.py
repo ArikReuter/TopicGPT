@@ -31,7 +31,7 @@ class TopicGPT:
                  vocab_embeddings: dict[str, np.ndarray] = None,
                  embedding_model: str = "text-embedding-ada-002",
                  max_numer_of_tokens_embedding: int = 8191,
-                 clusterer: Clustering_and_DimRed = None,  #TODO number of topics here and as argument 
+                 clusterer: Clustering_and_DimRed = None, 
                  n_topwords: int = 2000,
                  n_topwords_description: int = 500,
                  topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], 
@@ -53,7 +53,7 @@ class TopicGPT:
             vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings. If None, then it will be computed using the openAI API.
             embedding_model: Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
             max_numer_of_tokens_embedding: Maximum number of tokens to use for the OpenAI API when computing the embeddings.
-            clusterer: the clustering and dimensionality reduction object. The class can be found in the "Clustering/Clustering" folder. If None, a clustering object with default parameters will be used. Note that it doe note make sense to provide document and vocab embeddings and an embedding object at the same time. 
+            clusterer: the clustering and dimensionality reduction object. The class can be found in the "Clustering/Clustering" folder. If None, a clustering object with default parameters will be used. Note that it doe note make sense to provide document and vocab embeddings and an embedding object at the same time. The number of topics specified in the clusterer will overwrite the n_topics argument.
             n_topwords: number of top words to extract and save for each topic. Note that fewer top words might be used later. 
             n_topwords_description: number of top words to give to the LLM in order to describe the topic. 
             topword_extraction_methods: list of methods to use for extracting top words. The available methods are "tfidf", "cosine_similarity", and "topword_enhancement". See the file ExtractTopWords/ExtractTopWords.py for more details.
@@ -70,23 +70,6 @@ class TopicGPT:
         assert n_topwords > 0, "The number of top words needs to be a positive integer."
         assert n_topwords_description > 0, "The number of top words for the topic description needs to be a positive integer."
         assert len(topword_extraction_methods) > 0, "You need to provide at least one topword extraction method."
-
-        assert type(openai_api_key) == str, "The OpenAI API key needs to be a string."
-        assert type(n_topics) == int or n_topics is None, "The number of topics needs to be an integer or None."
-        assert type(openai_prompting_model) == str, "The OpenAI prompting model needs to be a string."
-        assert type(max_number_of_tokens) == int, "The maximum number of tokens needs to be an integer."
-        assert type(corpus_instruction) == str, "The corpus instruction needs to be a string."
-        assert type(document_embeddings) == np.ndarray or document_embeddings is None, "The document embeddings need to be a numpy array or None."
-        assert type(vocab_embeddings) == dict or vocab_embeddings is None, "The vocab embeddings need to be a dictionary or None."
-        assert type(embedding_model) == str, "The embedding model needs to be a string."
-        assert type(max_numer_of_tokens_embedding) == int, "The maximum number of tokens for the embedding model needs to be an integer."
-        assert type(clusterer) == Clustering_and_DimRed or clusterer is None, "The clusterer needs to be a Clustering_and_DimRed object or None."
-        assert type(n_topwords) == int, "The number of top words needs to be an integer."
-        assert type(n_topwords_description) == int, "The number of top words for the topic description needs to be an integer."
-        assert type(topword_extraction_methods) == list, "The topword extraction methods need to be a list."
-        assert type(compute_vocab_hyperparams) == dict, "The compute_vocab_hyperparams need to be a dictionary."
-        assert type(enhancer) == TopwordEnhancement or enhancer is None, "The enhancer needs to be a TopwordEnhancement object or None."
-        assert type(topic_prompting) == TopicPrompting or topic_prompting is None, "The topic prompting needs to be a TopicPrompting object or None."
 
         self.openai_api_key = openai_api_key
         self.n_topics = n_topics

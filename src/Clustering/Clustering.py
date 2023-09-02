@@ -52,20 +52,6 @@ class Clustering_and_DimRed():
         assert number_clusters_hdbscan is None or number_clusters_hdbscan > 0, "number_clusters_hdbscan must be greater than 0 or None"
         assert random_state is None or random_state >= 0, "random_state must be greater than or equal to 0"
 
-        # check types 
-        assert isinstance(n_dims_umap, int), "n_dims_umap must be an int"
-        assert isinstance(n_neighbors_umap, int), "n_neighbors_umap must be an int"
-        assert isinstance(min_dist_umap, float), "min_dist_umap must be a float"
-        assert isinstance(metric_umap, str), "metric_umap must be a str"
-        assert isinstance(min_cluster_size_hdbscan, int), "min_cluster_size_hdbscan must be an int"
-        assert isinstance(metric_hdbscan, str), "metric_hdbscan must be a str"
-        assert isinstance(cluster_selection_method_hdbscan, str), "cluster_selection_method_hdbscan must be a str"
-        assert isinstance(number_clusters_hdbscan, int) or number_clusters_hdbscan is None, "number_clusters_hdbscan must be an int or None"
-        assert isinstance(random_state, int) or random_state is None, "random_state must be an int or None"
-        assert isinstance(verbose, bool), "verbose must be a bool"
-        assert isinstance(UMAP_hyperparams, dict), "UMAP_hyperparams must be a dict"
-        assert isinstance(HDBSCAN_hyperparams, dict), "HDBSCAN_hyperparams must be a dict"
-
         self.random_state = random_state
         self.verbose = verbose
         self.UMAP_hyperparams = UMAP_hyperparams

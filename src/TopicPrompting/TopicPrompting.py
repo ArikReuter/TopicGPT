@@ -65,24 +65,7 @@ class TopicPrompting:
             vocab_embeddings: dictionary mapping words to their embeddings
             random_state: random state for reproducibility
         """
-
-        # Do some checks on the input arguments
-
-        assert len(topic_lis) > 0, "Need to provide at least one topic!"
-        assert isinstance(topic_lis[0], Topic), "Need to provide a list of Topic objects!"
-        assert isinstance(openai_key, str), "Need to provide a string as openai key!"
-        assert isinstance(openai_prompting_model, str), "Need to provide a string as openai prompting model!"
-        assert isinstance(max_context_length_promting, int), "Need to provide an integer as max_context_length_promting!"
-        assert isinstance(openai_model_temperature_prompting, float), "Need to provide a float as openai_model_temperature_prompting!"
-        assert isinstance(openai_embedding_model, str), "Need to provide a string as openai_embedding_model!"
-        assert isinstance(max_context_length_embedding, int), "Need to provide an integer as max_context_length_embedding!"
-        assert isinstance(basic_model_instruction, str), "Need to provide a string as basic_model_instruction!"
-        assert isinstance(corpus_instruction, str), "Need to provide a string as corpus_instruction!"
-        assert isinstance(enhancer, TopwordEnhancement), "Need to provide a TopwordEnhancement object as enhancer!"
-        assert isinstance(vocab, list), "Need to provide a list as vocab!"
-        assert isinstance(vocab_embeddings, dict), "Need to provide a dictionary as vocab_embeddings!"
-        assert isinstance(random_state, int), "Need to provide an integer as random_state!"
-
+ 
         self.topic_lis = topic_lis
         self.openai_key = openai_key
         self.openai_prompting_model = openai_prompting_model
