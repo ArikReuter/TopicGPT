@@ -23,6 +23,22 @@ class TopwordEnhancement:
             basic_model_instruction: the basic instruction for the model
             corpus_instruction: the instruction for the corpus. Useful if specific information on the corpus on hand is available
         """
+        # do some checks on the input arguments
+        assert openai_key is not None, "Please provide an openai key"
+        assert openai_model is not None, "Please provide an openai model"
+        assert max_context_length > 0, "Please provide a positive max_context_length"
+        assert openai_model_temperature > 0, "Please provide a positive openai_model_temperature"
+
+        # check types of input arguments 
+
+        assert type(openai_key) == str, "Please provide a string as openai_key"
+        assert type(openai_model) == str, "Please provide a string as openai_model"
+        assert type(max_context_length) == int, "Please provide an integer as max_context_length"
+        assert type(openai_model_temperature) == float, "Please provide a float as openai_model_temperature"
+        assert type(basic_model_instruction) == str, "Please provide a string as basic_model_instruction"
+        assert type(corpus_instruction) == str, "Please provide a string as corpus_instruction"
+        
+
         self.openai_key = openai_key
         self.openai_model = openai_model
         self.max_context_length = max_context_length

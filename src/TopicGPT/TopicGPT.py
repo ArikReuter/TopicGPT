@@ -26,7 +26,7 @@ class TopicGPT:
                  n_topics: int = None,
                  openai_prompting_model: str = "gpt-3.5-turbo-16k",
                  max_number_of_tokens: int = 16384,
-                 corpus_instruction: str = "",    # TODO: Change the name 
+                 corpus_instruction: str = "",  
                  document_embeddings: np.ndarray = None,
                  vocab_embeddings: dict[str, np.ndarray] = None,
                  embedding_model: str = "text-embedding-ada-002",
@@ -61,6 +61,32 @@ class TopicGPT:
             enhancer: the topword enhancement object. Is used to describe the The class can be found in the "TopwordEnhancement/TopwordEnhancement.py" folder. If None, a topword enhancement object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
             topic_prompting: the topic prompting object. This object is used to formulate the prompts. The class can be found in the "TopicPrompting/TopicPrompting.py" folder. If None, a topic prompting object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
         """
+
+        # Do some checks on the input arguments
+        assert openai_api_key is not None, "You need to provide an OpenAI API key."
+        assert n_topics is None or n_topics > 0, "The number of topics needs to be a positive integer."
+        assert max_number_of_tokens > 0, "The maximum number of tokens needs to be a positive integer."
+        assert max_numer_of_tokens_embedding > 0, "The maximum number of tokens for the embedding model needs to be a positive integer."
+        assert n_topwords > 0, "The number of top words needs to be a positive integer."
+        assert n_topwords_description > 0, "The number of top words for the topic description needs to be a positive integer."
+        assert len(topword_extraction_methods) > 0, "You need to provide at least one topword extraction method."
+
+        assert type(openai_api_key) == str, "The OpenAI API key needs to be a string."
+        assert type(n_topics) == int or n_topics is None, "The number of topics needs to be an integer or None."
+        assert type(openai_prompting_model) == str, "The OpenAI prompting model needs to be a string."
+        assert type(max_number_of_tokens) == int, "The maximum number of tokens needs to be an integer."
+        assert type(corpus_instruction) == str, "The corpus instruction needs to be a string."
+        assert type(document_embeddings) == np.ndarray or document_embeddings is None, "The document embeddings need to be a numpy array or None."
+        assert type(vocab_embeddings) == dict or vocab_embeddings is None, "The vocab embeddings need to be a dictionary or None."
+        assert type(embedding_model) == str, "The embedding model needs to be a string."
+        assert type(max_numer_of_tokens_embedding) == int, "The maximum number of tokens for the embedding model needs to be an integer."
+        assert type(clusterer) == Clustering_and_DimRed or clusterer is None, "The clusterer needs to be a Clustering_and_DimRed object or None."
+        assert type(n_topwords) == int, "The number of top words needs to be an integer."
+        assert type(n_topwords_description) == int, "The number of top words for the topic description needs to be an integer."
+        assert type(topword_extraction_methods) == list, "The topword extraction methods need to be a list."
+        assert type(compute_vocab_hyperparams) == dict, "The compute_vocab_hyperparams need to be a dictionary."
+        assert type(enhancer) == TopwordEnhancement or enhancer is None, "The enhancer needs to be a TopwordEnhancement object or None."
+        assert type(topic_prompting) == TopicPrompting or topic_prompting is None, "The topic prompting needs to be a TopicPrompting object or None."
 
         self.openai_api_key = openai_api_key
         self.n_topics = n_topics
