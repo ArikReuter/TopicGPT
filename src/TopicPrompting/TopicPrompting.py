@@ -388,23 +388,6 @@ class TopicPrompting:
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
     
-    def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
-        """"
-        A version of the knn_search function that returns a json file to be used with the openai API
-        params:
-            topic_index: index of the topic to search in
-            query: query string
-            k: number of neighbors to return
-        returns:
-            json object to be used with the openai API. Also returns the topk_docs and topk_doc_indices
-        """
-        topk_docs, topk_doc_indices = self.knn_search(topic_index, query, k)
-        json_obj = json.dumps({
-            "top-k documents": topk_docs,
-            "indices of top-k documents": list(topk_doc_indices)
-        })
-        return json_obj, (topk_docs, topk_doc_indices)
-    
     def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 2) -> (json, (list[str], list[int])):
         """
         Use the LLM to answer the llm query based on the documents belonging to the topic.  
@@ -535,21 +518,6 @@ class TopicPrompting:
             return None
         else:
             return topic_index
-
-    def _identify_topic_idx_openai(self, query: str, n_tries = 3) -> (json, int):
-        """
-        A version of the identify_topic_idx function that returns a json file to be used with the openai API
-        params:
-            query: query string
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            json object to be used with the openai API. Also returns the topic index
-        """
-        topic_index = self.identify_topic_idx(query, n_tries)
-        json_obj = json.dumps({
-            "topic index": topic_index
-        })
-        return json_obj, topic_index
 
     def general_prompt(self, prompt: str, n_tries = 2) -> (list[str], object):
         """
@@ -716,38 +684,6 @@ class TopicPrompting:
 
         return new_topics
     
-    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace = False) -> (json, list[Topic]):
-        """
-        A version of the split_topic_hdbscan function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            min_cluster_size: minimum cluster size to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
-        """
-        new_topics = self.split_topic_hdbscan(topic_idx, min_cluster_size, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-len(new_topics):]
-        })
-        return json_obj, new_topics
-
-    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace = False) -> (json, list[Topic]):
-        """
-        A version of the split_topic_kmeans function that returns a json file to be used with the openai API
-        params:
-            topic_idx: list of indices of the topics to split
-            n_clusters: number of clusters to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
-        """
-        new_topics = self.split_topic_kmeans(topic_idx, n_clusters, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-n_clusters:]
-        })
-        return json_obj, new_topics
-
     def split_topic_keywords(self, topic_idx: int, keywords: str, inplace = False) -> list[Topic]:
         """
         Split the topic into subtopics according to the keywords. This is achieved by computing the cosine similarity between the keywords and the documents in the topic. 
@@ -778,22 +714,6 @@ class TopicPrompting:
 
         return new_topics
 
-    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
-        """
-        A version of the split_topic_keywords function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            keywords: keywords to split the topic into. Needs to be a list of at least two keywords
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
-        """
-        new_topics = self.split_topic_keywords(topic_idx, keywords, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-len(keywords):]
-        })
-        return json_obj, new_topics
-
     def split_topic_single_keyword(self, topic_idx: int, keyword: str, inplace = False) -> list[Topic]:
         """
         Split the topic with a single keyword. Split the topic such that all documents closer to the original topic name stay in the old topic while all documents closer to the keyword are moved to the new topic.
@@ -811,22 +731,6 @@ class TopicPrompting:
         res = self.split_topic_keywords(topic_idx, keywords, inplace)
         
         return res
-
-    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
-        """
-        A version of the split_topic_single_keyword function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            keyword: keyword to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
-        """
-        new_topics = self.split_topic_single_keyword(topic_idx, keyword, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-2:]
-        })
-        return json_obj, new_topics
 
     def combine_topics(self, topic_idx_lis: list[int], inplace = False) -> list[Topic]:
         """
@@ -877,21 +781,6 @@ class TopicPrompting:
                 new_topic_lis.pop(topic_idx)
             new_topic_lis.append(new_topic)
             return new_topic_lis
-
-    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace = False) -> (json, list[Topic]):
-        """
-        A version of the combine_topics function that returns a json file to be used with the openai API
-        params:
-            topic_idx_lis: list of topic indices to combine
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API, also returns the new topics
-        """
-        new_topics = self.combine_topics(topic_idx_lis, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-1]
-        })
-        return json_obj, new_topics
 
     def add_new_topic_keyword(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> list[Topic]:
         """
@@ -972,27 +861,6 @@ class TopicPrompting:
         else:
             return new_topics
 
-    def _add_new_topic_keyword_openai(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> (json, list[Topic]):
-        """
-        A version of the add_new_topic_keyword function that returns a json file to be used with the openai API
-        params:
-            keyword: keyword to create the new topic from
-            vocab: vocabulary of the corpus
-            vocab_embeddings: dictionary mapping words to their embeddings
-            enhancer: TopwordEnhancement object fro naming and describing the new topics
-            api_key: openai api key
-            embedding_model: openai embedding model to use for computing the embeddings
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-            rename_new_topic: if True, the new topic is renamed to the keyword
-        returns:
-            json object to be used with the openai API
-        """
-        new_topics = self.add_new_topic_keyword(keyword, inplace, rename_new_topic)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-1]
-        })
-        return json_obj, new_topics 
-
     def delete_topic(self, topic_idx:int, inplace: bool = False) -> list[Topic]:
         """
         Delete a topic with the given index from the list of topics. Assign the documents of this topic to the remaining topics and recompute the topwords and the representations of the remaining topics.
@@ -1055,22 +923,7 @@ class TopicPrompting:
             return self.topic_lis
         else:
             return new_topics
-
-    def _delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
-        """
-        A version of the delete_topic function that returns a json file to be used with the openai API
-        params: 
-            topic_idx: index of the topic to delete
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API
-        """
-        new_topics = self.delete_topic(topic_idx, inplace)
-        json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-1]
-        })
-        return json_obj, new_topics
-    	
+	
     def get_topic_information(self, topic_idx_lis: list[int], max_number_topwords = 500) -> dict:
         """
         This function provides detailed information on the topics with indices from the topic_idx_lis. This information can be used to compare the topics.  This function simply returns a dictionary where the keys are the topic indices and the values are the strings describing the topics.
@@ -1105,6 +958,153 @@ class TopicPrompting:
         topic_info = {idx: tiktoken.encoding_for_model(self.openai_prompting_model).decode(pruned_encodings[idx]) for idx in topic_idx_lis}
 
         return topic_info
+    
+    def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
+        """"
+        A version of the knn_search function that returns a json file to be used with the openai API
+        params:
+            topic_index: index of the topic to search in
+            query: query string
+            k: number of neighbors to return
+        returns:
+            json object to be used with the openai API. Also returns the topk_docs and topk_doc_indices
+        """
+        topk_docs, topk_doc_indices = self.knn_search(topic_index, query, k)
+        json_obj = json.dumps({
+            "top-k documents": topk_docs,
+            "indices of top-k documents": list(topk_doc_indices)
+        })
+        return json_obj, (topk_docs, topk_doc_indices)
+    
+    def _identify_topic_idx_openai(self, query: str, n_tries = 3) -> (json, int):
+        """
+        A version of the identify_topic_idx function that returns a json file to be used with the openai API
+        params:
+            query: query string
+            n_tries: number of tries to get a valid response from the LLM
+        returns:
+            json object to be used with the openai API. Also returns the topic index
+        """
+        topic_index = self.identify_topic_idx(query, n_tries)
+        json_obj = json.dumps({
+            "topic index": topic_index
+        })
+        return json_obj, topic_index
+    
+    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace = False) -> (json, list[Topic]):
+        """
+        A version of the split_topic_hdbscan function that returns a json file to be used with the openai API
+        params:
+            topic_idx: index of the topic to split
+            min_cluster_size: minimum cluster size to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API. Also returns the new topics.
+        """
+        new_topics = self.split_topic_hdbscan(topic_idx, min_cluster_size, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-len(new_topics):]
+        })
+        return json_obj, new_topics
+    
+    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace = False) -> (json, list[Topic]):
+        """
+        A version of the split_topic_kmeans function that returns a json file to be used with the openai API
+        params:
+            topic_idx: list of indices of the topics to split
+            n_clusters: number of clusters to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API. Also returns the new topics.
+        """
+        new_topics = self.split_topic_kmeans(topic_idx, n_clusters, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-n_clusters:]
+        })
+        return json_obj, new_topics
+    
+    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
+        """
+        A version of the split_topic_keywords function that returns a json file to be used with the openai API
+        params:
+            topic_idx: index of the topic to split
+            keywords: keywords to split the topic into. Needs to be a list of at least two keywords
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API. Also returns the new topics.
+        """
+        new_topics = self.split_topic_keywords(topic_idx, keywords, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-len(keywords):]
+        })
+        return json_obj, new_topics
+    
+    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
+        """
+        A version of the split_topic_single_keyword function that returns a json file to be used with the openai API
+        params:
+            topic_idx: index of the topic to split
+            keyword: keyword to split the topic into
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API. Also returns the new topics.
+        """
+        new_topics = self.split_topic_single_keyword(topic_idx, keyword, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-2:]
+        })
+        return json_obj, new_topics
+    
+    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace = False) -> (json, list[Topic]):
+        """
+        A version of the combine_topics function that returns a json file to be used with the openai API
+        params:
+            topic_idx_lis: list of topic indices to combine
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API, also returns the new topics
+        """
+        new_topics = self.combine_topics(topic_idx_lis, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
+        })
+        return json_obj, new_topics
+
+    def _add_new_topic_keyword_openai(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> (json, list[Topic]):
+        """
+        A version of the add_new_topic_keyword function that returns a json file to be used with the openai API
+        params:
+            keyword: keyword to create the new topic from
+            vocab: vocabulary of the corpus
+            vocab_embeddings: dictionary mapping words to their embeddings
+            enhancer: TopwordEnhancement object fro naming and describing the new topics
+            api_key: openai api key
+            embedding_model: openai embedding model to use for computing the embeddings
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+            rename_new_topic: if True, the new topic is renamed to the keyword
+        returns:
+            json object to be used with the openai API
+        """
+        new_topics = self.add_new_topic_keyword(keyword, inplace, rename_new_topic)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
+        })
+        return json_obj, new_topics
+    
+    def _delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
+        """
+        A version of the delete_topic function that returns a json file to be used with the openai API
+        params: 
+            topic_idx: index of the topic to delete
+            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        returns:
+            json object to be used with the openai API
+        """
+        new_topics = self.delete_topic(topic_idx, inplace)
+        json_obj = json.dumps({
+            "new topics": [topic.to_dict() for topic in new_topics][-1]
+        })
+        return json_obj, new_topics
 
     def _get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
         """
@@ -1119,7 +1119,7 @@ class TopicPrompting:
             "topic info": topic_info
         })
         return json_obj, topic_info
-
+    
     def _fix_dictionary_topwords(self):
         """
         Fix an issue with topic representation where the topwords are in another dictionary withing the actual dictionary defining them
