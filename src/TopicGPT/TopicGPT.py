@@ -270,3 +270,7 @@ class TopicGPT:
 
         if return_function_result:
             return function_result
+        
+
+    
+    # TODO: Change functions to not reduce vocab again

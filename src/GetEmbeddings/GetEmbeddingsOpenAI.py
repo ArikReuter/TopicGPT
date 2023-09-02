@@ -22,13 +22,10 @@ class GetEmbeddingsOpenAI:
         self.api_key = api_key
         openai.api_key = api_key
         self.embedding_model = embedding_model
+
+        self.tokenizer_str = tokenizer
         
-        if tokenizer is None:
-             self.tokenizer = tiktoken.encoding_for_model(self.embedding_model)
-
-        else: 
-             self.tokenizer = tiktoken.get_encoding(tokenizer)
-
+    
         self.max_tokens = max_tokens
 
     @staticmethod
@@ -48,10 +45,16 @@ class GetEmbeddingsOpenAI:
         :param corpus: List of strings to embed. Where each element in the list is a document.
         :return: Total number of tokens needed to embed the corpus.
         """
-       
+
+        if self.tokenizer_str is None:
+             tokenizer = tiktoken.encoding_for_model(self.embedding_model)
+
+        else: 
+             tokenizer = tiktoken.get_encoding(self.tokenizer_str)
+
         num_tokens = 0
         for document in tqdm(corpus):
-            num_tokens += self.num_tokens_from_string(document, self.tokenizer)
+            num_tokens += self.num_tokens_from_string(document, tokenizer)
         
         return num_tokens
         
@@ -74,10 +77,15 @@ class GetEmbeddingsOpenAI:
             :param text: List of strings to embed. Where each element in the list is a document.    
             :return: List of list of strings to embed. Where each element in the list is a list of chunks comprising the document. 
          """
+         if self.tokenizer_str is None:
+              tokenizer = tiktoken.encoding_for_model(self.embedding_model)
+         else:
+              tokenizer = tiktoken.get_encoding(self.tokenizer_str)
+    
          
          split_text = []
          for document in tqdm(text):
-            if self.num_tokens_from_string(document, self.tokenizer) > self.max_tokens:
+            if self.num_tokens_from_string(document, tokenizer) > self.max_tokens:
                 split_text.append(self.split_doc(document))
             else:
                 split_text.append([document])

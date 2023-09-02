@@ -56,7 +56,7 @@ class Topic:
         assert len(documents) == len(document_embeddings_hd) == len(document_embeddings_ld) == len(document_embedding_similarity), "documents, document_embeddings_hd, document_embeddings_ld and document_embedding_similarity must have the same length"
         assert len(documents) > 0, "documents must not be empty"
         assert len(words) > 0, "words must not be empty"
-        
+
 
         self.topic_idx = topic_idx
         self.documents = documents

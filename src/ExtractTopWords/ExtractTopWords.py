@@ -11,6 +11,7 @@ import os
 import inspect
 import umap
 from collections import Counter
+import warnings
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -301,13 +302,16 @@ class ExtractTopWords:
         returns: 
             dict, dictionary of topics and their top words
         """
-        tf = word_topic_mat / np.sum(word_topic_mat, axis=0)
-        idf = np.log(1 + (word_topic_mat.shape[1] / np.sum(word_topic_mat > 0, axis=1)))
 
-        tfidf = tf * idf[:, np.newaxis]
-    
-        # set tfidf to zero if tf is nan (happens if word does not occur in any document or topic does not have any words)
-        tfidf[np.isnan(tf)] = 0
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            tf = word_topic_mat / np.sum(word_topic_mat, axis=0)
+            idf = np.log(1 + (word_topic_mat.shape[1] / np.sum(word_topic_mat > 0, axis=1)))
+
+            tfidf = tf * idf[:, np.newaxis]
+        
+            # set tfidf to zero if tf is nan (happens if word does not occur in any document or topic does not have any words)
+            tfidf[np.isnan(tf)] = 0
 
         # extract top words for each topic
         top_words = {}
