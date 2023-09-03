@@ -6,11 +6,17 @@ import pickle
 
 import unittest
 
-#from src.TopicRepresentation.TopicRepresentation import Topic
-from TopicGPT import TopicGPT
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+
+
+
+from src.TopicRepresentation.TopicRepresentation import Topic
+from src.TopicGPT_folder import TopicGPT
 from TopicRepresentation.TopicRepresentation import Topic
 
-openai.organization = "org-MOfdTrYSke1pXhlAdLXxwDKx"
+openai.organization = os.environ.get('OPENAI_ORG')
 
 class TestTopicGPT_prompting(unittest.TestCase):
     """

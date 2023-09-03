@@ -3,13 +3,20 @@ import sys
 import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
+#print(parentdir)
+
+sys.path.insert(0, f"{parentdir}/src/TopicGPT")
+
+#sys.path.insert(0, "C:/Users/arik_/Documents/Dokumente/Studium/Master/LLM_seminar/Project/src/TopicGPT")
+from TopicGPT import TopicGPT
+
 sys.path.insert(0, parentdir) 
 
 import openai
 import pickle
 
 import unittest
-from src.TopicGPT.TopicGPT import TopicGPT
+
 from TopicRepresentation.TopicRepresentation import Topic
 
 from src.Clustering.Clustering import Clustering_and_DimRed
