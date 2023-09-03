@@ -276,7 +276,6 @@ class TopicPrompting:
                         "required": ["topic_idx_lis"]
                     }
                 },
-
                 "split_topic_hdbscan": {
                     "name": "split_topic_hdbscan",
                     "description": "This function can be used to split a topic into several subtopics using hdbscan clustering. This method should be used if the number of clusters to split the topic into is not known.",
@@ -350,7 +349,7 @@ class TopicPrompting:
         self.topic_lis = topic_lis
         self.reindex_topics()
 
-    def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> list[str]:
+    def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> (list[str], list[int]):
         """
         find the k nearest neighbors of the query in the given topic based on cosine similarity in the original embedding space
         params: 
@@ -359,7 +358,8 @@ class TopicPrompting:
             k: number of neighbors to return
             doc_cutoff_threshold: maximum number of tokens per document. Afterwards, the document is cut off
         returns:
-            list of k nearest neighbors
+            list of topk_docs
+            list of topk_doc_indices
         """
         topic = self.topic_lis[topic_index]
 
@@ -389,7 +389,7 @@ class TopicPrompting:
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
     
-    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 2) -> (json, (list[str], list[int])):
+    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 3) -> (json, (list[str], list[int])):
         """
         Use the LLM to answer the llm query based on the documents belonging to the topic.  
         params: 
@@ -460,7 +460,7 @@ class TopicPrompting:
         
     def identify_topic_idx(self, query: str, n_tries = 3) -> int:
         """
-        Identify the index of the topic that the query is most likely about. This is done by asking a LLM to say which topic has the description that best fits the query. 
+        Identify the index of the topic that the query is most likely about. This is done by asking a LLM to say which topic has the description that best fits the query. If the LLM does not find any topic that fits the query, None is returned.
         params:
             query: query string
             n_tries: number of tries to get a valid response from the LLM
@@ -519,72 +519,6 @@ class TopicPrompting:
             return None
         else:
             return topic_index
-
-    def general_prompt(self, prompt: str, n_tries = 2) -> (list[str], object):
-        """
-        Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
-        Use n_tries in case the LLM does not give a valid response.
-        params:
-            prompt: prompt string
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            response messages
-            response of function
-        """
-        messages = [
-            {
-                "role": "system",
-                "content": self.basic_model_instruction + " " + self.corpus_instruction
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-            ]
-        
-        functions = [self.function_descriptions[key] for key in self.function_descriptions.keys()]
-        for _ in range(n_tries):
-            try: 
-                response_message = openai.ChatCompletion.create(
-                    model = self.openai_prompting_model,
-                    messages = messages,
-                    functions = functions,
-                    function_call = "auto")["choices"][0]["message"]
-                
-                # Step 2: check if GPT wanted to call a function
-                function_call = response_message.get("function_call")
-                if function_call is not None:
-                    print("GPT wants to the call the function: ", function_call)
-                    # Step 3: call the function
-                    # Note: the JSON response may not always be valid; be sure to handle errors
-
-                    function_name = function_call["name"]
-                    function_to_call = self.functionNames2Functions[function_name]
-                    function_args = json.loads(function_call["arguments"])
-                    function_response = function_to_call(**function_args)
-                    function_response_json = function_response[0]
-                    function_response_return_output = function_response[1]
-
-                    # Step 4: send the info on the function call and function response to GPT
-                    messages.append(response_message)  # extend conversation with assistant's reply
-                
-                    messages.append(
-                        {
-                            "role": "function",
-                            "name": function_name,
-                            "content": function_response_json,
-                        }
-                    )  # extend conversation with function response
-
-                    second_response = openai.ChatCompletion.create(
-                        model=self.openai_prompting_model,
-                        messages=messages,
-                    )  # get a new response from GPT where it can see the function response
-            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
-                print("Error occured: ", error)
-                print("Trying again...")
-            
-            return [response_message, second_response], function_response_return_output
 
     def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, inplace = False) -> list[Topic]:
         """
@@ -1129,3 +1063,68 @@ class TopicPrompting:
             if type(topic.top_words["cosine_similarity"]) == dict:
                 topic.top_words["cosine_similarity"] = topic.top_words["cosine_similarity"][0]
 
+    def general_prompt(self, prompt: str, n_tries = 2) -> (list[str], object):
+        """
+        Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
+        Use n_tries in case the LLM does not give a valid response.
+        params:
+            prompt: prompt string
+            n_tries: number of tries to get a valid response from the LLM
+        returns:
+            response messages
+            response of function
+        """
+        messages = [
+            {
+                "role": "system",
+                "content": self.basic_model_instruction + " " + self.corpus_instruction
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+            ]
+        
+        functions = [self.function_descriptions[key] for key in self.function_descriptions.keys()]
+        for _ in range(n_tries):
+            try: 
+                response_message = openai.ChatCompletion.create(
+                    model = self.openai_prompting_model,
+                    messages = messages,
+                    functions = functions,
+                    function_call = "auto")["choices"][0]["message"]
+                
+                # Step 2: check if GPT wanted to call a function
+                function_call = response_message.get("function_call")
+                if function_call is not None:
+                    print("GPT wants to the call the function: ", function_call)
+                    # Step 3: call the function
+                    # Note: the JSON response may not always be valid; be sure to handle errors
+
+                    function_name = function_call["name"]
+                    function_to_call = self.functionNames2Functions[function_name]
+                    function_args = json.loads(function_call["arguments"])
+                    function_response = function_to_call(**function_args)
+                    function_response_json = function_response[0]
+                    function_response_return_output = function_response[1]
+
+                    # Step 4: send the info on the function call and function response to GPT
+                    messages.append(response_message)  # extend conversation with assistant's reply
+                
+                    messages.append(
+                        {
+                            "role": "function",
+                            "name": function_name,
+                            "content": function_response_json,
+                        }
+                    )  # extend conversation with function response
+
+                    second_response = openai.ChatCompletion.create(
+                        model=self.openai_prompting_model,
+                        messages=messages,
+                    )  # get a new response from GPT where it can see the function response
+            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                print("Error occured: ", error)
+                print("Trying again...")
+            
+            return [response_message, second_response], function_response_return_output

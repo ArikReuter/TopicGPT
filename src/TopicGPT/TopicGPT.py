@@ -70,6 +70,7 @@ class TopicGPT:
         assert n_topwords > 0, "The number of top words needs to be a positive integer."
         assert n_topwords_description > 0, "The number of top words for the topic description needs to be a positive integer."
         assert len(topword_extraction_methods) > 0, "You need to provide at least one topword extraction method."
+        assert n_topwords_description <= n_topwords, "The number of top words for the topic description needs to be smaller or equal to the number of top words."
 
         self.openai_api_key = openai_api_key
         self.n_topics = n_topics
@@ -94,6 +95,8 @@ class TopicGPT:
         
         if clusterer is None:
             self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics)
+        else:
+            self.n_topics = clusterer.number_clusters_hdbscan
         
         if enhancer is None:
             self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens, corpus_instruction = self.corpus_instruction)
@@ -103,6 +106,24 @@ class TopicGPT:
         
         self.extractor = ExtractTopWords()
     
+    def __repr__(self) -> str:
+        repr = "TopicGPT object with the following parameters:\n"
+        repr += "-"*150 + "\n"
+        repr += "n_topics: " + str(self.n_topics) + "\n"
+        repr += "openai_prompting_model: " + self.openai_prompting_model + "\n"
+        repr += "max_number_of_tokens: " + str(self.max_number_of_tokens) + "\n"
+        repr += "corpus_instruction: " + self.corpus_instruction + "\n"
+        repr += "embedding_model: " + self.embedding_model + "\n"
+        repr += "clusterer: " + str(self.clusterer) + "\n"
+        repr += "n_topwords: " + str(self.n_topwords) + "\n"
+        repr += "n_topwords_description: " + str(self.n_topwords_description) + "\n"
+        repr += "topword_extraction_methods: " + str(self.topword_extraction_methods) + "\n"
+        repr += "compute_vocab_hyperparams: " + str(self.compute_vocab_hyperparams) + "\n"
+        repr += "enhancer: " + str(self.enhancer) + "\n"
+        repr += "topic_prompting: " + str(self.topic_prompting) + "\n"
+
+        return repr
+
     def compute_embeddings(self, corpus: list[str]) -> (np.ndarray, dict[str, np.ndarray]):
         """
         This function computes the document and vocab embeddings for the corpus. 
@@ -141,6 +162,7 @@ class TopicGPT:
             vocab_embeddings = self.vocab_embeddings,
             n_topwords = self.n_topwords,
             topword_extraction_methods = self.topword_extraction_methods,
+            consider_outliers = True
         )
 
         return self.topic_lis
@@ -156,10 +178,17 @@ class TopicGPT:
 
         assert self.topic_lis is not None, "You need to extract the topics first."
 
+        if "cosine_similarity" in self.topword_extraction_methods:
+            topword_method = "cosine_similarity"
+        elif "tfidf" in self.topword_extraction_methods:
+            topword_method = "tfidf"
+        else:
+            raise ValueError("You need to use either 'cosine_similarity' or 'tfidf' as topword extraction method.")
+
         self.topic_lis = TopicRepresentation.describe_and_name_topics(
             topics = topics,
             enhancer = self.enhancer,
-            topword_method= "cosine_similarity",
+            topword_method= topword_method,
             n_words = self.n_topwords_description
         )
 
@@ -218,11 +247,18 @@ class TopicGPT:
         """
         assert self.topic_lis is not None, "You need to extract the topics first."
 
+        if "cosine_similarity" in self.topword_extraction_methods:
+            topword_method = "cosine_similarity"
+        elif "tfidf" in self.topword_extraction_methods:
+            topword_method = "tfidf"
+        else:
+            raise ValueError("You need to use either 'cosine_similarity' or 'tfidf' as topword extraction method.")
+
         repr = ""
         for topic in self.topic_lis:
             repr += str(topic) + "\n"
             repr += "Topic_description: " + topic.topic_description + "\n"
-            repr += "Top words: " + str(topic.top_words["cosine_similarity"][:10]) + "\n"
+            repr += "Top words: " + str(topic.top_words[topword_method][:10]) + "\n"
             repr += "\n"
             repr += "-"*150 + "\n"
 
@@ -247,7 +283,6 @@ class TopicGPT:
         result = self.topic_prompting.general_prompt(query)
 
         answer = result[0][-1]["choices"][0]["message"]["content"]
-        function_call = result[0][0]["function_call"]
         function_result = result[1]
         self.topic_prompting._fix_dictionary_topwords()
         self.topic_lis = self.topic_prompting.topic_lis
@@ -272,5 +307,5 @@ class TopicGPT:
             return function_result
         
 
-    
+    # TODO: Add nice printing function
     # TODO: Change functions to not reduce vocab again

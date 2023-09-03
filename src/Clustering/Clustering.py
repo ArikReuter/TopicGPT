@@ -100,7 +100,7 @@ class Clustering_and_DimRed():
         outliers = np.where(labels == -1)[0]
 
         if self.number_clusters_hdbscan is not None:
-            clusterer = AgglomerativeClustering(n_clusters=self.number_clusters_hdbscan)
+            clusterer = AgglomerativeClustering(n_clusters=self.number_clusters_hdbscan)  #one cluster for outliers  
             labels = clusterer.fit_predict(embeddings)
             labels[outliers] = -1
 

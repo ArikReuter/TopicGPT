@@ -241,7 +241,7 @@ def extract_topics(corpus: list[str], document_embeddings: np.ndarray, clusterer
     return topics
 
 @staticmethod
-def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 2000, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"]) -> list[Topic]:
+def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str], document_embeddings: np.ndarray, clusterer: Clustering_and_DimRed, vocab_embeddings: np.ndarray, n_topwords: int = 2000, topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], consider_outliers:bool = False) -> list[Topic]:
     """
     Works like extract_topics but does not compute the vocabulary of the corpus. Instead it uses the provided vocab.
     params: 
@@ -252,6 +252,7 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
         vocab_embeddings: embeddings of the vocabulary
         n_topwords: number of top-words to extract from the topics
         topword_extraction_methods: list of methods to extract top-words from the topics. Can contain "tfidf" and "cosine_similarity"
+        consider_outliers: whether to consider outliers or not
     returns:
         list of Topic objects
     """
@@ -274,7 +275,7 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
     dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
-    word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
+    word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = consider_outliers)  # compute the word-topic matrix of the corpus
     if "tfidf" in topword_extraction_methods:
         tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
@@ -297,8 +298,11 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
         embeddings_hd = embeddings_hd[similarity_sorting]
         embeddings_ld = embeddings_ld[similarity_sorting]
 
-        if type(cosine_topwords[label]) == dict:
-            cosine_topwords[label] = cosine_topwords[label][0]
+        try:
+            if type(cosine_topwords[label]) == dict:
+                cosine_topwords[label] = cosine_topwords[label][0]
+        except:
+            pass
 
         top_words = {
             "tfidf": tfidf_topwords[label] if "tfidf" in topword_extraction_methods else None,
@@ -386,6 +390,7 @@ def extract_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.nd
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
     word_topic_mat = extractor.compute_word_topic_mat(corpus, vocab, labels, consider_outliers = False)  # compute the word-topic matrix of the corpus
+
     if "tfidf" in topword_extraction_methods:
         tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
@@ -393,7 +398,7 @@ def extract_topics_labels_vocab(corpus: list[str], document_embeddings_hd: np.nd
                                                                                                  
     topics = []
     for i, label in enumerate(np.unique(labels)):
-        if label == -1: # dont include outliers
+        if label < -0.5: # dont include outliers
             continue
         topic_idx = f"{label}"
         documents = [doc for j, doc in enumerate(corpus) if labels[j] == label]

@@ -248,13 +248,13 @@ class ExtractTopWords:
         """
 
         if consider_outliers:
-            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels))) - 1))
+            word_topic_mat = np.zeros(len(vocab), len((np.unique(labels))))
         else:
-            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
+            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)) - 1)))
 
         vocab_set = set(vocab)
         for i, doc in tqdm(enumerate(corpus), desc="Computing word-topic matrix", total=len(corpus)):
-            if labels[i] != -1:
+            if labels[i] > - 0.5:
                 bow = self.compute_bow_representation(doc, vocab, vocab_set)
                 idx_to_add = labels[i]
                 word_topic_mat[:, idx_to_add] += bow
@@ -275,18 +275,17 @@ class ExtractTopWords:
         corpus_arr = np.array(corpus) 
 
         if consider_outliers:
-            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels))) - 1))
+            word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
         else:
             word_topic_mat = np.zeros((len(vocab), len((np.unique(labels)))))
         
         for i, label in tqdm(enumerate(np.unique(labels)), desc="Computing word-topic matrix", total=len(np.unique(labels))):
-            if label != -1:
-                topic_docs = corpus_arr[labels == label]
-                topic_doc_string = " ".join(topic_docs)
-                topic_doc_words = word_tokenize(topic_doc_string)
-                topic_doc_counter = Counter(topic_doc_words)
+            topic_docs = corpus_arr[labels == label]
+            topic_doc_string = " ".join(topic_docs)
+            topic_doc_words = word_tokenize(topic_doc_string)
+            topic_doc_counter = Counter(topic_doc_words)
 
-                word_topic_mat[:, i] = np.array([topic_doc_counter.get(word, 0) for word in vocab])
+            word_topic_mat[:, i] = np.array([topic_doc_counter.get(word, 0) for word in vocab])
         
         return word_topic_mat
 
@@ -302,6 +301,9 @@ class ExtractTopWords:
         returns: 
             dict, dictionary of topics and their top words
         """
+
+        if -1 in list(np.unique(labels)):
+            word_topic_mat = word_topic_mat[:, 1:]
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -381,6 +383,9 @@ class ExtractTopWords:
         similarity_mat = self.compute_embedding_similarity_centroids(vocab, vocab_embedding_dict, umap_mapper, centroid_dict, reduce_vocab_embeddings, reduce_centroid_embeddings)
         top_words = {}
         top_word_scores = {}
+        
+        if -1 in list(np.unique(list(centroid_dict.keys()))):	
+            word_topic_mat = word_topic_mat[:, 1:] #ignore outliers
 
         for i, topic in enumerate(np.unique(list(centroid_dict.keys()))):
             if topic != -1:

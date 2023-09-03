@@ -10,8 +10,11 @@ import pickle
 
 import unittest
 from src.TopicGPT.TopicGPT import TopicGPT
-#from src.TopicRepresentation.TopicRepresentation import Topic
 from TopicRepresentation.TopicRepresentation import Topic
+
+from src.Clustering.Clustering import Clustering_and_DimRed
+from src.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
+from src.TopicPrompting.TopicPrompting import TopicPrompting
 
 class TestTopicGPT_init_and_fit(unittest.TestCase):
     """
@@ -57,8 +60,6 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         
         topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                             n_topics= 20,
-                            openai_prompting_model="gpt-4",
-                            max_number_of_tokens=8000,
                             corpus_instruction="This is a corpus instruction", 
                             document_embeddings = self.doc_embeddings,
                             vocab_embeddings= self.embeddings_vocab)
@@ -67,16 +68,21 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         # check if assertions are triggered
 
         with self.assertRaises(AssertionError):
+            topicgpt = TopicGPT(openai_api_key = None, 
+                                n_topics= 32,
+                                openai_prompting_model="gpt-4",
+                                max_number_of_tokens=8000,
+                                corpus_instruction="This is a corpus instruction")
+
+        with self.assertRaises(AssertionError):
             topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                                 n_topics= 0,
-                                openai_prompting_model="gpt-4",
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
             
         with self.assertRaises(AssertionError):
             topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                                 n_topics= 20,
-                                openai_prompting_model="gpt-4",
                                 max_number_of_tokens=0,
                                 corpus_instruction="This is a corpus instruction")
             
@@ -96,12 +102,12 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(isinstance(topicgpt.vocab[0], str))
 
             self.assertTrue(isinstance(topicgpt.topic_lis, list))
-
-            print(topicgpt.topic_lis[0])
-            print(type(topicgpt.topic_lis[0]))
             self.assertTrue(type(topicgpt.topic_lis[0]) == Topic)
 
-            self.assertTrue(len(topicgpt.topic_lis) <= 20)
+            if topicgpt.n_topics is not None:
+                print(f"{len(topicgpt.topic_lis)}, {topicgpt.n_topics}")
+                print(topicgpt.topic_lis)
+                self.assertTrue(len(topicgpt.topic_lis) == topicgpt.n_topics)
 
             self.assertTrue(topicgpt.topic_lis == topicgpt.topic_prompting.topic_lis)
             self.assertTrue(topicgpt.vocab == topicgpt.topic_prompting.vocab)
@@ -116,11 +122,40 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         topicgpt2 = TopicGPT(openai_api_key = self.api_key_openai,
                              n_topics= None,
                                 document_embeddings = self.doc_embeddings, 
+                                vocab_embeddings = self.embeddings_vocab)
+        
+        topicgpt3 = TopicGPT(openai_api_key=self.api_key_openai, 
+                              n_topics = 1,
+                                document_embeddings = self.doc_embeddings,
                                 vocab_embeddings = self.embeddings_vocab,
-                                openai_prompting_model="gpt-4",
-                                max_number_of_tokens=8000)
+                                n_topwords=10,
+                                n_topwords_description=10,
+                                topword_extraction_methods=["cosine_similarity"])
+        
+        clusterer4 = Clustering_and_DimRed(
+            n_dims_umap = 10,
+            n_neighbors_umap = 20,
+            min_cluster_size_hdbscan = 10,
+            number_clusters_hdbscan= 10 # use only 10 clusters
+        )
 
-        topic_gpt_list = [topicgpt1, topicgpt2]
+        topword_enhancement4 = TopwordEnhancement(openai_key = self.api_key_openai)
+        topic_prompting4 = TopicPrompting(
+            openai_key = self.api_key_openai,
+            enhancer = topword_enhancement4,
+            topic_lis = None
+        )
+
+        topicgpt4 = TopicGPT(openai_api_key=self.api_key_openai,
+                                n_topics= None,
+                                    document_embeddings = self.doc_embeddings, 
+                                    vocab_embeddings = self.embeddings_vocab,
+                                    topic_prompting = topic_prompting4,
+                                    clusterer = clusterer4,
+                                    topword_extraction_methods=["tfidf"])
+                        
+
+        topic_gpt_list = [topicgpt1, topicgpt2, topicgpt3, topicgpt4]
 
         for topic_gpt in topic_gpt_list:
             instance_test(topic_gpt)
