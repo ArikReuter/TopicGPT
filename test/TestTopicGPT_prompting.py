@@ -6,7 +6,9 @@ parentdir = os.path.dirname(currentdir)
 #print(parentdir)
 
 sys.path.insert(0, f"{parentdir}/src/TopicGPT/Model")
+sys.path.insert(0, f"{parentdir}/src/TopicGPT/TopicRepresentation")
 from TopicGPT import TopicGPT
+from TopicRepresentation import Topic
 
 sys.path.insert(0, parentdir) 
 
@@ -15,11 +17,10 @@ import pickle
 
 import unittest
 
-from src.TopicGPT.TopicRepresentation.TopicRepresentation import Topic
-
 from src.TopicGPT.Clustering.Clustering import Clustering_and_DimRed
 from src.TopicGPT.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
 from src.TopicGPT.TopicPrompting.TopicPrompting import TopicPrompting
+
 
 openai.organization = os.environ.get('OPENAI_ORG')
 
@@ -35,8 +36,12 @@ class TestTopicGPT_prompting(unittest.TestCase):
         """
 
         print("Setting up class...")
-        with open("Data/SavedTopicRepresentations/TopicGpt_20ng.pkl", "rb")  as f:
-            self.topicgpt = pickle.load(f)
+        try:
+            with open("Data/SavedTopicRepresentations/TopicGpt_20ng.pkl", "rb")  as f:
+                self.topicgpt = pickle.load(f)
+        except FileNotFoundError:
+              with open("../Data/SavedTopicRepresentations/TopicGpt_20ng.pkl", "rb")  as f:
+                self.topicgpt = pickle.load(f)
 
         print(f"The topic list of this object is: \n {self.topicgpt.topic_lis} \n\n")
 
@@ -225,6 +230,7 @@ class TestTopicGPT_prompting(unittest.TestCase):
     
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
+                print(type(function_result[0]))
                 self.assertTrue(type(function_result[0]) == Topic)
                 self.assertTrue(len(function_result) == added_topic_len + len(self.topicgpt.topic_lis) -1 )
 
@@ -368,6 +374,7 @@ class TestTopicGPT_prompting(unittest.TestCase):
     
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
+                print(type(function_result[0]))
                 self.assertTrue(type(function_result[0]) == Topic)
                 self.assertTrue(len(function_result) == len(self.topicgpt.topic_lis) +1)
 
