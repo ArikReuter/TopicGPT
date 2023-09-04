@@ -12,7 +12,7 @@ More specifically, it provides the following core functionalities:
 - Addition of new topics based on keywords
 - Deletion of topics
   
-It is further possible, to directly interact with TopicGPT via prompting and without explicitly calling  functions - a GPT autonomously decides which functionality to use).
+It is further possible, to directly interact with TopicGPT via prompting and without explicitly calling  functions - an LLM autonomously decides which functionality to use.
 
 ## Installation
 
