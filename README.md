@@ -18,9 +18,38 @@ It is further possible, to directly interact with TopicGPT via prompting and wit
 
 ## Example 
 
-In the following example, the usage of a few functions on the 20 Newsgroups corpus is demonstrated (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html). It is assumed that embeddings of the respective corpus and the repsective vocabulary have already been computed by using the class "GetEmbeddings.py" from this repository. 
+The following example demonstrates how TopicGPT can be used on a real-world dataset. A subset of the Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) will be used for this purpose. 
 
-#### Extracting Topics 
+### Load the data
+
+```python
+from sklearn.datasets import fetch_20newsgroups
+
+data = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes')) #download the 20 Newsgroups dataset
+corpus = data['data'][:1000] # just select the first 1000 documents for this example
+
+corpus = [doc for doc in corpus if doc != ""] #remove empty documents
+```
+### Initialize the model 
+
+Note that an OpenAi API-Key is needed to compute the embeddings and execute the prompts. See https://platform.openai.com/account/api-keys for more details. 
+
+```python 
+from topicgpt.TopicGPT import TopicGPT
+
+tm = TopicGPT(
+    openai_api_key = <your-openai-api-key>
+)
+```
+
+### Fit the model 
+
+The fit method fits the model. This can take, depending on the size of the dataset and wether embeddings have been provided, from a few minutes to several hours. 
+```python 
+tm.fit(corpus) # the corpus argument has the type list[str] where each string represents one document
+```
+
+### Extracting Topics 
 
 ```python
 clusterer = Clustering.Clustering_and_DimRed() # define object to reduce dimensionality and cluster documents 
