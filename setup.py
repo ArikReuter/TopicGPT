@@ -4,11 +4,6 @@ from setuptools import setup, find_packages
 with open("README.md", 'r', encoding='utf') as f:
     long_description = f.read()
 
-with open("requirements.txt", 'r', encoding='utf') as f:
-    requirements = f.read()
-
-print(requirements)
-
 setup(
     name='TopicGPT',
     version='0.0.1',
@@ -24,6 +19,7 @@ setup(
         'backports.functools-lru-cache==1.6.5',
         'bleach==6.0.0',
         'bokeh==3.2.1',
+        'build==1.0.0',
         'certifi==2023.5.7',
         'charset-normalizer==3.1.0',
         'click==8.1.6',

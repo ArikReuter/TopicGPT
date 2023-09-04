@@ -2,3 +2,6 @@ Data/
 __pycache__/
 Embeddings/
 t.ipynb
+build/
+dist/
+*.egg-info/

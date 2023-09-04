@@ -7,6 +7,7 @@ backcall==0.2.0
 backports.functools-lru-cache==1.6.5
 bleach==6.0.0
 bokeh==3.2.1
+build==1.0.0
 certifi==2023.5.7
 charset-normalizer==3.1.0
 click==8.1.6
@@ -86,6 +87,7 @@ pyct==0.5.0
 Pygments==2.15.1
 pynndescent==0.5.10
 pyparsing==3.0.9
+pyproject_hooks==1.0.0
 python-dateutil==2.8.2
 pytz==2023.3
 pyviz-comms==2.3.2
