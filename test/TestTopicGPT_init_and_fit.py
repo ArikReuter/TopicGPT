@@ -5,7 +5,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 #print(parentdir)
 
-sys.path.insert(0, f"{parentdir}/src/TopicGPT")
+sys.path.insert(0, f"{parentdir}/src/TopicGPT/Model")
 from TopicGPT import TopicGPT
 
 sys.path.insert(0, parentdir) 
@@ -15,11 +15,11 @@ import pickle
 
 import unittest
 
-from TopicRepresentation.TopicRepresentation import Topic
+from src.TopicGPT.TopicRepresentation.TopicRepresentation import Topic
 
-from src.Clustering.Clustering import Clustering_and_DimRed
-from src.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
-from src.TopicPrompting.TopicPrompting import TopicPrompting
+from src.TopicGPT.Clustering.Clustering import Clustering_and_DimRed
+from src.TopicGPT.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
+from src.TopicGPT.TopicPrompting.TopicPrompting import TopicPrompting
 
 class TestTopicGPT_init_and_fit(unittest.TestCase):
     """
