@@ -2,17 +2,14 @@ import numpy as np
 import os 
 import sys
 import inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
 
-from Clustering.Clustering import Clustering_and_DimRed
-from ExtractTopWords.ExtractTopWords import ExtractTopWords
-from TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
-from GetEmbeddings.GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
-from TopicPrompting.TopicPrompting import TopicPrompting
-from TopicRepresentation.TopicRepresentation import Topic
-import TopicRepresentation.TopicRepresentation as TopicRepresentation
+from Clustering import Clustering_and_DimRed
+from ExtractTopWords import ExtractTopWords
+from TopwordEnhancement import TopwordEnhancement
+from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
+from TopicPrompting import TopicPrompting
+from TopicRepresentation import Topic
+import TopicRepresentation as TopicRepresentation
 
 
 

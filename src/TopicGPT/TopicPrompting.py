@@ -1,9 +1,6 @@
 import sys
 import os
-import inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
+import inspect 
 import openai
 import numpy as np
 import json
@@ -14,9 +11,9 @@ import sklearn
 import hdbscan
 from copy import deepcopy
 
-from TopicRepresentation.TopicRepresentation import Topic
-from TopicRepresentation.TopicRepresentation import extract_and_describe_topic_cos_sim
-from TopicRepresentation.TopicRepresentation import extract_describe_topics_labels_vocab
+from TopicRepresentation import Topic
+from TopicRepresentation import extract_and_describe_topic_cos_sim
+from TopicRepresentation import extract_describe_topics_labels_vocab
 from TopwordEnhancement import TopwordEnhancement
 
 

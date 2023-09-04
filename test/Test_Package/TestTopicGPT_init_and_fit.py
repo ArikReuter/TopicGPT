@@ -8,7 +8,7 @@ import unittest
 
 from topicgpt.TopicRepresentation.TopicRepresentation import Topic
 
-from topicgpt.Clustering.Clustering import Clustering_and_DimRed
+from topicgpt.Clustering import Clustering_and_DimRed
 from topicgpt.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
 from topicgpt.TopicPrompting.TopicPrompting import TopicPrompting
 from topicgpt.Model.TopicGPT import TopicGPT
