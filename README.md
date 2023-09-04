@@ -18,7 +18,7 @@ It is further possible, to directly interact with TopicGPT via prompting and wit
 
 ## Example 
 
-The following example demonstrates how TopicGPT can be used on a real-world dataset. A subset of the Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) will be used for this purpose. 
+The following example demonstrates how TopicGPT can be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) will be used for this purpose. 
 
 ### Load the data
 
@@ -26,19 +26,20 @@ The following example demonstrates how TopicGPT can be used on a real-world data
 from sklearn.datasets import fetch_20newsgroups
 
 data = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes')) #download the 20 Newsgroups dataset
-corpus = data['data'][:1000] # just select the first 1000 documents for this example
+corpus = data['data'] 
 
 corpus = [doc for doc in corpus if doc != ""] #remove empty documents
 ```
 ### Initialize the model 
 
-Note that an OpenAi API-Key is needed to compute the embeddings and execute the prompts. See https://platform.openai.com/account/api-keys for more details. 
+Note that an OpenAi API-Key is needed to compute the embeddings and execute the prompts. See https://platform.openai.com/account/api-keys for more details. We select 20 topics in this case since the Twenty Newsgroups corpus comprises documents from 20 different newsgroups. It is also possible to let Hdbscan determine the number of topics automatically. 
 
 ```python 
 from topicgpt.TopicGPT import TopicGPT
 
 tm = TopicGPT(
-    openai_api_key = <your-openai-api-key>
+    openai_api_key = <your-openai-api-key>,
+    n_topics = 20 # select 20 topics since the true number of topics is 20 
 )
 ```
 
@@ -55,19 +56,66 @@ Obtain an overview over the indentified topics
 ```python
 print(tm.topic_lis)
 ```
-Output
+_Output_
 ```
-[Topic 0: Scientific Experiments,
- Topic 1: Sports,
- Topic 2: Cryptography and Security,
- Topic 3: Computer Hardware and Software Compatibility,
- Topic 4: medical treatments,
- Topic 5: Motorcycle Racing,
- Topic 6: Automotive,
- Topic 7: Religious Doctrine,
- Topic 8: Space Exploration,
- Topic 9: Technology and Sports,
- Topic 10: War Crimes]
+[Topic 0: Electronics Equipment Sales,
+ Topic 1: Image Processing,
+ Topic 2: Gun control,
+ Topic 3: Online Privacy and Anonymity,
+ Topic 4: Conflict and Violence.,
+ Topic 5: Computer Hardware,
+ Topic 6: Belief and Atheism,
+ Topic 7: Online Discussions,
+ Topic 8: Computer Software,
+ Topic 9: Car Features and Performance,
+ Topic 10: Encryption and Government,
+ Topic 11: Technology and Computing.,
+ Topic 12: Technology and Computing,
+ Topic 13: Space Exploration,
+ Topic 14: Motorcycle Riding Techniques,
+ Topic 15: Technology,
+ Topic 16: Hockey Games,
+ Topic 17: Health and Medicine.,
+ Topic 18: Baseball games and teams.,
+ Topic 19: Beliefs about Homosexuality.]
+```
+To obtain more detailed information on each topic, we can call the "print_topics" method: 
+
+```python
+tm.print_topics()
+```
+_Output_
+```
+Topic 0: Electronics Equipment Sales
+
+Topic_description: The common topic of the given words appears to be "electronics and technology". 
+
+Various aspects and sub-topics of this topic include:
+1. Buying and selling: "offer", "sale", "sell", "price", "buy"
+2. Device usage and features: "use", "get", "new", "used", "condition"
+3. Technical specifications: "wire", "ground", "power", "circuit", "voltage"
+4. Communication and connectivity: "phone", "email", "modem", "wireless", "connection"
+5. Accessories and peripherals: "battery", "cable", "manuals", "disk", "monitor"
+Top words: ["n't", 'one', 'would', 'use', 'like', 'get', 'new', 'used', 'offer', 'sale']
+
+[...]
+```
+We can also visualize the resulting clusters to get an overview of the shape and size of the clusters
+```
+tm.visualize_clusters()
+```
+
+### Find out more detailed information about the identified topics
+
+First, we might be interested in knowing what aspects of Mathematics topic 0 is exactly about: 
+
+```python 
+tm.pprompt("What information on the topic 'Mathematics' does topic 0 contain?")
+```
+
+_Output_
+```
+
 ```
 
 #### Topic-based Prompting 
@@ -116,6 +164,8 @@ It is also possible to create completely new, additional topics
 pmp.general_prompt("Please create a new topic based on Climate Change")
 ```
 ## How TopicGPT works
+
+## Disclaimer
 
 ## References
 
