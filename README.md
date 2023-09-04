@@ -4,17 +4,19 @@ TopicGPT integrates the remarkable capabilities of current LLMs such as GPT-3.5 
 While traditional topic models extract topics as simple lists of top-words, such as ["Lion", "Leopard", "Rhino", "Elephant", "Buffalo"], TopicGPT offers rich and dynamic topic representations that can be intuitively understood, extensively investigated and modified in various ways via a simple text commands. 
 
 More specifically, it provides the following core functionalities: 
-- Identification of clusters of documents and topword extraction
+- Identification of clusters of documents and top-word extraction
 - Generation of detailed and informative topic descriptions 
 - Extraction of detailed information about topics via Retrieval-Augmented-Generation (RAG)
 - Comparison of topics
-- Splitting and Combining of identified topics
+- Splitting and combining of identified topics
 - Addition of new topics based on keywords
 - Deletion of topics
   
-It is further possible, to directly interact with TopicGPT via prompting and without explizit calling of functions (a GPT decides which functionality to use). 
+It is further possible, to directly interact with TopicGPT via prompting and without explicitly calling  functions - a GPT autonomously decides which functionality to use).
 
-### Example use
+## Installation
+
+## Example 
 
 In the following example, the usage of a few functions on the 20 Newsgroups corpus is demonstrated (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html). It is assumed that embeddings of the respective corpus and the repsective vocabulary have already been computed by using the class "GetEmbeddings.py" from this repository. 
 
@@ -78,7 +80,7 @@ It is also possible to create completely new, additional topics
 ```python
 pmp.general_prompt("Please create a new topic based on Climate Change")
 ```
-# How it works
+## How TopicGPT works
 
 # Credits and References
 
