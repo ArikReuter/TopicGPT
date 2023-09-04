@@ -1,6 +1,3 @@
-import sys
-import os
-import inspect
 import tiktoken
 import openai
 from typing import Callable

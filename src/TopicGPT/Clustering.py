@@ -13,8 +13,6 @@ class Clustering_and_DimRed():
     """
     Class to perform dimensionality reduction with UMAP followed by clustering with HDBSCAN.
     """
-
-
     def __init__(self,
                  n_dims_umap:int = 5,
                  n_neighbors_umap:int = 15,

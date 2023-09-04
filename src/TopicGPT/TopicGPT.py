@@ -1,15 +1,22 @@
 import numpy as np
-import os 
-import sys
-import inspect
 
-from Clustering import Clustering_and_DimRed
-from ExtractTopWords import ExtractTopWords
-from TopwordEnhancement import TopwordEnhancement
-from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
-from TopicPrompting import TopicPrompting
-from TopicRepresentation import Topic
-import TopicRepresentation as TopicRepresentation
+# make sure the import works even if the package has not been installed and just the files are used
+try:
+    from topicgpt.Clustering import Clustering_and_DimRed
+    from topicgpt.ExtractTopWords import ExtractTopWords
+    from topicgpt.TopwordEnhancement import TopwordEnhancement
+    from topicgpt.GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
+    from topicgpt.TopicPrompting import TopicPrompting
+    from topicgpt.TopicRepresentation import Topic
+    import topicgpt.TopicRepresentation as TopicRepresentation
+except:
+    from Clustering import Clustering_and_DimRed
+    from ExtractTopWords import ExtractTopWords
+    from TopwordEnhancement import TopwordEnhancement
+    from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
+    from TopicPrompting import TopicPrompting
+    from TopicRepresentation import Topic
+    import TopicRepresentation as TopicRepresentation
 
 
 

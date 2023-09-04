@@ -11,9 +11,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from gensim.models.coherencemodel import CoherenceModel
 from gensim.corpora import Dictionary
 
-
-
-
 def Embed_corpus(dataset, embedder = SentenceTransformer("paraphrase-MiniLM-L6-v2"), emb_filename= None, emb_path = "Embeddings/"):
     """
     Create a dictionary with the word embedding of every word in the dataset. 

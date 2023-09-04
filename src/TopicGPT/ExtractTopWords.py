@@ -4,16 +4,17 @@ import collections
 from tqdm import tqdm
 from typing import List
 import numpy as np
-import re  # import the re module
+import re  
 from nltk.tokenize import word_tokenize
-import sys
-import os
-import inspect
 import umap
 from collections import Counter
 import warnings
 
-from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
+# make sure the import works even if the package has not been installed and just the files are used
+try:
+    from topicgpt.GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
+except:
+    from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
 
 nltk.download('stopwords')
 nltk.download('punkt')

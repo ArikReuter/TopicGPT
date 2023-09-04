@@ -1,6 +1,3 @@
-import sys
-import os
-import inspect 
 import openai
 import numpy as np
 import json
@@ -11,10 +8,17 @@ import sklearn
 import hdbscan
 from copy import deepcopy
 
-from TopicRepresentation import Topic
-from TopicRepresentation import extract_and_describe_topic_cos_sim
-from TopicRepresentation import extract_describe_topics_labels_vocab
-from TopwordEnhancement import TopwordEnhancement
+# make sure the import works even if the package has not been installed and just the files are used
+try: 
+    from topicgpt.TopicRepresentation import Topic
+    from topicgpt.TopicRepresentation import extract_and_describe_topic_cos_sim
+    from topicgpt.TopicRepresentation import extract_describe_topics_labels_vocab
+    from topicgpt.TopwordEnhancement import TopwordEnhancement
+except:
+    from TopicRepresentation import Topic
+    from TopicRepresentation import extract_and_describe_topic_cos_sim
+    from TopicRepresentation import extract_describe_topics_labels_vocab
+    from TopwordEnhancement import TopwordEnhancement
 
 
 basic_model_instruction = """You are a helpful assistant. 

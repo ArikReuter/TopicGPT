@@ -6,13 +6,19 @@ import inspect
 from tqdm import tqdm
 import umap
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
+# make sure the import works even if the package has not been installed and just the files are used
 
-from Clustering import Clustering_and_DimRed
-from ExtractTopWords import ExtractTopWords
-from TopwordEnhancement import TopwordEnhancement
+try:
+    from topicgpt.Clustering import Clustering_and_DimRed
+    from topicgpt.ExtractTopWords import ExtractTopWords
+    from topicgpt.TopwordEnhancement import TopwordEnhancement
+except:
+    from Clustering import Clustering_and_DimRed
+    from ExtractTopWords import ExtractTopWords
+    from TopwordEnhancement import TopwordEnhancement
+
+
+
 
 import json
 
