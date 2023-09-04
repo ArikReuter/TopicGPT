@@ -107,16 +107,34 @@ tm.visualize_clusters()
 
 ### Find out more detailed information about the identified topics
 
-First, we might be interested in knowing what aspects of Mathematics topic 0 is exactly about: 
+First, we might be interested in knowing what information on the moon landing the space topic (topic 13) has. 
 
 ```python 
-tm.pprompt("What information on the topic 'Mathematics' does topic 0 contain?")
+tm.pprompt("Which information on the keyword 'moon landing' does topic 13 have?")
 ```
 
 _Output_
 ```
+GPT wants to the call the function:  {
+  "name": "knn_search",
+  "arguments": "{\n  \"topic_index\": 13,\n  \"query\": \"moon landing\",\n  \"k\": 5\n}"
+}
+Topic 13, which is related to the keyword "moon landing," has the following information:
 
+1. Document index 258: This document provides an introduction to the solar system and mentions that advancements in rocketry after World War II enabled machines to travel to the Moon and other planets. It highlights that the United States has sent both automated spacecraft and human-crewed expeditions to explore the Moon.
+
+2. Document index 535: This document discusses a $65 million program called the Back to the Moon bill, which aims to encourage private companies to develop lunar orbiters. It mentions that there is a chance of making a lunar mission happen in this decade through this program.
+
+3. Document index 357: This document is a request for more information on a recent newspaper article about the Japanese crashing or crash-landing a package on the Moon. It indicates that the article was vague and unclear.
+
+4. Document index 321: This document speculates about what would have happened if the Soviets had beaten the United States in the Moon race. It suggests that the US would have still performed Moon landings and potentially set up a lunar base. The focus on Mars exploration would have depended on the Soviets' actions.
+
+5. Document index 102: This document mentions the Hiten engineering-test mission, which spent time in a highly eccentric Earth orbit and performed lunar flybys before being inserted into lunar orbit using gravity-assist-like maneuvers. It states that the mission was expected to crash on the Moon eventually.
+
+Please note that the above summaries are based on the content of the documents and may not capture all the information contained within them.
 ```
+
+From this output we see that an instance of a GPT decided to call the function "knn_search" from the class "TopicPrompting". Indeed some documents on the topic "moon landing" have been found and the model summarizes the relevant information accordingly. 
 
 #### Topic-based Prompting 
 
