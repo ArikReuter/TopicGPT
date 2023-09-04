@@ -6,8 +6,6 @@ parentdir = os.path.dirname(currentdir)
 #print(parentdir)
 
 sys.path.insert(0, f"{parentdir}/src/TopicGPT")
-
-#sys.path.insert(0, "C:/Users/arik_/Documents/Dokumente/Studium/Master/LLM_seminar/Project/src/TopicGPT")
 from TopicGPT import TopicGPT
 
 sys.path.insert(0, parentdir) 
@@ -51,7 +49,6 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
 
         with open("Data/Emebeddings/embeddings_20ng_vocab.pkl", "rb") as f:
             cls.embeddings_vocab = pickle.load(f)
-
 
     def test_init(self):
         """
@@ -112,8 +109,6 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(type(topicgpt.topic_lis[0]) == Topic)
 
             if topicgpt.n_topics is not None:
-                print(f"{len(topicgpt.topic_lis)}, {topicgpt.n_topics}")
-                print(topicgpt.topic_lis)
                 self.assertTrue(len(topicgpt.topic_lis) == topicgpt.n_topics)
 
             self.assertTrue(topicgpt.topic_lis == topicgpt.topic_prompting.topic_lis)

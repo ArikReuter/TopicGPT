@@ -1,20 +1,25 @@
 import os 
 import sys
 import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+#print(parentdir)
+
+sys.path.insert(0, f"{parentdir}/src/TopicGPT")
+from TopicGPT import TopicGPT
+
+sys.path.insert(0, parentdir) 
+
 import openai
 import pickle
 
 import unittest
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir) 
-
-
-
-from src.TopicRepresentation.TopicRepresentation import Topic
-from src.TopicGPT_folder import TopicGPT
 from TopicRepresentation.TopicRepresentation import Topic
+
+from src.Clustering.Clustering import Clustering_and_DimRed
+from src.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
+from src.TopicPrompting.TopicPrompting import TopicPrompting
 
 openai.organization = os.environ.get('OPENAI_ORG')
 
@@ -30,7 +35,7 @@ class TestTopicGPT_prompting(unittest.TestCase):
         """
 
         print("Setting up class...")
-        with open("Data/SavedTopicRepresentations/TopicGpt_20ng.pkl", "rb")  as f:
+        with open("../Data/SavedTopicRepresentations/TopicGpt_20ng.pkl", "rb")  as f:
             self.topicgpt = pickle.load(f)
 
         print(f"The topic list of this object is: \n {self.topicgpt.topic_lis} \n\n")
@@ -335,6 +340,7 @@ class TestTopicGPT_prompting(unittest.TestCase):
     
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
+                print("topic_gpt_topic_list: ", self.topicgpt.topic_lis)
     
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
