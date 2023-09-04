@@ -49,19 +49,25 @@ The fit method fits the model. This can take, depending on the size of the datas
 tm.fit(corpus) # the corpus argument has the type list[str] where each string represents one document
 ```
 
-### Extracting Topics 
+### Inspect the found topics
 
+Obtain an overview over the indentified topics
 ```python
-clusterer = Clustering.Clustering_and_DimRed() # define object to reduce dimensionality and cluster documents 
-enhancer = TopwordEnhancement(openai_key = <your_openai_key>, openai_model = "gpt-4", max_context_length = 8000) # define object used for describing and naming objects
-
-topics = TopicRepresentation.extract_and_describe_topics(
-                                            corpus = corpus,  # corpus of documents to be analyzed. Is of type list[str] where each string is a document
-                                            document_embeddings = embeddings,  # embeddings for each document. Is an np.ndarray of shape (n_documents, n_embedding_dimensions)
-                                            clusterer = clusterer, # object to cluster documents
-                                            vocab_embeddings = vocab_embeddings, # A dictionary of type dict[str, np.ndarray] where each key is a word in the vocabulary of the corpus and each value is the corresponding embedding obtained with the same embedding model as for the document embeddings. 
-                                            enhancer=enhancer, # object to describe topics
-                                            )
+print(tm.topic_lis)
+```
+Output
+```
+[Topic 0: Scientific Experiments,
+ Topic 1: Sports,
+ Topic 2: Cryptography and Security,
+ Topic 3: Computer Hardware and Software Compatibility,
+ Topic 4: medical treatments,
+ Topic 5: Motorcycle Racing,
+ Topic 6: Automotive,
+ Topic 7: Religious Doctrine,
+ Topic 8: Space Exploration,
+ Topic 9: Technology and Sports,
+ Topic 10: War Crimes]
 ```
 
 #### Topic-based Prompting 
