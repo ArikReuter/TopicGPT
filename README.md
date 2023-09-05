@@ -267,12 +267,13 @@ It is important to note that, as a model built on top of inherently stochastic L
 - **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
 
 ## References
-UMAP 
-HDBSCAN
+The follwing models, software packages and ideas are central for TopicGPT: 
+- **UMAP**: The Uniform Manifold Approximation and Projection for Dimension Reduction algorithm is used for reducing the dimensionality of document- and word embeddings (McInnes, Leland, John Healy, and James Melville. "Umap: Uniform manifold approximation and projection for dimension reduction." arXiv preprint arXiv:1802.03426 (2018).)
+- **HDBSCAN**: Hierarchical density based clusterin is used to identify the clusters among the dimensionality reduced topics (McInnes, Leland, John Healy, and Steve Astels. "hdbscan: Hierarchical density based clustering." J. Open Source Softw. 2.11 (2017): 205.)
+- **Topword extraction**: Even though the corresponding packages are not directly used, the topword extraction methods used for this package are based on very similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)). 
+- **LLMs from the GPT family**: Some references for the models for computing embeddings and answering the prompts include:
+  - Brown, Tom B., et al. “Language Models are Few-Shot Learners.” Advances in Neural Information Processing Systems 33 (2020).
+  - Radford, Alec, et al. “GPT-4: Generative Pre-training of Transformers with Discrete Latent Variables.” arXiv preprint arXiv:2302.07413 (2023).
+  - Radford, Alec, et al. “Improving Language Understanding by Generative Pre-Training.” URL: https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-unsupervised/language_understanding_paper.pdf. [6]
+  - Radford, Alec, et al. “Language Models are Unsupervised Multitask Learners.” OpenAI Blog 1.8 (2019): 9. [7]
 
-Please note that the topword extraction methods used for this package are based on very similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)).
-
-
-👷‍♀️🚧👷
-Note that this repository is still under developement and will be finished by 08.09.2023. 
-👷‍♀️🚧👷
