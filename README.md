@@ -18,7 +18,7 @@ It is further possible, to directly interact with TopicGPT via prompting and wit
 
 ## Example 
 
-The following example demonstrates how TopicGPT can be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) will be used for this purpose. 
+The following example demonstrates how TopicGPT can be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
 
 ### Load the data
 
