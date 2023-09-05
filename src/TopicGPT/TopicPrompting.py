@@ -575,10 +575,10 @@ class TopicPrompting:
             new_topic.topic_idx = len(self.topic_lis) + i + 1
             new_topics.append(new_topic)
 
-            new_topic_lis = self.topic_lis.copy()
-            new_topic_lis.pop(topic_idx)
-            new_topic_lis += new_topics
-            new_topic_lis = self.reindex_topic_lis(new_topic_lis)
+        new_topic_lis = self.topic_lis.copy()
+        new_topic_lis.pop(topic_idx)
+        new_topic_lis += new_topics
+        new_topic_lis = self.reindex_topic_lis(new_topic_lis)
         
         if inplace:
             self.topic_lis = new_topic_lis
@@ -661,7 +661,7 @@ class TopicPrompting:
         new_topics = self.split_topic_new_assignments(topic_idx, new_topic_assignments, inplace = inplace)
 
         new_topics = self.reindex_topic_lis(new_topics)
-        print(new_topics)
+
         if inplace:
             self.topic_lis = new_topics
 
@@ -1053,7 +1053,7 @@ class TopicPrompting:
         """
         new_topics = self.delete_topic(topic_idx, inplace)
         json_obj = json.dumps({
-            "new topics": [topic.to_dict() for topic in new_topics][-1]
+            f"Topics after deleting the one with index {topic_idx}": [topic.to_dict() for topic in new_topics]
         })
         return json_obj, new_topics
 
