@@ -45,9 +45,10 @@ tm = TopicGPT(
 
 ### Fit the model 
 
-The fit method fits the model. This can take, depending on the size of the dataset and wether embeddings have been provided, from a few minutes to several hours. 
+The fit-method fits the model. This can take, depending on the size of the dataset and wether embeddings have been provided, from a few minutes to several hours. Especially the computation of the embeddings can take some time. 
+
 ```python 
-tm.fit(corpus) # the corpus argument has the type list[str] where each string represents one document
+tm.fit(corpus) # the corpus argument should be of type list[str] where each string represents one document
 ```
 
 ### Inspect the found topics
@@ -107,10 +108,10 @@ tm.visualize_clusters()
 
 ### Find out more detailed information about the identified topics
 
-First, we might be interested in knowing what information on the moon landing the space topic (topic 13) has. 
+First, we might be interested in knowing what information the space topic (topic 13) contains on the moon landing. 
 
 ```python 
-tm.pprompt("Which information on the keyword 'moon landing' does topic 13 have?")
+tm.pprompt("Which information related to the keyword 'moon landing' does topic 13 have?")
 ```
 
 _Output_
@@ -136,6 +137,16 @@ Please note that the above summaries are based on the content of the documents a
 
 From this output we see that an instance of a GPT decided to call the function "knn_search" from the class "TopicPrompting". Indeed some documents on the topic "moon landing" have been found and the model summarizes the relevant information accordingly. 
 
+If we want to check, for instance the document with index 102 in topic 13 to learn more about the Hiten engineering-test mission, we can simply do the following:
+
+```python
+print(tm.topic_lis[13].documents[535])
+```
+_Output_
+```
+Their Hiten engineering-test mission spent a while in a highly eccentric Earth orbit doing lunar flybys, and then was inserted into lunar orbit using some very tricky gravity-assist-like maneuvering.  This meant that it would crash on the Moon eventually, since there is no such thing as a stable lunar orbit (as far as anyone knows), and I believe I recall hearing recently that it was about to happen.
+```
+
 #### Topic-based Prompting 
 
 ```python
@@ -160,7 +171,7 @@ pmp.topic_lis[13].topic_description
 
 This will execute retrieval-augmented generation based on the keyword "Jupiter" for topic 13 and tell you which information on Jupiter topic 13 contains
 ```python
-print(pmp.prompt_knn_search(llm_query = "What information on Jupiter does topic 13 contain)) 
+print(pmp.prompt_knn_search(llm_query = "What information on Jupiter does topic 13 contain?")) 
 ```
 You can identify the subtopics of a given topic.
 ```python
