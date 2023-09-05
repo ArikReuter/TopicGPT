@@ -4,8 +4,8 @@ TopicGPT integrates the remarkable capabilities of current LLMs such as GPT-3.5 
 While traditional topic models extract topics as simple lists of top-words, such as ["Lion", "Leopard", "Rhino", "Elephant", "Buffalo"], TopicGPT offers rich and dynamic topic representations that can be intuitively understood, extensively investigated and modified in various ways via a simple text commands. 
 
 More specifically, it provides the following core functionalities: 
-- Identification of clusters of documents and top-word extraction
-- Generation of detailed and informative topic descriptions 
+- Identification of clusters within document-embeddings and top-word extraction
+- Generation of informative topic descriptions 
 - Extraction of detailed information about topics via Retrieval-Augmented-Generation (RAG)
 - Comparison of topics
 - Splitting and combining of identified topics
