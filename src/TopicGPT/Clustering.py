@@ -18,7 +18,7 @@ class Clustering_and_DimRed():
                  n_neighbors_umap:int = 15,
                  min_dist_umap:float = 0,
                  metric_umap:str = "cosine",
-                 min_cluster_size_hdbscan:int = 15,
+                 min_cluster_size_hdbscan:int = 30,
                  metric_hdbscan:str = "euclidean",
                  cluster_selection_method_hdbscan:str = "eom",
                  number_clusters_hdbscan:int = None,

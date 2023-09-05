@@ -518,9 +518,13 @@ class TopicPrompting:
         
         response_text = response_message["content"]
         # find integer number in response text
-        match = re.search(r'(-?\d+)', response_text)
-        topic_index = int(match.group(1))
-        
+        try:
+            match = re.search(r'(-?\d+)', response_text)
+            topic_index = int(match.group(1))
+        except:  # in case the LLM does not find any topic that fits the query, return None
+            topic_index = None
+
+            
         if topic_index is None:
             raise ValueError("No integer number found in response text! The model gave the following response: ", response_text)
         

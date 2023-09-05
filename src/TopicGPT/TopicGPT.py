@@ -1,5 +1,6 @@
 import numpy as np
-
+import os
+import pickle
 # make sure the import works even if the package has not been installed and just the files are used
 try:
     from topicgpt.Clustering import Clustering_and_DimRed
@@ -18,7 +19,7 @@ except:
     from TopicRepresentation import Topic
     import TopicRepresentation as TopicRepresentation
 
-
+embeddings_path= "SavedEmbeddings/embeddings.pkl" #global variable for the path to the embeddings
 
 class TopicGPT:
     """
@@ -35,6 +36,7 @@ class TopicGPT:
                  vocab_embeddings: dict[str, np.ndarray] = None,
                  embedding_model: str = "text-embedding-ada-002",
                  max_numer_of_tokens_embedding: int = 8191,
+                 use_saved_embeddings: bool = True,
                  clusterer: Clustering_and_DimRed = None, 
                  n_topwords: int = 2000,
                  n_topwords_description: int = 500,
@@ -57,6 +59,7 @@ class TopicGPT:
             vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings. If None, then it will be computed using the openAI API.
             embedding_model: Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
             max_numer_of_tokens_embedding: Maximum number of tokens to use for the OpenAI API when computing the embeddings.
+            use_saved_embeddings: Whether to use saved embeddings. If True, then the embeddings will be loaded from the file SavedEmbeddings/embeddings.pkl. If False, then the embeddings will be computed using the openAI API and saved to the file SavedEmbeddings/embeddings.pkl.
             clusterer: the clustering and dimensionality reduction object. The class can be found in the "Clustering/Clustering" folder. If None, a clustering object with default parameters will be used. Note that it doe note make sense to provide document and vocab embeddings and an embedding object at the same time. The number of topics specified in the clusterer will overwrite the n_topics argument.
             n_topwords: number of top words to extract and save for each topic. Note that fewer top words might be used later. 
             n_topwords_description: number of top words to give to the LLM in order to describe the topic. 
@@ -93,6 +96,13 @@ class TopicGPT:
         self.compute_vocab_hyperparams = compute_vocab_hyperparams
         self.enhancer = enhancer
         self.topic_prompting = topic_prompting	
+        self.use_saved_embeddings = use_saved_embeddings
+
+        # if embeddings have already been downloaded to the folder SavedEmbeddings, then load them
+        if self.use_saved_embeddings and os.path.exists(embeddings_path):
+            with open(embeddings_path, "rb") as f:
+                self.document_embeddings, self.vocab_embeddings = pickle.load(f)
+
 
         for elem in topword_extraction_methods:
             assert elem in ["tfidf", "cosine_similarity", "topword_enhancement"], "Invalid topword extraction method. Valid methods are 'tfidf', 'cosine_similarity', and 'topword_enhancement'."
@@ -319,5 +329,22 @@ class TopicGPT:
         if return_function_result:
             return function_result
         
+    def save_embeddings(self, path = embeddings_path) -> None:
+        """
+        This function saves the document and vocabulary embeddings to a pickle file. For later re-use
+        params:
+            path: path to save the embeddings to.
+        """
+
+        assert self.document_embeddings is not None and self.vocab_embeddings is not None, "You need to compute the embeddings first."
+
+        # create dictionary if it doesn't exist yet 
+        if not os.path.exists("SavedEmbeddings"):
+            os.makedirs("SavedEmbeddings")
+
+
+        with open(path, "wb") as f:
+            pickle.dump([self.document_embeddings, self.vocab_embeddings], f)
+
 
     # TODO: Change functions to not reduce vocab again
