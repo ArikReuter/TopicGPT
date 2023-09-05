@@ -148,6 +148,79 @@ Their Hiten engineering-test mission spent a while in a highly eccentric Earth o
 ```
 
 ### Modify topics
+We find that topic 6 about Belief and Atheism is a bit general and would thus like to split see what 5 potential subtopics it contains: 
+
+```python
+tm.pprompt("What are 5 potential subtopics of topic 6")
+```
+
+_Output_
+
+```
+GPT wants to the call the function:  {
+  "name": "split_topic_kmeans",
+  "arguments": "{\n  \"topic_idx\": 6,\n  \"n_clusters\": 5\n}"
+}
+
+Here are five potential subtopics of topic 6:
+
+1. Existence of God: This subtopic explores arguments, evidence, proofs, and the existence of God.
+
+2. Atheism vs Theism: This subtopic delves into the concepts of atheism, theism, atheists, and theists, and the debates surrounding these belief systems.
+
+3. Belief and Faith: This subtopic focuses on beliefs, faith, believers, and the roles they play in religious and philosophical contexts.
+
+4. Rationality and Reasoning: This subtopic involves discussions on reason, rationality, logic, and argumentation as they relate to beliefs and debates about religion.
+
+5. Morality and Ethics: This subtopic explores moral values, ethics, morals, and how they influence and are influenced by religious beliefs and debates.
+
+These subtopics were inferred from the words provided and the descriptions of the topics in the corpus used for topic modeling.
+
+```
+Based on those results we decide to not actually split the topic into 5 subtopics but rather just 3 - One on "religious faith", one on "atheism" and one on "ethics and philisophy".
+We also want to actually make those changes to the existing topics, so we tell TopicGPT to do the changes inplace. 
+
+```python
+tm.pprompt("Please split topic 6 into subtopics based on the keywords 'religious faith', 'atheism' and 'ethics and philosophy'. Do this inplace.")
+```
+_Output_
+
+```
+I have split topic 6 into three subtopics based on the provided keywords: "religious faith", "atheism", and "ethics and philosophy". Here are the new subtopics:
+
+1. Topic 21: Religious Beliefs
+   - This topic encompasses the general theme of "Religion and Belief".
+   - Subtopics and aspects of this topic include:
+     - Faith and Beliefs: Believing, belief, true, evidence, truth.
+     - Religious Practices: Praying, heretic, bible, church.
+     - Religious Communities: Christian, Muslim, atheist.
+     - Interpretation and Understanding: Interpretations, interpretation, understanding, context.
+     - Morality and Ethics: Good, wrong, punishment, violence.
+
+2. Topic 22: Existence of God
+   - This topic focuses on "Atheism and Belief".
+   - Subtopics and aspects of this topic include:
+     - Arguments and Evidence: Atheists provide evidence for their beliefs.
+     - Existence of God: Atheists question the existence of God.
+     - Religious Beliefs: Atheists challenge religious beliefs.
+     - Science and Reason: Atheists rely on science and reason.
+     - Morality and Ethics: Atheists discuss morality and ethics.
+
+3. Topic 23: Ethics and Morality
+   - This topic revolves around "Morality and Ethics".
+   - Subtopics and aspects of this topic include:
+     - Moral reasoning: "Argument," "reasoning," "logic," "fallacy," "premises."
+     - Ethical principles: "Right," "wrong," "immoral," "morals," "ethical."
+     - Moral judgments: "Moral," "ethical," "morality," "judgments," "values."
+     - Human behavior: "Homosexual," "sexual," "promiscuous," "behavior," "sex."
+     - Scientific perspective: "Science," "scientific," "evidence," "empirical," "studies."
+Please note that these subtopics are based on the keywords provided and may not cover all aspects of the original topic.
+```
+
+We see that TopicGPT performed the splitting as intended. However, the names and descriptions of the topics got changed slightly in order to optimally fit to the documents that actually constitute the topics based on the keywords. (If you like you can rename them at any time). 
+
+
+
 
 ## Tips and tricks for prompting TopicGPT
 When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
@@ -163,12 +236,19 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 ## Limitations
 
-It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list may not be complete, but could provide useful information on what may go wrong when using TopicGPT:
--Hallucination: 
--Misleading confidence:
--Erroneous embeddings:
+It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list is not aimed at being complete, but could provide useful information on what may go wrong when using TopicGPT:
+
+- **Stoachasticity**: The behaviour of TopicGPT is not deterministic and exhibits some randomness. There is alwyays some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
+- **Hallucination**: LLMs are well known for yielding incorrect but cohernt and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behaviour through extensive prompt engineering, we found that TopicGPT may hallucinate with respect to the following aspects:
+  - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
+  - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable altough the corresponding documents are not actually related.
+  - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurence of falsely positive results. 
+  Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination. 
+- **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
 
 ## References
+UMAP 
+HDBSCAN
 
 Please note that the topword extraction methods used for this package are based on very similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)).
 
