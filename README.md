@@ -154,6 +154,8 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 - Explizitly tell the model which function it should use and which paramters you like. Sometimes the model simply cannot know what you except it to do. For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a paramter of k = 5 and do this inplace")```
 
+- Just ask the same prompt again. Since TopicGPT is a stochastic system, calling the same function with the same argument again might yield a different functionality to be used or a different result. 
+
 - If this doesn't help, you can also directly call the function you want to use from the TopicPrompting class. In the example above you could do ```tm.topic_prompting.split_topic_kmeans(topic_idx = 13, n_clusters = 5, inplace = True)```. Note that all functions the model can call can also be called directly. 
 
 
