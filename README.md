@@ -147,58 +147,28 @@ _Output_
 Their Hiten engineering-test mission spent a while in a highly eccentric Earth orbit doing lunar flybys, and then was inserted into lunar orbit using some very tricky gravity-assist-like maneuvering.  This meant that it would crash on the Moon eventually, since there is no such thing as a stable lunar orbit (as far as anyone knows), and I believe I recall hearing recently that it was about to happen.
 ```
 
-#### Topic-based Prompting 
+### Modify topics
 
-```python
-from TopicPrompting.TopicPrompting import TopicPrompting
+## Tips and tricks for prompting TopicGPT
+When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
 
-pmp = TopicPrompting(
-    openai_prompting_model = "gpt-4",
-    max_context_length_promting = 4000,
-    topic_lis = topics,
-    openai_key = <your_openai_key>, 
-    enhancer=enhancer,
-    vocab_embeddings=vocab_embeddings
-)
-pmp.show_topic_list() #display list of available topics 
-```
+-Explizitly tell the model which function it should use and which paramters you like. Sometimes the model simply cannot know what you except it to do. For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a paramter of k = 5 and do this inplace")```
 
-See the detailed topic description for topic 13
+- If this doesn't help, you can also explicitly call the functionality you like from the TopicPrompting class. In the example above you could do ```tm.topic_prompting.split_topic_kmeans(topic_idx = 13, n_clusters = 5, inplace = True)```. Note that all functions the model can call can also be called directly. 
 
-```python
-pmp.topic_lis[13].topic_description 
-```
 
-This will execute retrieval-augmented generation based on the keyword "Jupiter" for topic 13 and tell you which information on Jupiter topic 13 contains
-```python
-print(pmp.prompt_knn_search(llm_query = "What information on Jupiter does topic 13 contain?")) 
-```
-You can identify the subtopics of a given topic.
-```python
-pmp.general_prompt("What subtopics does topic 6 have?")
-```
-
-Based on the previous analysis, you can ask TopicGPT to actually split a topic based on the previous analysis. 
-```python
-pmp.general_prompt("Please actually split topic 6 into its subtopics. Do this inplace.")
-```
-
-One can also combine topics. 
-```python
-pmp.general_prompt("Combine the topics 19 and 20 into one single topic")
-```
-
-It is also possible to create completely new, additional topics
-```python
-pmp.general_prompt("Please create a new topic based on Climate Change")
-```
 ## How TopicGPT works
 
-## Disclaimer
+## Limitations
+
+It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list may not be complete, but could provide useful information on what may go wrong when using TopicGPT:
+-Hallucination: 
+-Misleading confidence:
+-Erroneous embeddings:
 
 ## References
 
-Please note that the topword extraction methods used for this package are based on similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)).
+Please note that the topword extraction methods used for this package are based on very similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)).
 
 
 👷‍♀️🚧👷
