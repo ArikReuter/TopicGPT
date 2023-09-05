@@ -86,7 +86,7 @@ class TopicPrompting:
         self.function_descriptions = {
                 "knn_search": {
                     "name": "knn_search",
-                    "description": "This function is the best choice to find out if a topic is about a specific subject or keyword or contains information about it. It should also be used to infer the subtopics of a given topic. Note that it is possible that just useless documents are returned.",
+                    "description": "This function is the best choice to find out if a topic is about a specific subject or keyword or aspects or contains information about it. It should also be used to infer the subtopics of a given topic. Note that it is possible that just useless documents are returned.",
                     "parameters": {
                         "type": "object",
                         "properties": {
@@ -574,23 +574,16 @@ class TopicPrompting:
             )
             new_topic.topic_idx = len(self.topic_lis) + i + 1
             new_topics.append(new_topic)
-        
-        if inplace:
-            self.topic_lis.pop(topic_idx)
-            self.topic_lis += new_topics
-            self.reindex_topics()
 
             new_topic_lis = self.topic_lis.copy()
             new_topic_lis.pop(topic_idx)
             new_topic_lis += new_topics
             new_topic_lis = self.reindex_topic_lis(new_topic_lis)
-            return new_topic_lis
-        else:
-            new_topic_lis = self.topic_lis.copy()
-            new_topic_lis.pop(topic_idx)
-            new_topic_lis += new_topics
-            new_topic_lis = self.reindex_topic_lis(new_topic_lis)
-            return new_topic_lis
+        
+        if inplace:
+            self.topic_lis = new_topic_lis
+        
+        return new_topic_lis
 
     def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace:bool = False) -> list[Topic]:
         """
@@ -628,6 +621,11 @@ class TopicPrompting:
         cluster_labels = clusterer.labels_
         new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, inplace)
 
+        new_topics = self.reindex_topic_lis(new_topics)
+
+        if inplace:
+            self.topic_lis = new_topics
+
         return new_topics
     
     def split_topic_keywords(self, topic_idx: int, keywords: str, inplace = False) -> list[Topic]:
@@ -656,7 +654,16 @@ class TopicPrompting:
         similarities = document_embeddings @ keyword_embeddings.T
         new_topic_assignments = np.argmax(similarities, axis = 1)
 
+        # if the topic cannot be split, i.e. all documents are assigned the same label, raise an error
+        if len(np.unique(new_topic_assignments)) == 1:
+            raise ValueError(f"The topic cannot be split into the subtopics {keywords}. All documents are assigned the same label!")
+
         new_topics = self.split_topic_new_assignments(topic_idx, new_topic_assignments, inplace = inplace)
+
+        new_topics = self.reindex_topic_lis(new_topics)
+        print(new_topics)
+        if inplace:
+            self.topic_lis = new_topics
 
         return new_topics
 
@@ -1136,4 +1143,4 @@ class TopicPrompting:
                 print("Error occured: ", error)
                 print("Trying again...")
             
-            return [response_message, second_response], function_response_return_output
+        return [response_message, second_response], function_response_return_output

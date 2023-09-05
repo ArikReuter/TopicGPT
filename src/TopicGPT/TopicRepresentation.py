@@ -5,6 +5,7 @@ import os
 import inspect
 from tqdm import tqdm
 import umap
+import json
 
 # make sure the import works even if the package has not been installed and just the files are used
 
@@ -16,13 +17,6 @@ except:
     from Clustering import Clustering_and_DimRed
     from ExtractTopWords import ExtractTopWords
     from TopwordEnhancement import TopwordEnhancement
-
-
-
-
-import json
-
-
 
 class Topic:
     """
@@ -285,7 +279,7 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
     if "tfidf" in topword_extraction_methods:
         tfidf_topwords, tfidf_dict = extractor.extract_topwords_tfidf(word_topic_mat = word_topic_mat, vocab = vocab, labels = labels, top_n_words = n_topwords)  # extract the top-words according to tfidf
     if "cosine_similarity" in topword_extraction_methods:
-        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = vocab, vocab_embedding_dict = vocab_embeddings, centroid_dict= dim_red_centroid_dict, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = False)
+        cosine_topwords, cosine_dict = extractor.extract_topwords_centroid_similarity(word_topic_mat = word_topic_mat, vocab = vocab, vocab_embedding_dict = vocab_embeddings, centroid_dict= dim_red_centroid_dict, umap_mapper = umap_mapper, top_n_words = n_topwords, reduce_vocab_embeddings = True, reduce_centroid_embeddings = False, consider_outliers = True)
                                                                                            
     topics = []
     for i, label in enumerate(np.unique(labels)):

@@ -138,7 +138,7 @@ class ExtractTopWords:
 
         # print most common words and their frequencies
         if verbose:
-            print("Most common words:")
+            print("Most common words in the vocabulary:")
             for word, count in word_counter.most_common(10):
                 print(f"{word}: {count}")
 
@@ -299,8 +299,9 @@ class ExtractTopWords:
             dict, dictionary of topics and their top words
         """
 
-        if -1 in list(np.unique(labels)):
+        if min(labels) == -1:
             word_topic_mat = word_topic_mat[:, 1:]
+
 
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -315,11 +316,11 @@ class ExtractTopWords:
         # extract top words for each topic
         top_words = {}
         top_word_scores = {}
-        for i, topic in enumerate(np.unique(labels)):
+        for topic in np.unique(labels):
             if topic != -1:
-                indices = np.argsort(-tfidf[:, i - 1])[:top_n_words]
+                indices = np.argsort(-tfidf[:, topic])[:top_n_words]
                 top_words[topic] = [vocab[word_idx] for word_idx in indices]
-                top_word_scores[topic] = [tfidf[word_idx, i - 1] for word_idx in indices]
+                top_word_scores[topic] = [tfidf[word_idx, topic] for word_idx in indices]
 
 
         return top_words, top_word_scores
@@ -381,13 +382,13 @@ class ExtractTopWords:
         top_words = {}
         top_word_scores = {}
         
-        if -1 in list(np.unique(list(centroid_dict.keys()))):	
+        if word_topic_mat.shape[1] > len(np.unique(list(centroid_dict.keys()))):	
             word_topic_mat = word_topic_mat[:, 1:] #ignore outliers
 
         for i, topic in enumerate(np.unique(list(centroid_dict.keys()))):
             if topic != -1:
-                topic_similarity_mat = similarity_mat[:, i] * word_topic_mat[:, i]
+                topic_similarity_mat = similarity_mat[:, topic] * word_topic_mat[:, topic]
                 top_words[topic] = [vocab[word_idx] for word_idx in np.argsort(-topic_similarity_mat)[:top_n_words]]
-                top_word_scores[topic] = [similarity_mat[word_idx, i] for word_idx in np.argsort(-similarity_mat[:, i])[:top_n_words]]
+                top_word_scores[topic] = [similarity_mat[word_idx, topic] for word_idx in np.argsort(-similarity_mat[:, topic])[:top_n_words]]
 
         return top_words, top_word_scores

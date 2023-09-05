@@ -6,12 +6,12 @@ import pickle
 
 import unittest
 
-from topicgpt.TopicRepresentation.TopicRepresentation import Topic
+from topicgpt.TopicRepresentation import Topic
 
 from topicgpt.Clustering import Clustering_and_DimRed
-from topicgpt.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
-from topicgpt.TopicPrompting.TopicPrompting import TopicPrompting
-from topicgpt.Model.TopicGPT import TopicGPT
+from topicgpt.TopwordEnhancement import TopwordEnhancement
+from topicgpt.TopicPrompting import TopicPrompting
+from topicgpt.TopicGPT import TopicGPT
 
 class TestTopicGPT_init_and_fit(unittest.TestCase):
     """
@@ -19,7 +19,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
     """
 
     @classmethod
-    def setUpClass(cls, sample_size = 0.1):
+    def setUpClass(cls, sample_size = 0.5):
         """
         load the necessary data and only keep a sample of it 
         """

@@ -49,7 +49,7 @@ class TopicGPT:
 
         params:
             openai_api_key: your OpenAI API key. You can get this from https://beta.openai.com/account/api-keys.
-            n_topics: number of topics to find. If None, then it will be automatically determined using the Hdbscan algorithm (https://pypi.org/project/hdbscan/). 
+            n_topics: number of topics to find. If None, then it will be automatically determined using the Hdbscan algorithm (https://pypi.org/project/hdbscan/). Otherwise agglomerative clustering will be used. Note that in case of too little data less than the specified number of topics may be found.
             openai_prompting_model: Model provided by Openai to describe the topics and answer the prompts. For available models see https://platform.openai.com/docs/models. 
             max_number_of_tokens: maximum number of tokens to use for the OpenAI API.
             corpus_instruction: If further information on the given corpus are available, it can be beneficial to let the model know about it. 
@@ -206,6 +206,15 @@ class TopicGPT:
             verbose: Whether to print what is happening.
         """
         self.corpus = corpus 
+        
+        # remove empty documents
+        n_empty = 0
+        for doc in self.corpus:
+            if doc == "":
+                self.corpus.remove(doc)
+                n_empty += 1
+        if verbose: 
+            print("Removed " + str(n_empty) + " empty documents.")
 
         if verbose:
                 print("Computing vocabulary...")
@@ -214,7 +223,7 @@ class TopicGPT:
         else:
             self.vocab = list(self.vocab_embeddings.keys())
 
-        if self.vocab_embeddings is None or self.document_embeddings is None:  #TODO differentiate for vocab 
+        if self.vocab_embeddings is None or self.document_embeddings is None:  
             if verbose:
                 print("Computing embeddings...")
             self.compute_embeddings(corpus = self.corpus)
@@ -311,5 +320,4 @@ class TopicGPT:
             return function_result
         
 
-    # TODO: Add nice printing function
     # TODO: Change functions to not reduce vocab again
