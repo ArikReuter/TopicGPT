@@ -229,12 +229,14 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 - Just ask the same prompt again. Since TopicGPT is a stochastic system, calling the same function with the same argument again might yield a different functionality to be used or a different result. 
 
-- If this doesn't help, you can also directly call the function you want to use from the TopicPrompting class. In the example above you could do ```tm.topic_prompting.split_topic_kmeans(topic_idx = 13, n_clusters = 5, inplace = True)```. Note that all functions the model can call can also be called directly. 
+- If this doesn't help, you can also directly call the function you want to use from the TopicPrompting class. In the example above you could do ```tm.topic_prompting.split_topic_kmeans(topic_idx = 13, n_clusters = 5, inplace = True)```. Note that all functions the model can call can also be called directly.
+
+-  In case of hallucination of facts it may help to use GPT-4 for TopicGPT
 
 
 ## How TopicGPT works
 
-## Limitations
+## Limitations and caveats
 
 It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list is not aimed at being complete, but could provide useful information on what may go wrong when using TopicGPT:
 
