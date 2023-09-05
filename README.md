@@ -238,12 +238,14 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list is not aimed at being complete, but could provide useful information on what may go wrong when using TopicGPT:
 
-- **Stoachasticity**: The behaviour of TopicGPT is not deterministic and exhibits some randomness. There is alwyays some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
-- **Hallucination**: LLMs are well known for yielding incorrect but cohernt and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behaviour through extensive prompt engineering, we found that TopicGPT may hallucinate with respect to the following aspects:
+- **Hallucination**: LLMs are well known for yielding incorrect but cohernt and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behaviour through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
   - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
   - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable altough the corresponding documents are not actually related.
+  - 
+- **Stoachasticity**: The behaviour of TopicGPT is not deterministic and exhibits some randomness. There is alwyays some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
   - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurence of falsely positive results. 
-  Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination. 
+  Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination.
+
 - **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
 
 ## References
