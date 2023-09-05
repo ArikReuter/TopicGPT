@@ -225,7 +225,7 @@ We see that TopicGPT performed the splitting as intended. However, the names and
 ## Tips and tricks for prompting TopicGPT
 When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
 
-- Explizitly tell the model which function it should use and which paramters you like. Sometimes the model simply cannot know what you except it to do. For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a paramter of k = 5 and do this inplace")```
+- Explizitly tell the model which function it should use and which paramters to select. (Sometimes the model simply cannot know what you except it to do.) For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a paramter of k = 5 and do this inplace")```
 
 - Just ask the same prompt again. Since TopicGPT is a stochastic system, calling the same function with the same argument again might yield a different functionality to be used or a different result. 
 
