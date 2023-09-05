@@ -147,7 +147,7 @@ _Output_
 Their Hiten engineering-test mission spent a while in a highly eccentric Earth orbit doing lunar flybys, and then was inserted into lunar orbit using some very tricky gravity-assist-like maneuvering.  This meant that it would crash on the Moon eventually, since there is no such thing as a stable lunar orbit (as far as anyone knows), and I believe I recall hearing recently that it was about to happen.
 ```
 
-### Modify topics
+### Split Topics
 We find that topic 6 about Belief and Atheism is a bit general and would thus like to split see what 5 potential subtopics it contains: 
 
 ```python
@@ -219,8 +219,22 @@ Please note that these subtopics are based on the keywords provided and may not 
 
 We see that TopicGPT performed the splitting as intended. However, the names and descriptions of the topics got changed slightly in order to optimally fit to the documents that actually constitute the topics based on the keywords. (If you like you can rename them at any time). 
 
+### Combining topics
 
+Since topics 15 ("Hockey Games") and 17 ("Baseball games and tems") are both about sports, we want to combine them into a single topic.
 
+```python
+tm.pprompt("Please combine topics 15 and 17. Do this inplace.")
+```
+_Output_
+
+```
+GPT wants to the call the function:  {
+  "name": "combine_topics",
+  "arguments": "{\n  \"topic_idx_lis\": [15, 17],\n  \"inplace\": true\n}"
+}
+The topics 15 and 17 have been combined into a new topic called "Sports". This topic includes aspects and sub-topics related to sports such as team and players, games and seasons, performance and skills, fans and audience, and statistics and records. Some of the common words found in this topic include "team," "players," "hockey," "baseball," "game," "games," "season," "playoffs," "good," "better," "win," "hit," "score," "fans," "series," "watch," "fan," "stats," "record," "pts," and "career".
+```
 
 ## Tips and tricks for prompting TopicGPT
 When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
@@ -243,7 +257,9 @@ It is important to note that, as a model built on top of inherently stochastic L
 - **Hallucination**: LLMs are well known for yielding incorrect but cohernt and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behaviour through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
   - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
   - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable altough the corresponding documents are not actually related.
-  - 
+
+- **Unsdesired Behaviour**: When using the "prompt" or "pprompt" function, TopicGPT may not call the function you intended it to call. This can be alleviated by explizitly telling the model which function to use or directly calling the function yourself. 
+
 - **Stoachasticity**: The behaviour of TopicGPT is not deterministic and exhibits some randomness. There is alwyays some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
   - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurence of falsely positive results. 
   Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination.
