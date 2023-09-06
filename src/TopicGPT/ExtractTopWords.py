@@ -21,14 +21,15 @@ nltk.download('punkt')
 
 class ExtractTopWords:
     
-    def extract_centroids(self, embedddings: np.ndarray, labels: np.ndarray) -> dict:
+    def extract_centroid(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Extract centroids of clusters 
-        params:
-            embeddings: np.ndarray, embeddings to cluster and reduce
-            labels: np.ndarray, cluster labels. -1 means outlier
-        returns: 
-            dict, dictionary of cluster labels and their centroids
+        Extract the single centroid of a cluster.
+
+        Args:
+            embeddings (np.ndarray): Embeddings to extract the centroid from.
+
+        Returns:
+            np.ndarray: The centroid of the cluster.
         """
 
         centroid_dict = {}
@@ -38,41 +39,52 @@ class ExtractTopWords:
 
         return centroid_dict
     
-    def extract_centroid(self, embeddings) -> np.ndarray:
+    def extract_centroid(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        extract the single centroid of a cluster
+        Extract the single centroid of a cluster.
+
+        Args:
+            embeddings (np.ndarray): Embeddings to extract the centroid from.
+
+        Returns:
+            np.ndarray: The centroid of the cluster.
         """
+
         return np.mean(embeddings, axis = 0)
     
     def compute_centroid_similarity(self, embeddings: np.ndarray, centroid_dict: dict, cluster_label: int) -> np.ndarray:
         """
-        compute the similarity of the document embeddings to the centroid of the cluster via cosine similarity
+        Compute the similarity of the document embeddings to the centroid of the cluster via cosine similarity.
 
-        params:
-            embeddings: np.ndarray, embeddings to cluster and reduce
-            centroid_dict: dict, dictionary of cluster labels and their centroids
-            cluster_label: int, cluster label for which to compute the similarity
-        returns: 
-            np.ndarray, cosine similarity of the document embeddings to the centroid of the cluster
+        Args:
+            embeddings (np.ndarray): Embeddings to cluster and reduce.
+            centroid_dict (dict): Dictionary of cluster labels and their centroids.
+            cluster_label (int): Cluster label for which to compute the similarity.
+
+        Returns:
+            np.ndarray: Cosine similarity of the document embeddings to the centroid of the cluster.
         """
+
         centroid = centroid_dict[cluster_label]
         similarity = np.dot(embeddings, centroid) / (np.linalg.norm(embeddings) * np.linalg.norm(centroid))
         return similarity
     
     def get_most_similar_docs(self, corpus: list[str], embeddings: np.ndarray, labels: np.ndarray, centroid_dict: dict, cluster_label: int, top_n: int = 10) -> List[str]:
         """
-        get the most similar documents to the centroid of a cluster
+        Get the most similar documents to the centroid of a cluster.
 
-        params:
-            corpus: list[str], list of documents
-            embeddings: np.ndarray, embeddings to cluster and reduce
-            labels: np.ndarray, cluster labels. -1 means outlier
-            centroid_dict: dict, dictionary of cluster labels and their centroids
-            cluster_label: int, cluster label for which to compute the similarity
-            top_n: int, number of top documents to extract
-        returns: 
-            List[str], list of the most similar documents to the centroid of a cluster
+        Args:
+            corpus (list[str]): List of documents.
+            embeddings (np.ndarray): Embeddings to cluster and reduce.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
+            centroid_dict (dict): Dictionary of cluster labels and their centroids.
+            cluster_label (int): Cluster label for which to compute the similarity.
+            top_n (int, optional): Number of top documents to extract.
+
+        Returns:
+            List[str]: List of the most similar documents to the centroid of a cluster.
         """
+
         similarity = self.compute_centroid_similarity(embeddings, centroid_dict, cluster_label)
         most_similar_docs = [corpus[i] for i in np.argsort(similarity)[-top_n:][::-1]]
         return most_similar_docs
@@ -80,33 +92,35 @@ class ExtractTopWords:
     def compute_corpus_vocab(self, 
                         corpus: list[str],
                         remove_stopwords: bool = True, 
-                        remove_punction:bool = True, 
-                        min_word_length:int = 3,
-                        max_word_length:int = 20, 
-                        remove_short_words:bool = True, 
-                        remove_numbers:bool = True, 
-                        verbose:bool = True,
+                        remove_punctuation: bool = True, 
+                        min_word_length: int = 3,
+                        max_word_length: int = 20, 
+                        remove_short_words: bool = True, 
+                        remove_numbers: bool = True, 
+                        verbose: bool = True,
                         min_doc_frequency: int = 3,
                         min_freq: float = 0.1,
                         max_freq: float = 0.9) -> list[str]:
         """
-        compute the vocabulary of the corpus. Perform preprocessing of the corpus 
+        Compute the vocabulary of the corpus and perform preprocessing of the corpus.
 
-        params:
-            corpus: list[str], list of documents
-            remove_stopwords: bool, whether to remove stopwords
-            remove_punction: bool, whether to remove punctuation
-            remove_long_words: bool, whether to remove long words
-            remove_short_words: bool, whether to remove short words
-            remove_numbers: bool, whether to remove numbers
-            verbose: bool, whether to print progress and say what is happening
-            min_doc_frequency: int, minimum number of documents a word should appear in to be considered in the vocab
-            min_freq: float, minimum frequency percentile of words to be considered in the vocabulary
-            max_freq: float, maximum frequency percentile of words to be considered in the vocabulary
+        Args:
+            corpus (list[str]): List of documents.
+            remove_stopwords (bool, optional): Whether to remove stopwords.
+            remove_punctuation (bool, optional): Whether to remove punctuation.
+            min_word_length (int, optional): Minimum word length to retain.
+            max_word_length (int, optional): Maximum word length to retain.
+            remove_short_words (bool, optional): Whether to remove short words.
+            remove_numbers (bool, optional): Whether to remove numbers.
+            verbose (bool, optional): Whether to print progress and describe what is happening.
+            min_doc_frequency (int, optional): Minimum number of documents a word should appear in to be considered in the vocabulary.
+            min_freq (float, optional): Minimum frequency percentile of words to be considered in the vocabulary.
+            max_freq (float, optional): Maximum frequency percentile of words to be considered in the vocabulary.
 
-        returns:
-            list[str], list of words in the corpus sorted alphabetically
+        Returns:
+            list[str]: List of words in the corpus sorted alphabetically.
         """
+
         stopwords = set(nltk.corpus.stopwords.words('english'))
         
         word_counter = collections.Counter()
@@ -165,15 +179,17 @@ class ExtractTopWords:
 
     def compute_words_topics(self, corpus: list[str], vocab: list[str], labels: np.ndarray) -> dict:
         """
-        compute the words per topic
+        Compute the words per topic.
 
-        params:
-            corpus: list[str], list of documents
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            labels: np.ndarray, cluster labels. -1 means outlier
-        returns:
-            dict, dictionary of topics and their words
+        Args:
+            corpus (list[str]): List of documents.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
+
+        Returns:
+            dict: Dictionary of topics and their words.
         """
+
 
         # Download NLTK resources (only required once)
         nltk.download("punkt")
@@ -190,17 +206,19 @@ class ExtractTopWords:
 
         return words_per_topic
                     
-    def embed_vocab_openAI(self, api_key: str, vocab: list[str], embedder:GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
+    def embed_vocab_openAI(self, api_key: str, vocab: list[str], embedder: GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
         """
-        embed the vocabulary using the OpenAi embedding API
+        Embed the vocabulary using the OpenAI embedding API.
 
-        params:
-            api_key: str, openai api key
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            embedder: GetEmbeddingsOpenAI, embedding object
-        returns:
-            dict[str, np.ndarray], dictionary of words and their embeddings
+        Args:
+            api_key (str): OpenAI API key.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            embedder (GetEmbeddingsOpenAI, optional): Embedding object.
+
+        Returns:
+            dict[str, np.ndarray]: Dictionary of words and their embeddings.
         """
+
         vocab = sorted(list(set(vocab)))
         if embedder is None: 
             embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(api_key)
@@ -213,15 +231,17 @@ class ExtractTopWords:
     
     def compute_bow_representation(self, document: str, vocab: list[str], vocab_set: set[str]) -> np.ndarray:
         """
-        compute the bag-of-words representation of a document
+        Compute the bag-of-words representation of a document.
 
-        params:
-            document: str, document to compute the bag-of-words representation of
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            vocab_set: set[str], set of words in the corpus sorted alphabetically
-        returns:
-            np.ndarray, bag-of-words representation of the document
+        Args:
+            document (str): Document to compute the bag-of-words representation of.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            vocab_set (set[str]): Set of words in the corpus sorted alphabetically.
+
+        Returns:
+            np.ndarray: Bag-of-words representation of the document.
         """
+
         bow = np.zeros(len(vocab))
         words = word_tokenize(document)
         if vocab_set is None:
@@ -231,17 +251,18 @@ class ExtractTopWords:
                 bow[vocab.index(word.lower())] += 1
         return bow   
     
-    def compute_word_topic_mat_old(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers = False) -> np.ndarray:
+    def compute_word_topic_mat_old(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers: bool = False) -> np.ndarray:
         """
-        compute the word-topic matrix
+        Compute the word-topic matrix.
 
-        params:
-            corpus: list[str], list of documents
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            labels: np.ndarray, cluster labels. -1 means outlier
-            consider_outliers: bool, whether to consider outliers when computing the top words. I.e. whether the labels contain -1 to indicate outliers
-        returns:
-            np.ndarray, word-topic matrix
+        Args:
+            corpus (list[str]): List of documents.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
+            consider_outliers (bool, optional): Whether to consider outliers when computing the top words. I.e. whether the labels contain -1 to indicate outliers.
+
+        Returns:
+            np.ndarray: Word-topic matrix.
         """
 
         if consider_outliers:
@@ -258,17 +279,20 @@ class ExtractTopWords:
 
         return word_topic_mat
     
-    def compute_word_topic_mat(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers = False) -> np.ndarray:
+    def compute_word_topic_mat_old(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers: bool = False) -> np.ndarray:
         """
-        compute the word-topic matrix in a more efficient way
-        params: 
-            corpus: list[str], list of documents
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            labels: np.ndarray, cluster labels. -1 means outlier
-            consider_outliers: bool, whether to consider outliers when computing the top words. I.e. whether the labels contain -1 to indicate outliers
-        returns:
-            np.ndarray, word-topic matrix
+        Compute the word-topic matrix.
+
+        Args:
+            corpus (list[str]): List of documents.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
+            consider_outliers (bool, optional): Whether to consider outliers when computing the top words.
+
+        Returns:
+            np.ndarray: Word-topic matrix.
         """
+
         corpus_arr = np.array(corpus) 
 
         if consider_outliers:
@@ -286,18 +310,20 @@ class ExtractTopWords:
         
         return word_topic_mat
 
-    def extract_topwords_tfidf(self, word_topic_mat: np.ndarray, vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> (dict, np.ndarray):
+    def extract_topwords_tfidf(self, word_topic_mat: np.ndarray, vocab: list[str], labels: np.ndarray, top_n_words: int = 10) -> dict:
         """
-        extract the top-words for each topic using a class-based tf-idf score
+        Extract the top words for each topic using a class-based tf-idf score.
 
-        params: 
-            word_topic_mat: np.ndarray, word-topic matrix
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            labels: np.ndarray, cluster labels. -1 means outlier
-            top_n_words: int, number of top words to extract per topic
-        returns: 
-            dict, dictionary of topics and their top words
+        Args:
+            word_topic_mat (np.ndarray): Word-topic matrix.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
+            top_n_words (int, optional): Number of top words to extract per topic.
+
+        Returns:
+            dict: Dictionary of topics and their top words.
         """
+
 
         if min(labels) == -1:
             word_topic_mat = word_topic_mat[:, 1:]
@@ -327,17 +353,20 @@ class ExtractTopWords:
     
     def compute_embedding_similarity_centroids(self, vocab: list[str], vocab_embedding_dict: dict, umap_mapper: umap.UMAP, centroid_dict: dict, reduce_vocab_embeddings: bool = False, reduce_centroid_embeddings: bool = False) -> np.ndarray:
         """
-        compute the cosine similarity of each word in the vocab to each centroid
-        params:
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            vocab_embedding_dict: dict, dictionary of words and their embeddings
-            umap_mapper: umap.UMAP, UMAP mapper to transform new embeddings in the same way as the document embeddings
-            centroid_dict: dict, dictionary of cluster labels and their centroids. -1 means outlier
-            reduce_vocab_embeddings: bool, whether to reduce the vocab embeddings with the UMAP mapper
-            reduce_centroid_embeddings: bool, whether to reduce the centroid embeddings with the UMAP mapper
-        returns:
-            np.ndarray, cosine similarity of each word in the vocab to each centroid. has shape (len(vocab), len(centroid_dict) - 1)
+        Compute the cosine similarity of each word in the vocabulary to each centroid.
+
+        Args:
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            vocab_embedding_dict (dict): Dictionary of words and their embeddings.
+            umap_mapper (umap.UMAP): UMAP mapper to transform new embeddings in the same way as the document embeddings.
+            centroid_dict (dict): Dictionary of cluster labels and their centroids. -1 means outlier.
+            reduce_vocab_embeddings (bool, optional): Whether to reduce the vocab embeddings with the UMAP mapper.
+            reduce_centroid_embeddings (bool, optional): Whether to reduce the centroid embeddings with the UMAP mapper.
+
+        Returns:
+            np.ndarray: Cosine similarity of each word in the vocab to each centroid. Has shape (len(vocab), len(centroid_dict) - 1).
         """
+
         embedding_dim = umap_mapper.n_components
         centroid_arr = np.zeros((len(centroid_dict), embedding_dim))
         for i, centroid in enumerate(centroid_dict.values()):
@@ -362,22 +391,24 @@ class ExtractTopWords:
     
     def extract_topwords_centroid_similarity(self, word_topic_mat: np.ndarray, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False, consider_outliers: bool = False) -> (dict, np.ndarray):
         """
-        Extract the top-words for each cluster by computing the cosine similarity of the words that occur in the corpus to the centroid of the cluster
-        params: 
-            word_topic_mat: np.ndarray, word-topic matrix
-            vocab: list[str], list of words in the corpus sorted alphabetically
-            vocab_embedding_dict: dict, dictionary of words and their embeddings
-            centroid_dict: dict, dictionary of cluster labels and their centroids. -1 means outlier
-            umap_mapper: umap.UMAP, UMAP mapper to transform new embeddings in the same way as the document embeddings
-            top_n_words: int, number of top words to extract per topic
-            reduce_vocab_embeddings: bool, whether to reduce the vocab embeddings with the UMAP mapper
-            reduce_centroid_embeddings: bool, whether to reduce the centroid embeddings with the UMAP mapper
-            consider_outliers: bool, whether to consider outliers when computing the top words. I.e. whetther the labels contain -1 to indicate outliers 
+        Extract the top words for each cluster by computing the cosine similarity of the words that occur in the corpus to the centroid of the cluster.
 
-        returns:
-            dict, dictionary of topics and their top words
-            np.ndarray, cosine similarity of each word in the vocab to each centroid. has shape (len(vocab), len(centroid_dict) - 1)
+        Args:
+            word_topic_mat (np.ndarray): Word-topic matrix.
+            vocab (list[str]): List of words in the corpus sorted alphabetically.
+            vocab_embedding_dict (dict): Dictionary of words and their embeddings.
+            centroid_dict (dict): Dictionary of cluster labels and their centroids. -1 means outlier.
+            umap_mapper (umap.UMAP): UMAP mapper to transform new embeddings in the same way as the document embeddings.
+            top_n_words (int, optional): Number of top words to extract per topic.
+            reduce_vocab_embeddings (bool, optional): Whether to reduce the vocab embeddings with the UMAP mapper.
+            reduce_centroid_embeddings (bool, optional): Whether to reduce the centroid embeddings with the UMAP mapper.
+            consider_outliers (bool, optional): Whether to consider outliers when computing the top words. I.e., whether the labels contain -1 to indicate outliers.
+
+        Returns:
+            dict: Dictionary of topics and their top words.
+            np.ndarray: Cosine similarity of each word in the vocab to each centroid. Has shape (len(vocab), len(centroid_dict) - 1).
         """
+
         similarity_mat = self.compute_embedding_similarity_centroids(vocab, vocab_embedding_dict, umap_mapper, centroid_dict, reduce_vocab_embeddings, reduce_centroid_embeddings)
         top_words = {}
         top_word_scores = {}

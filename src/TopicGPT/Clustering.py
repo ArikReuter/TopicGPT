@@ -14,33 +14,36 @@ class Clustering_and_DimRed():
     Class to perform dimensionality reduction with UMAP followed by clustering with HDBSCAN.
     """
     def __init__(self,
-                 n_dims_umap:int = 5,
-                 n_neighbors_umap:int = 15,
-                 min_dist_umap:float = 0,
-                 metric_umap:str = "cosine",
-                 min_cluster_size_hdbscan:int = 30,
-                 metric_hdbscan:str = "euclidean",
-                 cluster_selection_method_hdbscan:str = "eom",
-                 number_clusters_hdbscan:int = None,
-                 random_state:int = 42,
-                 verbose:bool = True,
-                 UMAP_hyperparams:dict = {},
-                 HDBSCAN_hyperparams:dict = {}) -> None:
+             n_dims_umap: int = 5,
+             n_neighbors_umap: int = 15,
+             min_dist_umap: float = 0,
+             metric_umap: str = "cosine",
+             min_cluster_size_hdbscan: int = 30,
+             metric_hdbscan: str = "euclidean",
+             cluster_selection_method_hdbscan: str = "eom",
+             number_clusters_hdbscan: int = None,
+             random_state: int = 42,
+             verbose: bool = True,
+             UMAP_hyperparams: dict = {},
+             HDBSCAN_hyperparams: dict = {}) -> None:
         """
-        params: 
-            n_dims_umap: int, number of dimensions to reduce to
-            n_neighbors_umap: int, number of neighbors for UMAP
-            min_dist_umap: float, minimal distance for UMAP
-            metric_umap: str, metric for UMAP
-            min_cluster_size_hdbscan: int, minimal cluster size for HDBSCAN
-            metric_hdbscan: str, metric for HDBSCAN
-            cluster_selection_method_hdbscan: str, cluster selection method for HDBSCAN
-            number_clusters_hdbscan: int, number of clusters for HDBSCAN. If None, HDBSCAN will determine the number of clusters automatically. Make sure that min_cluster_size is not too big to find enough clusters.
-            random_state: int, random state for UMAP and HDBSCAN
-            verbose: bool, whether to print progress
-            UMAP_hyperparams: dict, further hyperparameters for UMAP
-            HDBSCAN_hyperparams: dict, further hyperparameters for HDBSCAN
+        Initializes the clustering and dimensionality reduction parameters for topic modeling.
+
+        Args:
+            n_dims_umap (int, optional): Number of dimensions to reduce to using UMAP.
+            n_neighbors_umap (int, optional): Number of neighbors for UMAP.
+            min_dist_umap (float, optional): Minimum distance for UMAP.
+            metric_umap (str, optional): Metric for UMAP.
+            min_cluster_size_hdbscan (int, optional): Minimum cluster size for HDBSCAN.
+            metric_hdbscan (str, optional): Metric for HDBSCAN.
+            cluster_selection_method_hdbscan (str, optional): Cluster selection method for HDBSCAN.
+            number_clusters_hdbscan (int, optional): Number of clusters for HDBSCAN. If None, HDBSCAN will determine the number of clusters automatically. Ensure that min_cluster_size is not too large to find enough clusters.
+            random_state (int, optional): Random state for UMAP and HDBSCAN.
+            verbose (bool, optional): Whether to print progress.
+            UMAP_hyperparams (dict, optional): Additional hyperparameters for UMAP.
+            HDBSCAN_hyperparams (dict, optional): Additional hyperparameters for HDBSCAN.
         """
+
 
         # do some checks on the input arguments 
         assert n_dims_umap > 0, "n_dims_umap must be greater than 0"
@@ -71,15 +74,19 @@ class Clustering_and_DimRed():
         self.hdbscan = hdbscan.HDBSCAN(**self.HDBSCAN_hyperparams)
 
     
-    def reduce_dimensions_umap(self, embeddings: np.ndarray) -> np.ndarray:
+    def reduce_dimensions_umap(self, embeddings: np.ndarray) -> Tuple[np.ndarray, umap.UMAP]:
         """
-        Reduce dimensions with UMAP.
-        params:
-            embeddings: np.ndarray, embeddings to reduce
-        returns:
-            np.ndarray, reduced embeddings
-            umap.UMAP, UMAP mapper to transform new embeddings, especially embeddings of the vocabulary (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
+        Reduces dimensions of embeddings using UMAP.
+
+        Args:
+            embeddings (np.ndarray): Embeddings to reduce.
+
+        Returns:
+            tuple: A tuple containing two items:
+                - reduced_embeddings (np.ndarray): Reduced embeddings.
+                - umap_mapper (umap.UMAP): UMAP mapper for transforming new embeddings, especially embeddings of the vocabulary. (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
         """
+
         mapper = umap.UMAP(**self.UMAP_hyperparams).fit(embeddings)
         dim_red_embeddings = mapper.transform(embeddings)
         dim_red_embeddings = dim_red_embeddings/np.linalg.norm(dim_red_embeddings, axis=1).reshape(-1,1)
@@ -87,13 +94,17 @@ class Clustering_and_DimRed():
     
     def cluster_hdbscan(self, embeddings: np.ndarray) -> np.ndarray:
         """
-        Cluster embeddings with HDBSCAN.
+        Cluster embeddings using HDBSCAN.
+        
         If self.number_clusters_hdbscan is not None, further clusters the data with AgglomerativeClustering to achieve a fixed number of clusters.
-        params:
-            embeddings: np.ndarray, embeddings to cluster
-        returns:
-            np.ndarray, cluster labels
+
+        Args:
+            embeddings (np.ndarray): Embeddings to cluster.
+
+        Returns:
+            np.ndarray: Cluster labels.
         """
+
         labels = self.hdbscan.fit_predict(embeddings)
         outliers = np.where(labels == -1)[0]
 
@@ -111,27 +122,33 @@ class Clustering_and_DimRed():
 
         return labels
     
-    def cluster_and_reduce(self, embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray, umap.UMAP]:
+    def cluster_and_reduce(self, embeddings: np.ndarray) -> Tuple[np.ndarray, np.ndarray, umap.UMAP]:
         """
-        Cluster embeddings with HDBSCAN and reduce dimensions with UMAP.
-        params:
-            embeddings: np.ndarray, embeddings to cluster and reduce
-        returns:
-            np.ndarray, reduced embeddings
-            np.ndarray, cluster labels
-            umap.UMAP, UMAP mapper to transform new embeddings, especially embeddings of the vocabulary (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
+        Cluster embeddings using HDBSCAN and reduce dimensions with UMAP.
+
+        Args:
+            embeddings (np.ndarray): Embeddings to cluster and reduce.
+
+        Returns:
+            tuple: A tuple containing three items:
+                - reduced_embeddings (np.ndarray): Reduced embeddings.
+                - cluster_labels (np.ndarray): Cluster labels.
+                - umap_mapper (umap.UMAP): UMAP mapper for transforming new embeddings, especially embeddings of the vocabulary. (MAKE SURE TO NORMALIZE EMBEDDINGS AFTER USING THE MAPPER)
         """
+
         dim_red_embeddings, umap_mapper = self.reduce_dimensions_umap(embeddings)
         clusters = self.cluster_hdbscan(dim_red_embeddings)
         return dim_red_embeddings, clusters, umap_mapper
     
     def visualize_clusters_static(self, embeddings: np.ndarray, labels: np.ndarray):
         """
-        reduce dimensionality with UMAP to two dimensions and plot the clusters
-        params:
-            embeddings: np.ndarray, whose clustering to plot
-            labels: np.ndarray, cluster labels
+        Reduce dimensionality with UMAP to two dimensions and plot the clusters.
+
+        Args:
+            embeddings (np.ndarray): Embeddings for which to plot clustering.
+            labels (np.ndarray): Cluster labels.
         """
+
 
         # Reduce dimensionality with UMAP
         reducer = umap.UMAP(n_components=2, random_state = self.random_state, n_neighbors=30, metric="cosine", min_dist=0)
@@ -174,13 +191,15 @@ class Clustering_and_DimRed():
 
     def visualize_clusters_dynamic(self, embeddings: np.ndarray, labels: np.ndarray, texts: list[str], class_names: list[str] = None):
         """
-        visualize clusters with plotly and allow to hover over clusters to see the beginning of the texts of the documents
-        params:
-            embeddings: np.ndarray, embeddings whose clustering to plot
-            labels: np.ndarray, cluster labels
-            texts: list[str], texts of the documents
-            class_names: list[str], names of the classes
+        Visualize clusters using Plotly and enable hovering over clusters to see the beginning of the texts of the documents.
+
+        Args:
+            embeddings (np.ndarray): Embeddings for which to visualize clustering.
+            labels (np.ndarray): Cluster labels.
+            texts (list[str]): Texts of the documents.
+            class_names (list[str], optional): Names of the classes.
         """
+
 
         # Reduce dimensionality with UMAP
         reducer = umap.UMAP(n_components=2, random_state = self.random_state, n_neighbors=30, metric="cosine", min_dist=0)
@@ -207,9 +226,6 @@ class Clustering_and_DimRed():
         
         fig.update_traces(mode='markers', marker=dict(size=3))  # Optional: Increase the marker size
 
-        
-
-    
         # make plot quadratic
         fig.update_layout(
         autosize=False,
@@ -222,7 +238,7 @@ class Clustering_and_DimRed():
             t=100,
             pad=4
         )
-    )
+        )
         # set title 
         fig.update_layout(title_text='UMAP projection of the document embeddings', title_x=0.5)
 
