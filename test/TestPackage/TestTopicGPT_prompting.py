@@ -1,3 +1,7 @@
+"""
+This class is used to mainly test the prompting functionality of the TopicGPT package. 
+"""
+
 import os 
 import sys
 import inspect

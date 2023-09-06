@@ -1,3 +1,8 @@
+"""
+This class is used to test the init and fit functions of the TopicGPT class
+"""
+
+
 import os 
 import sys
 import inspect

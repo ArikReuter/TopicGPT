@@ -258,19 +258,19 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 TopicGPT is centrally built on top of text embeddings and the prompting mechanisms obtained via LLMs and provided by the OpenAI API. Please also see the section [References](#references) for more details on the models and ideas used in TopicGPT.
 
-### Embeddings
+#### Embeddings
 When no embeddings are provided, TopicGPT automatically computes the embeddings of the documents of the provided corpus and also of the vocabulary that is extracted from the corpus. This happens after the fit-method is called. 
 
 The class ```GetEmbeddingsOpenAI``` is used for this purpose.
 
-### Clustering
+#### Clustering
 In order to identify topics among the documents, TopicGPT reduces the dimensionality of the document embeddings via UMAP and then uses Hdbscan to identify the clusters. Dimensionality reduction is necessary since the document embeddings are of very high dimensionality  and thus the curse of dimensionality would make it very difficult, if not impossible, to identify the clusters.
 
 When not specifying the number of topics in the ```Topic GPT``` class, Hdbscan is used to automatically determine the number of topics. If the number of topics is specified, agglomerative clustering is used on top of the clusters identified by HDBSCAN. 
 
 The class ```Clustering``` is used for this purpose.
 
-### Extraction of Top-Words
+#### Extraction of Top-Words
 
 After the clusters have been identified, TopicGPT extracts the top-words of each topic. This is done via two different methods:
 - **Tf-idf**: The tf-idf method is based on the idea that words that occur frequently in a topic but rarely in other topics are good indicators for the topic. The top-words are thus the words with the highest tf-idf scores. 
@@ -280,7 +280,7 @@ Note that the Tf-idf heuristic was introduced for the BerTopic Model (Grootendor
 
 Topword extraction is performed with help of the class ```ExtractTopWords```.
 
-### Describing and naming topics
+#### Describing and naming topics
 
 In the next step, all topics are provided with a short name and a description. This is done via prompting an LLM provided by OpenAI with around 500 top-words of each topic. The LLM then generates a short name and a description for each topic.
 
@@ -288,6 +288,30 @@ The class ```TopwordEnhancement``` is used for this purpose.
 
 
 Note that computation of Embeddings, Extraction of Top-Words and Describing and Naming Topics are all performed when calling the ```fit``` method of the ```TopicGPT``` class.	
+
+#### Prompting
+
+The main way to interact with TopicGPT is via direct textual prompts. Those prompts are augmented with basic information about desired behavior and potentially useful information. Additionally, information on available functions and their parameters is provided. Then this information is used to prompt an LLM via the OpenAI API. The LLM then decides if it should call a function of the ones provided and if so, which parameters to use. The respective function call is executed and part of the result is returned to the LLM which uses the original prompt together with the function call and the result to generate a response.
+
+#### Functions available for prompting:
+
+The following functions are available for the LLM to use:
+- ```knn_search```: This function is used to find documents that are related to a certain keyword. The LLM can specify the number of documents to be found and the number of keywords to be used. The result is retrieved by performing retrieval-augmented-generation (RAG) where the query is embedded and the most similar documents are retrieved. 
+- ```identify_topic_idx```: This function is used to identify the topic that is most related to a certain keyword. This is simply done by providing all topic descriptions to the LLM and then asking for index of the the topic that is most related to the keyword.
+
+- ```get_topic_information```: This function is used to obtain information on certain topics. This can be useful to compare similar topics. 
+
+- ```split_topic_kmeans```: This function is used to split a topic into subtopics. The LLM can specify the number of subtopics to be created. The result is retrieved by performing k-means clustering on the document embeddings of the documents in the topic. Note that when splitting a topic, the top-words are not completely recomputed, but rather the top-words of the "super"-topic are distributed among the subtopics.
+
+- ```split_topic_hdbscan```: Works analogously to ```split_topic_kmeans``` but uses Hdbscan instead of k-means clustering. This means that the number of subtopics is not specified by the user but rather automatically determined by Hdbscan.
+
+- ```split_topic_keywords```: This function is used to split a topic into subtopics based on provided keywords. Each keyword is embedded and the topic is split according to cosine similarity of the document embeddings within the "super"-topic. This means that documents among the "super"-topic that are most similar to a certain keyword are assigned to the corresponding subtopic. 
+
+- ```add_new_topic_keyword```: This function is used to add a new topic based on a keyword. The documents belonging to this new topic are computed as the documents from all other topics that are more similar to the embedding of the new keyword than the centroid of the original topic. Then all topwords and the topic description are recomputed.
+
+- ```delete_topic```: This function is used to delete a topic. The LLM can specify the topic to be deleted. The result is retrieved by simply removing the topic from the list of topics and assigning the documents of the deleted topic to the topic with the most similar centroid. Then all topwords and the topic description are recomputed.
+
+- ```combine_topics```: This function is used to combine two topics into a single topic. The LLM can specify the two topics to be combined. The result is retrieved by simply combining the documents of the two topics and re-computing the embeddings and top-words of the new topic.
 
 
 ## Limitations and Caveats

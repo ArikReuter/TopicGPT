@@ -1,3 +1,7 @@
+"""
+This class tests the init and fit functions of the TopicGPT module. 
+"""
+
 import os 
 import sys
 import inspect
