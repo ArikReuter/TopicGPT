@@ -9,16 +9,20 @@ class GetEmbeddingsOpenAI:
     This class allows to compute embeddings of text using the OpenAI API.
     """
 
-    def __init__(self, api_key:str, embedding_model:str = "text-embedding-ada-002", tokenizer:str = None, max_tokens:int = 8191) -> None:
+    def __init__(self, api_key: str, embedding_model: str = "text-embedding-ada-002", tokenizer: str = None, max_tokens: int = 8191) -> None:
         """
         Constructor of the class.
-        :param api_key: API key to use the OpenAI API.
-        :param embedding_model: Name of the embedding model to use.
-        :param tokenizer: Name of the tokenizer to use.
-        :param max_tokens: Maximum number of tokens to use.
 
-        Per default the embedding model "text-embedding-ada-002" is used with the corresponding tokenizer "cl100k_base" and a maximum number of tokens of 8191.
+        Args:
+            api_key (str): API key to use the OpenAI API.
+            embedding_model (str, optional): Name of the embedding model to use.
+            tokenizer (str, optional): Name of the tokenizer to use.
+            max_tokens (int, optional): Maximum number of tokens to use.
+
+        Note:
+            By default, the embedding model "text-embedding-ada-002" is used with the corresponding tokenizer "cl100k_base" and a maximum number of tokens of 8191.
         """
+
         self.api_key = api_key
         openai.api_key = api_key
         self.embedding_model = embedding_model
@@ -30,21 +34,30 @@ class GetEmbeddingsOpenAI:
 
     @staticmethod
     def num_tokens_from_string(string: str, encoding) -> int:
-            """
-            Returns the number of tokens in a text string.
-            :param string: Text string to compute the number of tokens.
-            :param encoding: function to encode the string into tokens.
-            :return: Number of tokens in the text string.
-            """
-            num_tokens = len(encoding.encode(string))
-            return num_tokens
+        """
+        Returns the number of tokens in a text string.
+
+        Args:
+            string (str): Text string to compute the number of tokens.
+            encoding: A function to encode the string into tokens.
+
+        Returns:
+            int: Number of tokens in the text string.
+        """
+        num_tokens = len(encoding.encode(string))
+        return num_tokens
 
     def compute_number_of_tokens(self, corpus: list[str]) -> int:
         """
-        This function computes the total number of tokens needed to embed the corpus.
-        :param corpus: List of strings to embed. Where each element in the list is a document.
-        :return: Total number of tokens needed to embed the corpus.
+        Computes the total number of tokens needed to embed the corpus.
+
+        Args:
+            corpus (list[str]): List of strings to embed, where each element in the list is a document.
+
+        Returns:
+            int: Total number of tokens needed to embed the corpus.
         """
+
 
         if self.tokenizer_str is None:
              tokenizer = tiktoken.encoding_for_model(self.embedding_model)
@@ -59,56 +72,79 @@ class GetEmbeddingsOpenAI:
         return num_tokens
         
     def split_doc(self, text):
-             """
-             split a single document that is longer than the maximum number of tokens into a list of smaller documents 
-                :param text: string to embed. 
-                :return: List of strings to embed. Where each element in the list is a list of chunks comprising the document. 
-             """
-             split_text = []
-             split_text.append(text[:self.max_tokens])
-             for i in range(1, len(text) // self.max_tokens):
-                split_text.append(text[i * self.max_tokens:(i + 1) * self.max_tokens])
-             split_text.append(text[(len(text) // self.max_tokens) * self.max_tokens:])
-             return split_text
+        """
+        Splits a single document that is longer than the maximum number of tokens into a list of smaller documents.
+
+        Args:
+            self: The instance of the class.
+            text (str): The string to be split.
+
+        Returns:
+            List[str]: A list of strings to embed, where each element in the list is a list of chunks comprising the document.
+        """
+
+        split_text = []
+        split_text.append(text[:self.max_tokens])
+        for i in range(1, len(text) // self.max_tokens):
+            split_text.append(text[i * self.max_tokens:(i + 1) * self.max_tokens])
+        split_text.append(text[(len(text) // self.max_tokens) * self.max_tokens:])
+        return split_text
     
     def split_long_docs(self, text: list[str]) -> list[list[str]]:
-         """
-         split all documents that are longer than the maximum number of tokens into a list of smaller documents 
-            :param text: List of strings to embed. Where each element in the list is a document.    
-            :return: List of list of strings to embed. Where each element in the list is a list of chunks comprising the document. 
-         """
-         if self.tokenizer_str is None:
-              tokenizer = tiktoken.encoding_for_model(self.embedding_model)
-         else:
-              tokenizer = tiktoken.get_encoding(self.tokenizer_str)
+        """
+        Splits all documents that are longer than the maximum number of tokens into a list of smaller documents.
+
+        Args:
+            self: The instance of the class.
+            text (list[str]): List of strings to embed, where each element in the list is a document.
+
+        Returns:
+            List[list[str]]: A list of lists of strings to embed, where each element in the outer list is a list of chunks comprising the document.
+        """
+
+        if self.tokenizer_str is None:
+            tokenizer = tiktoken.encoding_for_model(self.embedding_model)
+        else:
+            tokenizer = tiktoken.get_encoding(self.tokenizer_str)
     
          
-         split_text = []
-         for document in tqdm(text):
+        split_text = []
+        for document in tqdm(text):
             if self.num_tokens_from_string(document, tokenizer) > self.max_tokens:
                 split_text.append(self.split_doc(document))
             else:
                 split_text.append([document])
-         return split_text   
+        return split_text   
     
-    def make_api_call(self, text:str):
-         """
-        make an API call to the OpenAI API to embed a text string
-            :param text: string to embed.
-            :return: API response.
+    def make_api_call(self, text: str):
         """
-         response = openai.Embedding.create(input = [text], model = self.embedding_model)
-         return response
+        Makes an API call to the OpenAI API to embed a text string.
+
+        Args:
+            self: The instance of the class.
+            text (str): The string to embed.
+
+        Returns:
+            API response: The response from the API.
+        """
+        response = openai.Embedding.create(input = [text], model = self.embedding_model)
+        return response
 
 
     
-    def get_embeddings_doc_split(self, corpus: list[list[str]], n_tries = 3) -> list[dict]:
+    def get_embeddings_doc_split(self, corpus: list[list[str]], n_tries=3) -> list[dict]:
         """
-        This function computes the embeddings of a corpus for splitted documents.
-        :param corpus: List of strings to embed. Where each element in the list is a document that is represented by the list of its chunks.
-        :param n_tries: Number of tries to make an API call.
-        :return: List of dictionaries. Where each dictionary contains the embedding of the document, the text of the document and a list of errors that occured during the embedding process.
+        Computes the embeddings of a corpus for split documents.
+
+        Args:
+            self: The instance of the class.
+            corpus (list[list[str]]): List of strings to embed, where each element is a document represented by a list of its chunks.
+            n_tries (int, optional): Number of tries to make an API call (default is 3).
+
+        Returns:
+            List[dict]: A list of dictionaries, where each dictionary contains the embedding of the document, the text of the document, and a list of errors that occurred during the embedding process.
         """
+
         api_res_list = [] 
         for i in tqdm(range(len(corpus))):
             chunk_lis = corpus[i]
@@ -148,24 +184,36 @@ class GetEmbeddingsOpenAI:
         return api_res_list
     
     def convert_api_res_list(self, api_res_list: list[dict]) -> dict:
-         """
-         Convert the api_res list in to a dictionary containing the embeddings as a matrix and the corpus as a list of string
-            :param api_res_list: List of dictionaries. Where each dictionary contains the embedding of the document, the text of the document and a list of errors that occured during the embedding process.
-            :return: Dictionary containing the embeddings as a matrix and the corpus as a list of string
-         """
+        """
+        Converts the api_res list into a dictionary containing the embeddings as a matrix and the corpus as a list of strings.
 
-         embeddings = np.array([api_res["embedding"] for api_res in api_res_list])
-         corpus = [api_res["text"] for api_res in api_res_list]
-         errors = [api_res["errors"] for api_res in api_res_list]
-         return {"embeddings": embeddings, "corpus": corpus, "errors": errors}
+        Args:
+            self: The instance of the class.
+            api_res_list (list[dict]): List of dictionaries, where each dictionary contains the embedding of the document, the text of the document, and a list of errors that occurred during the embedding process.
+
+        Returns:
+            dict: A dictionary containing the embeddings as a matrix and the corpus as a list of strings.
+        """
+
+
+        embeddings = np.array([api_res["embedding"] for api_res in api_res_list])
+        corpus = [api_res["text"] for api_res in api_res_list]
+        errors = [api_res["errors"] for api_res in api_res_list]
+        return {"embeddings": embeddings, "corpus": corpus, "errors": errors}
 
     
     def get_embeddings(self, corpus: list[str]) -> dict:
         """
-        This function computes the embeddings of a corpus.
-        :param corpus: List of strings to embed. Where each element in the list is a document.
-        :return: Dictionary containing the embeddings as a matrix and the corpus as a list of strings
+        Computes the embeddings of a corpus.
+
+        Args:
+            self: The instance of the class.
+            corpus (list[str]): List of strings to embed, where each element in the list is a document.
+
+        Returns:
+            dict: A dictionary containing the embeddings as a matrix and the corpus as a list of strings.
         """
+
         corpus_split = self.split_long_docs(corpus)
         corpus_emb = self.get_embeddings_doc_split(corpus_split)
         self.corpus_emb = corpus_emb

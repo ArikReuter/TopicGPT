@@ -36,37 +36,38 @@ class TopicPrompting:
     """
 
     def __init__(self, 
-                 topic_lis: list[Topic], 
-                 openai_key: str, 
-                 openai_prompting_model: str = "gpt-3.5-turbo-16k", 
-                 max_context_length_promting:int = 16000, 
-                 openai_model_temperature_prompting:float = 0.5,
-                 openai_embedding_model = "text-embedding-ada-002",
-                 max_context_length_embedding = 8191, 
-                 basic_model_instruction = basic_model_instruction,
-                 corpus_instruction = "",
-                 enhancer: TopwordEnhancement = None,
-                 vocab = None,
-                 vocab_embeddings = None,
-                 random_state = 42):
+             topic_list: list[Topic], 
+             openai_key: str, 
+             openai_prompting_model: str = "gpt-3.5-turbo-16k", 
+             max_context_length_prompting: int = 16000, 
+             openai_model_temperature_prompting: float = 0.5,
+             openai_embedding_model: str = "text-embedding-ada-002",
+             max_context_length_embedding: int = 8191, 
+             basic_model_instruction: str = basic_model_instruction,
+             corpus_instruction: str = "",
+             enhancer: TopwordEnhancement = None,
+             vocab: list = None,
+             vocab_embeddings: dict = None,
+             random_state: int = 42):
         """
-        params: 
-            topic_lis: list of Topic objects
-            openai_key: openai key
-            topic_list: list of Topic objects
-            openai_prompting_model: openai model to use for prompting
-            max_context_length_promting: maximum context length for the prompting model
-            openai_model_temperature_prompting: temperature for the prompting model
-            openai_embedding_model: openai model to use for computing embeddings for similarity search
-            max_context_length_embedding: maximum context length for the embedding model
-            basic_model_instruction: basic instruction for the prompting model
-            corpus_instruction: instruction for the prompting model to use the corpus
-            enhancer: TopwordEnhancement object for naming and describing the topics
-            vocab: vocabulary of the corpus
-            vocab_embeddings: dictionary mapping words to their embeddings
-            random_state: random state for reproducibility
+        Initialize the object.
+
+        Args:
+            topic_list (list[Topic]): List of Topic objects.
+            openai_key (str): OpenAI API key.
+            openai_prompting_model (str, optional): OpenAI model to use for prompting (default is "gpt-3.5-turbo-16k").
+            max_context_length_prompting (int, optional): Maximum context length for the prompting model (default is 16000).
+            openai_model_temperature_prompting (float, optional): Temperature for the prompting model (default is 0.5).
+            openai_embedding_model (str, optional): OpenAI model to use for computing embeddings for similarity search (default is "text-embedding-ada-002").
+            max_context_length_embedding (int, optional): Maximum context length for the embedding model (default is 8191).
+            basic_model_instruction (str, optional): Basic instruction for the prompting model.
+            corpus_instruction (str, optional): Instruction for the prompting model to use the corpus.
+            enhancer (TopwordEnhancement, optional): TopwordEnhancement object for naming and describing the topics (default is None).
+            vocab (list, optional): Vocabulary of the corpus (default is None).
+            vocab_embeddings (dict, optional): Dictionary mapping words to their embeddings (default is None).
+            random_state (int, optional): Random state for reproducibility (default is 42).
         """
- 
+
         self.topic_lis = topic_lis
         self.openai_key = openai_key
         self.openai_prompting_model = openai_prompting_model
@@ -318,25 +319,44 @@ class TopicPrompting:
     
     def reindex_topics(self) -> None:
         """
-        simply give the topics in self.topic_lis correct new indices
+        Reindexes the topics in self.topic_list to assign correct new indices.
+
+        This method updates the indices of topics within the instance's topic list to ensure they are correctly ordered.
+
+        Returns:
+            None
         """
+
         for idx, topic in enumerate(self.topic_lis):
             topic.topic_idx = idx
 
-    def reindex_topic_lis(self, topic_lis: list[Topic]) -> list[Topic]:
+    def reindex_topic_list(self, topic_list: list[Topic]) -> list[Topic]:
         """
-        simply give the topics in topic_lis correct new indices
+        Reindexes the topics in the provided topic list to assign correct new indices.
+
+        This method updates the indices of topics within the given topic list to ensure they are correctly ordered.
+
+        Args:
+            topic_list (list[Topic]): The list of Topic objects to reindex.
+
+        Returns:
+            list[Topic]: The reindexed list of Topic objects.
         """
-        for idx, topic in enumerate(topic_lis):
+
+        for idx, topic in enumerate(topic_list):
             topic.topic_idx = idx
-        return topic_lis
+        return topic_list
 
     def show_topic_list(self) -> str:
         """
-        Show the list of topics
-        returns:
-            string representation of the list of topics
+        Returns a string representation of the list of topics.
+
+        This method generates a human-readable string representation of the topics in the instance's topic list.
+
+        Returns:
+            str: A string containing the representation of the list of topics.
         """
+
         self.reindex_topics()
         res = ""
         for idx, topic in enumerate(self.topic_lis):
@@ -344,32 +364,51 @@ class TopicPrompting:
 
         print(res)
 
-    def get_topic_lis(self) -> list[Topic]:
+    def get_topic_list(self) -> list[Topic]:
         """
-        return the list of topics
+        Returns the list of topics stored in the instance.
+
+        This method retrieves and returns the list of topics associated with the instance.
+
+        Returns:
+            list[Topic]: The list of Topic objects.
         """
+
         self.reindex_topics()
         return self.topic_lis
     
-    def set_topic_lis(self, topic_lis: list[Topic]) -> None:
+    def set_topic_list(self, topic_list: list[Topic]) -> None:
         """
-        set the list of topics
+        Sets the list of topics for the instance.
+
+        This method updates the list of topics associated with the instance to the provided list.
+
+        Args:
+            topic_list (list[Topic]): The list of Topic objects to set.
+
+        Returns:
+            None
         """
-        self.topic_lis = topic_lis
+
+        self.topic_lis = topic_list
         self.reindex_topics()
 
     def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> (list[str], list[int]):
         """
-        find the k nearest neighbors of the query in the given topic based on cosine similarity in the original embedding space
-        params: 
-            topic: Topic object
-            query: query string
-            k: number of neighbors to return
-            doc_cutoff_threshold: maximum number of tokens per document. Afterwards, the document is cut off
-        returns:
-            list of topk_docs
-            list of topk_doc_indices
+        Finds the k nearest neighbors of the query in the given topic based on cosine similarity in the original embedding space.
+
+        Args:
+            topic_index (int): Index of the topic to search within.
+            query (str): Query string.
+            k (int, optional): Number of neighbors to return (default is 20).
+            doc_cutoff_threshold (int, optional): Maximum number of tokens per document. Afterwards, the document is cut off (default is 1000).
+
+        Returns:
+            tuple: A tuple containing two lists -
+                - A list of top k documents (as strings).
+                - A list of indices corresponding to the top k documents in the topic.
         """
+
         topic = self.topic_lis[topic_index]
 
         query_embedding = openai.Embedding.create(input = [query], model = self.openai_embedding_model)["data"][0]["embedding"]
@@ -398,16 +437,23 @@ class TopicPrompting:
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
     
-    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries:int = 3) -> (json, (list[str], list[int])):
+    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries: int = 3) -> (str, tuple[list[str], list[int]]):
         """
-        Use the LLM to answer the llm query based on the documents belonging to the topic.  
-        params: 
-            llm_query: query string for the LLM
-            topic_index: index of topic object. If None, the topic is inferred from the query
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            answer string. Also returns the topk_docs and topk_doc_indices
+        Uses the Language Model (LLM) to answer the llm_query based on the documents belonging to the topic.
+
+        Args:
+            llm_query (str): Query string for the Language Model (LLM).
+            topic_index (int, optional): Index of the topic object. If None, the topic is inferred from the query.
+            n_tries (int, optional): Number of tries to get a valid response from the LLM (default is 3).
+
+        Returns:
+            tuple: A tuple containing two elements -
+                - A string representing the answer from the LLM.
+                - A tuple containing two lists -
+                    - A list of top k documents (as strings).
+                    - A list of indices corresponding to the top k documents in the topic.
         """
+
         messages = [
             {
                 "role": "system",
@@ -467,15 +513,20 @@ class TopicPrompting:
             
             return second_response, function_response_return_output
         
-    def identify_topic_idx(self, query: str, n_tries = 3) -> int:
+    def identify_topic_idx(self, query: str, n_tries: int = 3) -> int:
         """
-        Identify the index of the topic that the query is most likely about. This is done by asking a LLM to say which topic has the description that best fits the query. If the LLM does not find any topic that fits the query, None is returned.
-        params:
-            query: query string
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            index of the topic that the query is most likely about
+        Identifies the index of the topic that the query is most likely about.
+
+        This method uses a Language Model (LLM) to determine which topic best fits the query description. If the LLM does not find any topic that fits the query, None is returned.
+
+        Args:
+            query (str): Query string.
+            n_tries (int, optional): Number of tries to get a valid response from the LLM (default is 3).
+
+        Returns:
+            int: The index of the topic that the query is most likely about. If no suitable topic is found, None is returned.
         """
+
 
         topic_descriptions_str = ""
         for i, topic in enumerate(self.topic_lis):
@@ -533,17 +584,23 @@ class TopicPrompting:
         else:
             return topic_index
 
-    def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, inplace = False) -> list[Topic]:
+    def split_topic_new_assignments(self, topic_idx: int, new_topic_assignments: np.ndarray, inplace: bool = False) -> list[Topic]:
         """
-        split a topic into new topics based on new topic assignments. Note that this method only computes topwords based on the cosine-similarity method because tf-idf topwords need expensive computation on the entire corpus. 
-        The topwords of the old topic are also just split among the new ones. No new topwords are computed in this step. 
-        params:
-            topic_idx: index of the topic to split
-            new_topic_assignments: new topic assignments for the documents in the topic
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            list of new topics
+        Splits a topic into new topics based on new topic assignments.
+
+        Note that this method only computes topwords based on the cosine-similarity method because tf-idf topwords need expensive computation on the entire corpus. 
+        The topwords of the old topic are also just split among the new ones. No new topwords are computed in this step.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            new_topic_assignments (np.ndarray): New topic assignments for the documents in the topic.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the split.
         """
+
+
         if self.vocab_embeddings is None:
             raise(ValueError("Need to provide vocab_embeddings to Topic prompting class to split a topic!"))
         if self.enhancer is None:
@@ -589,15 +646,22 @@ class TopicPrompting:
         
         return new_topic_lis
 
-    def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace:bool = False) -> list[Topic]:
+    def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace: bool = False) -> list[Topic]:
         """
-        Split an existing topic into several subtopics using kmeans clustering  on the document embeddings of the topic. Note that no new topwords are computed in this step and the topwords 
-        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
-        params:
-            topic_idx: index of the topic to split
-            n_clusters: number of clusters to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        Splits an existing topic into several subtopics using k-means clustering on the document embeddings of the topic.
+
+        Note that no new topwords are computed in this step, and the topwords of the old topic are just split among the new ones. Additionally, only the cosine-similarity method for topwords extraction is used.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            n_clusters (int, optional): Number of clusters to split the topic into (default is 2).
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the split.
         """
+
+
         old_topic = self.topic_lis[topic_idx]
         embeddings = old_topic.document_embeddings_ld  # embeddings to split into clusters
 
@@ -607,16 +671,22 @@ class TopicPrompting:
 
         return new_topics
     
-    def split_topic_hdbscan(self, topic_idx: int, min_cluster_size: int = 100, inplace = False) -> list[Topic]:
+    def split_topic_hdbscan(self, topic_idx: int, min_cluster_size: int = 100, inplace: bool = False) -> list[Topic]:
         """
-        Split an existing topic into several subtopics using hdbscan clustering  on the document embeddings of the topic. THis method does not require to specify the number of clusters to split. 
-        Note that no new topwords are computed in this step and the topwords 
-        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
-        params:
-            topic_idx: index of the topic to split
-            min_cluster_size: minimum cluster size to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
+        Splits an existing topic into several subtopics using HDBSCAN clustering on the document embeddings of the topic.
+
+        This method does not require specifying the number of clusters to split. Note that no new topwords are computed in this step, and the topwords of the old topic are just split among the new ones. Additionally, only the cosine-similarity method for topwords extraction is used.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            min_cluster_size (int, optional): Minimum cluster size to split the topic into (default is 100).
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the split.
         """
+
+
         old_topic = self.topic_lis[topic_idx]
         embeddings = old_topic.document_embeddings_ld
 
@@ -632,18 +702,21 @@ class TopicPrompting:
 
         return new_topics
     
-    def split_topic_keywords(self, topic_idx: int, keywords: str, inplace = False) -> list[Topic]:
+    def split_topic_keywords(self, topic_idx: int, keywords: str, inplace: bool = False) -> list[Topic]:
         """
-        Split the topic into subtopics according to the keywords. This is achieved by computing the cosine similarity between the keywords and the documents in the topic. 
-        Note that no new topwords are computed in this step and the topwords 
-        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
-        params:
-            topic_idx: index of the topic to split
-            keywords: keywords to split the topic into. Needs to be a list of at least two keywords
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            list of new topics
+        Splits the topic into subtopics according to the provided keywords.
+
+        This is achieved by computing the cosine similarity between the keywords and the documents in the topic. Note that no new topwords are computed in this step, and the topwords of the old topic are just split among the new ones. Additionally, only the cosine-similarity method for topwords extraction is used.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            keywords (str): Keywords to split the topic into. Needs to be a list of at least two keywords.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the split.
         """
+
         assert len(keywords) > 1, "Need at least two keywords to split the topic! Otherwise use the split_topic_single_keyword function!"
         keyword_embeddings = []
         for keyword in keywords:
@@ -671,35 +744,41 @@ class TopicPrompting:
 
         return new_topics
 
-    def split_topic_single_keyword(self, topic_idx: int, keyword: str, inplace = False) -> list[Topic]:
+    def split_topic_single_keyword(self, topic_idx: int, keyword: str, inplace: bool = False) -> list[Topic]:
         """
-        Split the topic with a single keyword. Split the topic such that all documents closer to the original topic name stay in the old topic while all documents closer to the keyword are moved to the new topic.
-        Note that no new topwords are computed in this step and the topwords 
-        of the old topic are just split among the new ones. Also just the cosine-similarity method for topwords extraction is used. 
-        params:
-            topic_idx: index of the topic to split
-            keyword: keyword to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            list of new topics
+        Splits the topic with a single keyword.
+
+        This method splits the topic such that all documents closer to the original topic name stay in the old topic, while all documents closer to the keyword are moved to the new topic. Note that no new topwords are computed in this step, and the topwords of the old topic are just split among the new ones. Additionally, only the cosine-similarity method for topwords extraction is used.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            keyword (str): Keyword to split the topic into.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the split.
         """
+
         keywords = [self.topic_lis[topic_idx].topic_name, keyword]
 
         res = self.split_topic_keywords(topic_idx, keywords, inplace)
         
         return res
 
-    def combine_topics(self, topic_idx_lis: list[int], inplace = False) -> list[Topic]:
+    def combine_topics(self, topic_idx_list: list[int], inplace: bool = False) -> list[Topic]:
         """
-        Combine several topics into one topic.
-        Note that no new topwords are computed in this step and the topwords 
-        of the old topics are just combined. Also just the cosine-similarity method for topwords extraction is used. 
-        params:
-            topic_idx_lis: list of topic indices to combine
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            list of new topics
+        Combines several topics into one topic.
+
+        This method combines the specified topics into a single topic. Note that no new topwords are computed in this step, and the topwords of the old topics are just combined. Additionally, only the cosine-similarity method for topwords extraction is used.
+
+        Args:
+            topic_idx_list (list[int]): List of topic indices to combine.
+            inplace (bool, optional): If True, the topics are combined in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the combination.
         """
+
         new_topic_docs = []
         new_topic_words = []
         new_topic_document_embeddings_hd = []
@@ -737,23 +816,21 @@ class TopicPrompting:
         
         return new_topic_lis
         
-    def add_new_topic_keyword(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> list[Topic]:
+    def add_new_topic_keyword(self, keyword: str, inplace: bool = False, rename_new_topic: bool = False) -> list[Topic]:
         """
-        Create a new topic based on a keyword. Remove all documents belonging to the other topics from them and add them to the new topic. Note that this needs to recompute the entire topics for the entire corpus. 
-        Note that the new topic does not automatically get the name of the keyword to reflect that the topic is not necessarily about the keyword. 
-        This method actually computed completely new topwords with both the tf-idf and the cosine-similarity method.
-        params:
-            keyword: keyword to create the new topic from
-            vocab: vocabulary of the corpus
-            vocab_embeddings: dictionary mapping words to their embeddings
-            enhancer: TopwordEnhancement object fro naming and describing the new topics
-            api_key: openai api key
-            embedding_model: openai embedding model to use for computing the embeddings
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-            rename_new_topic: if True, the new topic is renamed to the keyword
-        returns:
-            list of new topics including the newly created topic and the modified old ones
+        Create a new topic based on a keyword and recompute topic topwords.
+
+        This method removes all documents belonging to other topics from them and adds them to the new topic. It computes new topwords using both the tf-idf and the cosine-similarity method.
+        
+        Args:
+            keyword (str): Keyword to create the new topic from.
+            inplace (bool, optional): If True, the topic is updated in place. Otherwise, a new list of topics is created and returned (default is False).
+            rename_new_topic (bool, optional): If True, the new topic is renamed to the keyword (default is False).
+
+        Returns:
+            list of Topic: A list of new topics, including the newly created topic and the modified old ones.
         """
+
         umap_mapper = self.topic_lis[0].umap_mapper
 
         keyword_embedding_hd = openai.Embedding.create(input = [keyword], model = self.openai_embedding_model)["data"][0]["embedding"]
@@ -816,15 +893,20 @@ class TopicPrompting:
    
         return new_topics
 
-    def delete_topic(self, topic_idx:int, inplace: bool = False) -> list[Topic]:
+    def delete_topic(self, topic_idx: int, inplace: bool = False) -> list[Topic]:
         """
-        Delete a topic with the given index from the list of topics. Assign the documents of this topic to the remaining topics and recompute the topwords and the representations of the remaining topics.
-        params: 
-            topic_idx: index of the topic to delete
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            list of new topics
+        Deletes a topic with the given index from the list of topics and recomputes topwords and representations of the remaining topics.
+
+        This method assigns the documents of the deleted topic to the remaining topics.
+
+        Args:
+            topic_idx (int): Index of the topic to delete.
+            inplace (bool, optional): If True, the topic is deleted in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            list of Topic: A list of new topics resulting from the deletion.
         """
+
 
         topic_lis_new = deepcopy(self.topic_lis)
         topic_lis_new.pop(topic_idx)
@@ -879,15 +961,20 @@ class TopicPrompting:
    
         return new_topics
 	
-    def get_topic_information(self, topic_idx_lis: list[int], max_number_topwords = 500) -> dict:
+    def get_topic_information(self, topic_idx_list: list[int], max_number_topwords: int = 500) -> dict:
         """
-        This function provides detailed information on the topics with indices from the topic_idx_lis. This information can be used to compare the topics.  This function simply returns a dictionary where the keys are the topic indices and the values are the strings describing the topics.
-        params:
-            topic_idx_lis: list of topic indices to compare
-            max_number_topwords: maximum number of topwords to include in the description of the topics
-        returns:
-            dictionary with the comparison results where the keys are the topic indices and the values are the strings describing the topics
+        Get detailed information on topics by their indices.
+
+        This function returns a dictionary where the keys are the topic indices, and the values are strings describing the topics. The description includes a maximum of max_number_topwords topwords.
+
+        Args:
+            topic_idx_list (list[int]): List of topic indices to compare.
+            max_number_topwords (int, optional): Maximum number of topwords to include in the description of the topics (default is 500).
+
+        Returns:
+            dict: A dictionary with topic indices as keys and their descriptions as values.
         """
+
         max_number_tokens = self.max_context_length_promting - len(tiktoken.encoding_for_model(self.openai_prompting_model).encode(self.basic_model_instruction + " " + self.corpus_instruction)) - 100
 
         topic_info = {} # dictionary with the topic indices as keys and the topic descriptions as values
@@ -915,15 +1002,21 @@ class TopicPrompting:
         return topic_info
     
     def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
-        """"
-        A version of the knn_search function that returns a json file to be used with the openai API
-        params:
-            topic_index: index of the topic to search in
-            query: query string
-            k: number of neighbors to return
-        returns:
-            json object to be used with the openai API. Also returns the topk_docs and topk_doc_indices
         """
+        A version of the knn_search function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_index (int): Index of the topic to search in.
+            query (str): Query string.
+            k (int, optional): Number of neighbors to return (default is 20).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            tuple: A tuple containing two lists -
+                - A list of top k documents (as strings).
+                - A list of indices corresponding to the top k documents in the topic.
+        """
+
         topk_docs, topk_doc_indices = self.knn_search(topic_index, query, k)
         json_obj = json.dumps({
             "top-k documents": topk_docs,
@@ -931,130 +1024,157 @@ class TopicPrompting:
         })
         return json_obj, (topk_docs, topk_doc_indices)
     
-    def _identify_topic_idx_openai(self, query: str, n_tries = 3) -> (json, int):
+    def _identify_topic_idx_openai(self, query: str, n_tries: int = 3) -> (json, int):
         """
-        A version of the identify_topic_idx function that returns a json file to be used with the openai API
-        params:
-            query: query string
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            json object to be used with the openai API. Also returns the topic index
+        A version of the identify_topic_idx function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            query (str): Query string.
+            n_tries (int, optional): Number of tries to get a valid response from the LLM (default is 3).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            int: The topic index.
         """
+
         topic_index = self.identify_topic_idx(query, n_tries)
         json_obj = json.dumps({
             "topic index": topic_index
         })
         return json_obj, topic_index
     
-    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace = False) -> (json, list[Topic]):
+    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the split_topic_hdbscan function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            min_cluster_size: minimum cluster size to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
+        A version of the split_topic_hdbscan function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            min_cluster_size (int, optional): Minimum cluster size to split the topic into (default is 10).
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the split.
         """
+
         new_topics = self.split_topic_hdbscan(topic_idx, min_cluster_size, inplace)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-len(new_topics):]
         })
         return json_obj, new_topics
     
-    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace = False) -> (json, list[Topic]):
+    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the split_topic_kmeans function that returns a json file to be used with the openai API
-        params:
-            topic_idx: list of indices of the topics to split
-            n_clusters: number of clusters to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
+        A version of the split_topic_kmeans function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx (list[int]): List of indices of the topics to split.
+            n_clusters (int, optional): Number of clusters to split each topic into (default is 2).
+            inplace (bool, optional): If True, the topics are split in place. Otherwise, new lists of topics are created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the split.
         """
+
         new_topics = self.split_topic_kmeans(topic_idx, n_clusters, inplace)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-n_clusters:]
         })
         return json_obj, new_topics
     
-    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace = False) -> (json, list[Topic]):
+    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the split_topic_keywords function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            keywords: keywords to split the topic into. Needs to be a list of at least two keywords
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
+        A version of the split_topic_keywords function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            keywords (str): Keywords to split the topic into. Needs to be a list of at least two keywords.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the split.
         """
+
         new_topics = self.split_topic_keywords(topic_idx, keywords, inplace)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-len(keywords):]
         })
         return json_obj, new_topics
     
-    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace = False) -> (json, list[Topic]):
+    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the split_topic_single_keyword function that returns a json file to be used with the openai API
-        params:
-            topic_idx: index of the topic to split
-            keyword: keyword to split the topic into
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API. Also returns the new topics.
+        A version of the split_topic_single_keyword function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx (int): Index of the topic to split.
+            keyword (str): Keyword to split the topic into.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the split.
         """
+
         new_topics = self.split_topic_single_keyword(topic_idx, keyword, inplace)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-2:]
         })
         return json_obj, new_topics
     
-    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace = False) -> (json, list[Topic]):
+    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the combine_topics function that returns a json file to be used with the openai API
-        params:
-            topic_idx_lis: list of topic indices to combine
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API, also returns the new topics
+        A version of the combine_topics function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx_lis (list[int]): List of topic indices to combine.
+            inplace (bool, optional): If True, the topics are combined in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the combination.
         """
+
         new_topics = self.combine_topics(topic_idx_lis, inplace)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-1]
         })
         return json_obj, new_topics
 
-    def _add_new_topic_keyword_openai(self, keyword: str, inplace:bool = False, rename_new_topic:bool = False) -> (json, list[Topic]):
+    def _add_new_topic_keyword_openai(self, keyword: str, inplace: bool = False, rename_new_topic: bool = False) -> (json, list[Topic]):
         """
-        A version of the add_new_topic_keyword function that returns a json file to be used with the openai API
-        params:
-            keyword: keyword to create the new topic from
-            vocab: vocabulary of the corpus
-            vocab_embeddings: dictionary mapping words to their embeddings
-            enhancer: TopwordEnhancement object fro naming and describing the new topics
-            api_key: openai api key
-            embedding_model: openai embedding model to use for computing the embeddings
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-            rename_new_topic: if True, the new topic is renamed to the keyword
-        returns:
-            json object to be used with the openai API
+        A version of the add_new_topic_keyword function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            keyword (str): Keyword to create the new topic from.
+            inplace (bool, optional): If True, the topic is split in place. Otherwise, a new list of topics is created and returned (default is False).
+            rename_new_topic (bool, optional): If True, the new topic is renamed to the keyword (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of new topics resulting from the operation.
         """
+
         new_topics = self.add_new_topic_keyword(keyword, inplace, rename_new_topic)
         json_obj = json.dumps({
             "new topics": [topic.to_dict() for topic in new_topics][-1]
         })
         return json_obj, new_topics
     
-    def _delete_topic_openai(self, topic_idx:int, inplace: bool = False) -> (json, list[Topic]):
+    def _delete_topic_openai(self, topic_idx: int, inplace: bool = False) -> (json, list[Topic]):
         """
-        A version of the delete_topic function that returns a json file to be used with the openai API
-        params: 
-            topic_idx: index of the topic to delete
-            inplace: if True, the topic is split inplace. Otherwise, a new list of topics is created and returned
-        returns:
-            json object to be used with the openai API
+        A version of the delete_topic function that returns a JSON file to be used with the OpenAI API.
+
+        Args:
+            topic_idx (int): Index of the topic to delete.
+            inplace (bool, optional): If True, the topic is deleted in place. Otherwise, a new list of topics is created and returned (default is False).
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            list of Topic: A list of topics after the deletion operation.
         """
+
         new_topics = self.delete_topic(topic_idx, inplace)
         json_obj = json.dumps({
             f"Topics after deleting the one with index {topic_idx}": [topic.to_dict() for topic in new_topics]
@@ -1063,12 +1183,16 @@ class TopicPrompting:
 
     def _get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
         """
-        A version of the get_topic_information function that returns a json file to be used with the openai API
-        params:
-            topic_idx_lis: list of topic indices to compare
-        returns:
-            json object to be used with the openai API
+        A version of the get_topic_information function that returns a JSON file suitable for use with the OpenAI API.
+
+        Args:
+            topic_idx_lis (list[int]): List of topic indices to compare.
+
+        Returns:
+            json: JSON object to be used with the OpenAI API.
+            dict: A dictionary containing detailed information about the specified topics.
         """
+
         topic_info = self.get_topic_information(topic_idx_lis)
         json_obj = json.dumps({
             "topic info": topic_info
@@ -1077,23 +1201,28 @@ class TopicPrompting:
     
     def _fix_dictionary_topwords(self):
         """
-        Fix an issue with topic representation where the topwords are in another dictionary withing the actual dictionary defining them
+        Fix an issue with the topic representation where the topwords are nested within another dictionary in the actual dictionary defining them.
         """
+
         for topic in self.topic_lis:
             if type(topic.top_words["cosine_similarity"]) == dict:
                 topic.top_words["cosine_similarity"] = topic.top_words["cosine_similarity"][0]
 
-    def general_prompt(self, prompt: str, n_tries = 2) -> (list[str], object):
+    def general_prompt(self, prompt: str, n_tries: int = 2) -> (list[str], object):
         """
-        Prompt the LLM with a general prompt and return the response. Allow the llm to call any function defined in the class. 
-        Use n_tries in case the LLM does not give a valid response.
-        params:
-            prompt: prompt string
-            n_tries: number of tries to get a valid response from the LLM
-        returns:
-            response messages
-            response of function
+        Prompt the Language Model (LLM) with a general prompt and return the response. Allow the LLM to call any function defined in the class.
+        
+        Use n_tries in case the LLM does not provide a valid response.
+
+        Args:
+            prompt (str): Prompt string.
+            n_tries (int, optional): Number of tries to get a valid response from the LLM (default is 2).
+
+        Returns:
+            list of str: Response messages from the LLM.
+            object: Response of the invoked function.
         """
+
         messages = [
             {
                 "role": "system",
