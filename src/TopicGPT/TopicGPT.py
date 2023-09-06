@@ -26,50 +26,51 @@ class TopicGPT:
     This is the main class for doing topic modelling with TopicGPT. 
     """
 
-    def __init__(self, 
-                 openai_api_key: str,
-                 n_topics: int = None,
-                 openai_prompting_model: str = "gpt-3.5-turbo-16k",
-                 max_number_of_tokens: int = 16384,
-                 corpus_instruction: str = "",  
-                 document_embeddings: np.ndarray = None,
-                 vocab_embeddings: dict[str, np.ndarray] = None,
-                 embedding_model: str = "text-embedding-ada-002",
-                 max_numer_of_tokens_embedding: int = 8191,
-                 use_saved_embeddings: bool = True,
-                 clusterer: Clustering_and_DimRed = None, 
-                 n_topwords: int = 2000,
-                 n_topwords_description: int = 500,
-                 topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], 
-                 compute_vocab_hyperparams: dict = {},
-                 enhancer: TopwordEnhancement = None,
-                 topic_prompting: TopicPrompting = None, 
-                 verbose = True
-                 ) -> None:
+    def __init__(self,
+             openai_api_key: str,
+             n_topics: int = None,
+             openai_prompting_model: str = "gpt-3.5-turbo-16k",
+             max_number_of_tokens: int = 16384,
+             corpus_instruction: str = "",
+             document_embeddings: np.ndarray = None,
+             vocab_embeddings: dict[str, np.ndarray] = None,
+             embedding_model: str = "text-embedding-ada-002",
+             max_number_of_tokens_embedding: int = 8191,
+             use_saved_embeddings: bool = True,
+             clusterer: Clustering_and_DimRed = None,
+             n_topwords: int = 2000,
+             n_topwords_description: int = 500,
+             topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"],
+             compute_vocab_hyperparams: dict = {},
+             enhancer: TopwordEnhancement = None,
+             topic_prompting: TopicPrompting = None,
+             verbose: bool = True) -> None:
         
         """
-        Initialize the main class for doing topic modelling with TopicGPT.
+        Initializes the main class for conducting topic modeling with TopicGPT.
 
-        params:
-            openai_api_key: your OpenAI API key. You can get this from https://beta.openai.com/account/api-keys.
-            n_topics: number of topics to find. If None, then it will be automatically determined using the Hdbscan algorithm (https://pypi.org/project/hdbscan/). Otherwise agglomerative clustering will be used. Note that in case of too little data less than the specified number of topics may be found.
-            openai_prompting_model: Model provided by Openai to describe the topics and answer the prompts. For available models see https://platform.openai.com/docs/models. 
-            max_number_of_tokens: maximum number of tokens to use for the OpenAI API.
-            corpus_instruction: If further information on the given corpus are available, it can be beneficial to let the model know about it. 
-            document_embeddings: document embeddings for the corpus. If None, then it will be computed using the openAI API.
-            vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings. If None, then it will be computed using the openAI API.
-            embedding_model: Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
-            max_numer_of_tokens_embedding: Maximum number of tokens to use for the OpenAI API when computing the embeddings.
-            use_saved_embeddings: Whether to use saved embeddings. If True, then the embeddings will be loaded from the file SavedEmbeddings/embeddings.pkl. If False, then the embeddings will be computed using the openAI API and saved to the file SavedEmbeddings/embeddings.pkl.
-            clusterer: the clustering and dimensionality reduction object. The class can be found in the "Clustering/Clustering" folder. If None, a clustering object with default parameters will be used. Note that it doe note make sense to provide document and vocab embeddings and an embedding object at the same time. The number of topics specified in the clusterer will overwrite the n_topics argument.
-            n_topwords: number of top words to extract and save for each topic. Note that fewer top words might be used later. 
-            n_topwords_description: number of top words to give to the LLM in order to describe the topic. 
-            topword_extraction_methods: list of methods to use for extracting top words. The available methods are "tfidf", "cosine_similarity", and "topword_enhancement". See the file ExtractTopWords/ExtractTopWords.py for more details.
-            compute_vocab_hyperparams: hyperparameters for computing the vocab embeddings. See the file ExtractTopWords/ExtractTopWords.py for more details.
-            enhancer: the topword enhancement object. Is used to describe the The class can be found in the "TopwordEnhancement/TopwordEnhancement.py" folder. If None, a topword enhancement object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
-            topic_prompting: the topic prompting object. This object is used to formulate the prompts. The class can be found in the "TopicPrompting/TopicPrompting.py" folder. If None, a topic prompting object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
-            verbose: Whether to extensively print what is happening. Is overwritten by arguments in passed objects. 
+        Args:
+            openai_api_key (str): Your OpenAI API key. Obtain this key from https://beta.openai.com/account/api-keys.
+            n_topics (int, optional): Number of topics to discover. If None, the Hdbscan algorithm (https://pypi.org/project/hdbscan/) is used to determine the number of topics automatically. Otherwise, agglomerative clustering is used. Note that with insufficient data, fewer topics may be found than specified.
+            openai_prompting_model (str, optional): Model provided by OpenAI for topic description and prompts. Refer to https://platform.openai.com/docs/models for available models.
+            max_number_of_tokens (int, optional): Maximum number of tokens to use for the OpenAI API.
+            corpus_instruction (str, optional): Additional information about the corpus, if available, to benefit the model.
+            document_embeddings (np.ndarray, optional): Document embeddings for the corpus. If None, they will be computed using the OpenAI API.
+            vocab_embeddings (dict[str, np.ndarray], optional): Vocabulary embeddings for the corpus in a dictionary format where keys are words and values are embeddings. If None, they will be computed using the OpenAI API.
+            embedding_model (str, optional): Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
+            max_number_of_tokens_embedding (int, optional): Maximum number of tokens to use for the OpenAI API when computing embeddings.
+            use_saved_embeddings (bool, optional): Whether to use saved embeddings. If True, embeddings are loaded from the file 'SavedEmbeddings/embeddings.pkl'. If False, embeddings are computed using the OpenAI API and saved to the file.
+            clusterer (Clustering_and_DimRed, optional): Clustering and dimensionality reduction object. Find the class in the "Clustering/Clustering" folder. If None, a clustering object with default parameters is used. Note that providing document and vocab embeddings and an embedding object at the same time is not sensible; the number of topics specified in the clusterer will overwrite the n_topics argument.
+            n_topwords (int, optional): Number of top words to extract and save for each topic. Note that fewer top words might be used later.
+            n_topwords_description (int, optional): Number of top words to provide to the LLM (Language Model) to describe the topic.
+            topword_extraction_methods (list[str], optional): List of methods for extracting top words. Available methods include "tfidf", "cosine_similarity", and "topword_enhancement". Refer to the file 'ExtractTopWords/ExtractTopWords.py' for more details.
+            compute_vocab_hyperparams (dict, optional): Hyperparameters for computing vocabulary embeddings. Refer to the file 'ExtractTopWords/ExtractTopWords.py' for more details.
+            enhancer (TopwordEnhancement, optional): Topword enhancement object. Used for describing topics. Find the class in the "TopwordEnhancement/TopwordEnhancement.py" folder. If None, a topword enhancement object with default parameters is used. If an openai model is specified here, it will overwrite the openai_prompting_model argument for topic description.
+            topic_prompting (TopicPrompting, optional): Topic prompting object for formulating prompts. Find the class in the "TopicPrompting/TopicPrompting.py" folder. If None, a topic prompting object with default parameters is used. If an openai model is specified here, it will overwrite the openai_prompting_model argument for topic description.
+            verbose (bool, optional): Whether to print detailed information about the process. This can be overridden by arguments in passed objects.
         """
+        
+
 
         # Do some checks on the input arguments
         assert openai_api_key is not None, "You need to provide an OpenAI API key."
@@ -145,13 +146,17 @@ class TopicGPT:
 
     def compute_embeddings(self, corpus: list[str]) -> (np.ndarray, dict[str, np.ndarray]):
         """
-        This function computes the document and vocab embeddings for the corpus. 
-        params:
-            corpus: List of strings to embed. Where each element in the list is a document.
-        return:
-            document_embeddings: document embeddings for the corpus. Has shape (len(corpus), n_embedding_dimensions).
-            vocab_embeddings: vocab embeddings for the corpus. Is given in a dictionary where the keys are the words and the values are the embeddings.
+        Computes document and vocabulary embeddings for the given corpus.
+
+        Args:
+            corpus (list[str]): List of strings to embed, where each element is a document.
+
+        Returns:
+            tuple: A tuple containing two items:
+                - document_embeddings (np.ndarray): Document embeddings for the corpus, with shape (len(corpus), n_embedding_dimensions).
+                - vocab_embeddings (dict[str, np.ndarray]): Vocabulary embeddings for the corpus, provided as a dictionary where keys are words and values are embeddings.
         """
+
         
         self.document_embeddings = self.embedder.get_embeddings(corpus)["embeddings"]
 
@@ -159,13 +164,15 @@ class TopicGPT:
 
         return self.document_embeddings, self.vocab_embeddings
     
-    def extract_topics(self, corpus) -> list[Topic]:
+    def extract_topics(self, corpus: list[str]) -> list[Topic]:
         """
-        This function extracts the topics from the corpus. 
-        params:
-            corpus: List of strings to embed. Where each element in the list is a document.
-        return:
-            topics: list of Topic objects. 
+        Extracts topics from the given corpus.
+
+        Args:
+            corpus (list[str]): List of strings to process, where each element represents a document.
+
+        Returns:
+            list[Topic]: A list of Topic objects representing the extracted topics.
         """
 
         assert self.document_embeddings is not None and self.vocab_embeddings is not None, "You need to compute the embeddings first."
@@ -186,14 +193,17 @@ class TopicGPT:
 
         return self.topic_lis
     
-    def describe_topics(self, topics) -> list[Topic]:
+    def describe_topics(self, topics: list[Topic]) -> list[Topic]:
         """
-        This function gives topics a name and describes them by using the openai api.
-        params:
-            topics: list of Topic objects. 
-        return:
-            topics: list of Topic objects. 
+        Names and describes the provided topics using the OpenAI API.
+
+        Args:
+            topics (list[Topic]): List of Topic objects to be named and described.
+
+        Returns:
+            list[Topic]: A list of Topic objects with names and descriptions.
         """
+
 
         assert self.topic_lis is not None, "You need to extract the topics first."
 
@@ -213,13 +223,15 @@ class TopicGPT:
 
         return self.topic_lis
     
-    def fit(self, corpus, verbose = True): 
+    def fit(self, corpus: list[str], verbose: bool = True):
         """
-        This function computes the embeddings if necessary, extracts the topics, and describes them.
-        params:
-            corpus: List of strings to embed. Where each element in the list is a document.
-            verbose: Whether to print what is happening.
+        Compute embeddings if necessary, extract topics, and describe them.
+
+        Args:
+            corpus (list[str]): List of strings to embed, where each element represents a document.
+            verbose (bool, optional): Whether to print the progress and details of the process.
         """
+
         self.corpus = corpus 
         
         # remove empty documents
@@ -257,7 +269,7 @@ class TopicGPT:
 
     def visualize_clusters(self):
         """
-        This function visualizes the identified clusters that constitute the topics in a Scatterplot.
+        Visualizes the identified clusters representing the topics in a scatterplot.
         """
 
         assert self.topic_lis is not None, "You need to extract the topics first."
@@ -271,8 +283,9 @@ class TopicGPT:
     
     def repr_topics(self) -> str:
         """
-        This function returns a string explaining the topics.
+        Returns a string explanation of the topics.
         """
+
         assert self.topic_lis is not None, "You need to extract the topics first."
 
         if "cosine_similarity" in self.topword_extraction_methods:
@@ -294,19 +307,27 @@ class TopicGPT:
 
     def print_topics(self):
         """
-        This function prints the string explaining the topics.
-        """   
+        Prints a string explanation of the topics.
+        """
+   
         print(self.repr_topics())
 
     def prompt(self, query: str) -> (str, object):
         """
-        This function prompts the model with the query. Please Have a look at the TopicPrompting class for more details on available functions for prompting the model.
-        params:
-            query: The query to prompt the model with.
-        return:
-            answer: The answer from the model.
-            function_result: The result of the function call.
+        Prompts the model with the given query.
+
+        Args:
+            query (str): The query to prompt the model with.
+
+        Returns:
+            tuple: A tuple containing two items:
+                - answer (str): The answer from the model.
+                - function_result (object): The result of the function call.
+        
+        Note:
+            Please refer to the TopicPrompting class for more details on available functions for prompting the model.
         """
+
 
         result = self.topic_prompting.general_prompt(query)
 
@@ -317,15 +338,18 @@ class TopicGPT:
 
         return answer, function_result
     
-    def pprompt(self, query:str, return_function_result: bool = True) -> object:
+    def pprompt(self, query: str, return_function_result: bool = True) -> object:
         """
-        This function prompts the model with the query and prints the answer.
-        params:
-            query: The query to prompt the model with.
-            return_function_result: Whether to return the result of the function call by the LLM.
-        return:
-            function_result: The result of the function call.    
+        Prompts the model with the given query and prints the answer.
+
+        Args:
+            query (str): The query to prompt the model with.
+            return_function_result (bool, optional): Whether to return the result of the function call by the Language Model (LLM).
+
+        Returns:
+            object: The result of the function call if return_function_result is True, otherwise None.
         """
+
 
         answer, function_result = self.prompt(query)
 
@@ -334,12 +358,14 @@ class TopicGPT:
         if return_function_result:
             return function_result
         
-    def save_embeddings(self, path = embeddings_path) -> None:
+    def save_embeddings(self, path: str = embeddings_path) -> None:
         """
-        This function saves the document and vocabulary embeddings to a pickle file. For later re-use
-        params:
-            path: path to save the embeddings to.
+        Saves the document and vocabulary embeddings to a pickle file for later re-use.
+
+        Args:
+            path (str, optional): The path to save the embeddings to. Defaults to embeddings_path.
         """
+
 
         assert self.document_embeddings is not None and self.vocab_embeddings is not None, "You need to compute the embeddings first."
 
@@ -351,5 +377,3 @@ class TopicGPT:
         with open(path, "wb") as f:
             pickle.dump([self.document_embeddings, self.vocab_embeddings], f)
 
-
-    # TODO: Change functions to not reduce vocab again
