@@ -7,16 +7,29 @@ basic_instruction =  "You are a helpful assistant. You are excellent at inferrin
 
 class TopwordEnhancement:
     
-    def __init__(self, openai_key: str, openai_model: str = "gpt-3.5-turbo", max_context_length = 4000, openai_model_temperature:float = 0.5, basic_model_instruction: str = basic_instruction, corpus_instruction: str = ""):
+    def __init__(
+    self,
+    openai_key: str,
+    openai_model: str = "gpt-3.5-turbo",
+    max_context_length: int = 4000,
+    openai_model_temperature: float = 0.5,
+    basic_model_instruction: str = basic_instruction,
+    corpus_instruction: str = "") -> None:
         """
-        params:
-            openai_key: your openai key
-            openai_model: the openai model to use
-            max_context_length: the maximum length of the context for the openai model
-            openai_model_temperature: the softmax temperature to use for the openai model
-            basic_model_instruction: the basic instruction for the model
-            corpus_instruction: the instruction for the corpus. Useful if specific information on the corpus on hand is available
+        Initialize the OpenAIAssistant with the specified parameters.
+
+        Args:
+            openai_key (str): Your OpenAI API key.
+            openai_model (str, optional): The OpenAI model to use (default is "gpt-3.5-turbo").
+            max_context_length (int, optional): The maximum length of the context for the OpenAI model (default is 4000).
+            openai_model_temperature (float, optional): The softmax temperature to use for the OpenAI model (default is 0.5).
+            basic_model_instruction (str, optional): The basic instruction for the model.
+            corpus_instruction (str, optional): The instruction for the corpus. Useful if specific information on the corpus is available.
+
+        Returns:
+            None
         """
+
         # do some checks on the input arguments
         assert openai_key is not None, "Please provide an openai key"
         assert openai_model is not None, "Please provide an openai model"
@@ -40,11 +53,13 @@ class TopwordEnhancement:
     
     def count_tokens_api_message(self, messages: list[dict[str]]) -> int:
         """
-        Count the number of tokens in the API message
-        params:
-            message: the message from the API
-        returns:
-            number of tokens in the message
+        Count the number of tokens in the API messages.
+
+        Args:
+            messages (list[dict[str]]): List of messages from the API.
+
+        Returns:
+            int: Number of tokens in the messages.
         """
         encoding = tiktoken.encoding_for_model(self.openai_model)
         n_tokens = 0
@@ -60,14 +75,17 @@ class TopwordEnhancement:
                                n_words: int = None,
                                query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
         """
-        Describe the given topic based on its topwords by using the openai model. The given query is used together with the base query to query the model.
-        params:
-            topwords: list of topwords
-            n_words: number of words to use for the query. If None, all words are used
-            query_function: function to query the model. The function should take a list of topwords and return a string
-        returns:
-            A description of the topics by the model in form of an openai.ChatCompletion object
+        Describe the given topic based on its topwords using the OpenAI model.
+
+        Args:
+            topwords (list[str]): List of topwords.
+            n_words (int, optional): Number of words to use for the query. If None, all words are used.
+            query_function (Callable, optional): Function to query the model. The function should take a list of topwords and return a string.
+
+        Returns:
+            openai.ChatCompletion: A description of the topics by the model in the form of an OpenAI ChatCompletion object.
         """
+
         if n_words is None:
             n_words = len(topwords)
         
@@ -103,47 +121,56 @@ class TopwordEnhancement:
                                n_words: int = None,
                                query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic. Make sure the descriptions are short and concise! Do not cite more than 5 words per sub-aspect!!!") -> str:
         """
-        Describe the given topic based on its topwords by using the openai model. The given query is used together with the base query to query the model.
-        params:
-            topwords: list of topwords
-            n_words: number of words to use for the query. If None, all words are used
-            query_function: function to query the model. The function should take a list of topwords and return a string
-        returns:
-            A description of the topics by the model in form of a string
+        Describe the given topic based on its topwords using the OpenAI model.
+
+        Args:
+            topwords (list[str]): List of topwords.
+            n_words (int, optional): Number of words to use for the query. If None, all words are used.
+            query_function (Callable, optional): Function to query the model. The function should take a list of topwords and return a string.
+
+        Returns:
+            str: A description of the topics by the model in the form of a string.
         """
+
         completion = self.describe_topic_topwords_completion_object(topwords, n_words, query_function)
         return completion.choices[0].message["content"]
     
     def generate_topic_name_str(self,
-                                topwords: list[str],
-                                n_words: int = None,
-                                query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Give me only the title of the topic and nothing else please. Make sure the title is precise and not longer than 5 words, ideally even shorter.") -> str:
+                            topwords: list[str],
+                            n_words: int = None,
+                            query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Give me only the title of the topic and nothing else please. Make sure the title is precise and not longer than 5 words, ideally even shorter.") -> str:
         """
-        Generate a topic name based on the given topwords by using the openai model. The given query is used together with the base query to query the model. Works completely analogously to describe_topic_topwords_str.
-        params:
-            topwords: list of topwords
-            n_words: number of words to use for the query. If None, all words are used
-            query_function: function to query the model. The function should take a list of topwords and return a string
-        returns:
-            A topic name generated by the model in form of a string
+        Generate a topic name based on the given topwords using the OpenAI model.
+
+        Args:
+            topwords (list[str]): List of topwords.
+            n_words (int, optional): Number of words to use for the query. If None, all words are used.
+            query_function (Callable, optional): Function to query the model. The function should take a list of topwords and return a string.
+
+        Returns:
+            str: A topic name generated by the model in the form of a string.
         """
+
         return self.describe_topic_topwords_str(topwords, n_words, query_function)
 
     def describe_topic_documents_completion_object(self, 
-                                 documents: list[str],
-                                 truncate_doc_thresh = 100,
-                                 n_documents: int = None,
-                                 query_function: Callable = lambda docs: f"Please give me the common topic of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
+                                               documents: list[str],
+                                               truncate_doc_thresh=100,
+                                               n_documents: int = None,
+                                               query_function: Callable = lambda docs: f"Please give me the common topic of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
         """
-        Describe the given topic based on its documents by using the openai model. The given query is used together with the base query to query the model.
-        params:
-            documents: list of documents
-            truncate_doc_thresh: threshold for the number of words in a document. If a document has more words than this threshold, it is pruned to this threshold.
-            n_documents: number of documents to use for the query. If None, all documents are used
-            query_function: function to query the model. The function should take a list of documents and return a string
-        returns:
-            A description of the topics by the model in form of an openai.ChatCompletion object
+        Describe the given topic based on its documents using the OpenAI model.
+
+        Args:
+            documents (list[str]): List of documents.
+            truncate_doc_thresh (int, optional): Threshold for the number of words in a document. If a document has more words than this threshold, it is pruned to this threshold.
+            n_documents (int, optional): Number of documents to use for the query. If None, all documents are used.
+            query_function (Callable, optional): Function to query the model. The function should take a list of documents and return a string.
+
+        Returns:
+            openai.ChatCompletion: A description of the topics by the model in the form of an openai.ChatCompletion object.
         """
+
         if n_documents is None:
             n_documents = len(documents)
         documents = documents[:n_documents]
@@ -179,55 +206,68 @@ class TopwordEnhancement:
     @staticmethod
     def sample_identity(n_docs: int) -> np.ndarray:
         """
-        do not change the order of the documents
-        params:
-            n_docs: number of documents
-        returns:
-            np.arange(n_docs)
+        Generate an identity array of document indices without changing their order.
+
+        Args:
+            n_docs (int): Number of documents.
+
+        Returns:
+            np.ndarray: An array containing document indices from 0 to (n_docs - 1).
         """
+
         return np.arange(n_docs)
     
+
     @staticmethod
     def sample_uniform(n_docs: int) -> np.ndarray:
         """
-        sample documents randomly
-        params:
-            n_docs: number of documents
-        returns:
-            np.random.permutation(n_docs)
+        Randomly sample document indices without replacement.
+
+        Args:
+            n_docs (int): Number of documents.
+
+        Returns:
+            np.ndarray: An array containing randomly permuted document indices from 0 to (n_docs - 1).
         """
+
         return np.random.permutation(n_docs)
     
     @staticmethod
     def sample_poisson(n_docs: int) -> np.ndarray:
         """
-        sample documents randomly according to a poisson distribution, i.e. draw more documents from the beginning of the list
-        params:
-            n_docs: number of documents
-        returns:
-            np.random.permutation(n_docs)
+        Randomly sample document indices according to a Poisson distribution, favoring documents from the beginning of the list.
+
+        Args:
+            n_docs (int): Number of documents.
+
+        Returns:
+            np.ndarray: An array containing randomly permuted document indices, with more documents drawn from the beginning of the list.
         """
+
         return np.random.poisson(1, n_docs)
     
-    def describe_topic_documents_sampling_completion_object(self,
-                                                            documents: list[str],
-                                                            truncate_doc_thresh = 100,
-                                                            n_documents: int = None,
-                                                            query_function: Callable = lambda docs: f"Please give me the common topic of the sample of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.",
-                                                            sampling_strategy: (Callable, str) = None,
-                                                            )-> openai.ChatCompletion:
+    def describe_topic_documents_sampling_completion_object(
+        self,
+        documents: list[str],
+        truncate_doc_thresh=100,
+        n_documents: int = None,
+        query_function: Callable = lambda docs: f"Please give me the common topic of the sample of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.",
+        sampling_strategy: str = None,) -> openai.ChatCompletion:
         """
-        Take a list of documents belonging to a topic and describe the topic by sampling a subset of the documents and describing the topic based on the sample.
-        params:
-            documents: list of documents ordered by similarity to centroid of topic
-            truncate_doc_thresh: threshold for the number of words in a document. If a document has more words than this threshold, it is pruned to this threshold.
-            n_documents: number of documents to use for the query. If None, all documents are used
-            query_function: function to query the model. The function should take a list of documents and return a string
-            sampling_strategy: strategy to sample the documents. If None, the first provided documents are used. Otherwise the returned array specifies the order the documents should be considered. 
-            If the sampling strategy is a string, it is interpreted as a method of the class, e.g. "sample_uniform" is interpreted as self.sample_uniform. Can also be a function
-        returns:
-            A description of the topics by the model in form of an openai.ChatCompletion object
+        Describe a topic based on a sample of its documents by using the openai model.
+
+        Args:
+            documents (list[str]): List of documents ordered by similarity to the topic's centroid.
+            truncate_doc_thresh (int, optional): Threshold for the number of words in a document. If a document exceeds this threshold, it is truncated. Defaults to 100.
+            n_documents (int, optional): Number of documents to use for the query. If None, all documents are used. Defaults to None.
+            query_function (Callable, optional): Function to query the model. Defaults to a lambda function generating a query based on the provided documents.
+            sampling_strategy (Union[Callable, str], optional): Strategy to sample the documents. If None, the first provided documents are used.
+                If it's a string, it's interpreted as a method of the class (e.g., "sample_uniform" is interpreted as self.sample_uniform). It can also be a custom sampling function. Defaults to None.
+
+        Returns:
+            openai.ChatCompletion: A description of the topic by the model in the form of an openai.ChatCompletion object.
         """
+
         if type(sampling_strategy) == str:
             if sampling_strategy == "topk":
                 sampling_strategy = self.sample_identity
@@ -243,24 +283,27 @@ class TopwordEnhancement:
         result = self.describe_topic_documents_completion_object(new_documents, truncate_doc_thresh, n_documents, query_function)
         return result
     
-    def describe_topic_document_sampling_str(self,
-                                             documents: list[str],
-                                             truncate_doc_thresh = 100,
-                                             n_documents: int = None,
-                                             query_function: Callable = lambda docs: f"Please give me the common topic of the sample of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.",
-                                             sampling_strategy: (Callable, str) = None,
-                                             )-> str:
+    def describe_topic_document_sampling_str(
+    self,
+    documents: list[str],
+    truncate_doc_thresh=100,
+    n_documents: int = None,
+    query_function: Callable = lambda docs: f"Please give me the common topic of the sample of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.",
+    sampling_strategy: str = None,) -> str:
         """
-        Take a list of documents belonging to a topic and describe the topic by sampling a subset of the documents and describing the topic based on the sample.
-        params:
-            documents: list of documents ordered by similarity to centroid of topic
-            truncate_doc_thresh: threshold for the number of words in a document. If a document has more words than this threshold, it is pruned to this threshold.
-            n_documents: number of documents to use for the query. If None, all documents are used
-            query_function: function to query the model. The function should take a list of documents and return a string
-            sampling_strategy: strategy to sample the documents. If None, the first provided documents are used. Otherwise the returned array specifies the order the documents should be considered. 
-            If the sampling strategy is a string, it is interpreted as a method of the class, e.g. "sample_uniform" is interpreted as self.sample_uniform. Can also be a function
-        returns:
-            A description of the topics by the model in form of a string
+        Describe a topic based on a sample of its documents by using the openai model.
+
+        Args:
+            documents (list[str]): List of documents ordered by similarity to the topic's centroid.
+            truncate_doc_thresh (int, optional): Threshold for the number of words in a document. If a document exceeds this threshold, it is truncated. Defaults to 100.
+            n_documents (int, optional): Number of documents to use for the query. If None, all documents are used. Defaults to None.
+            query_function (Callable, optional): Function to query the model. Defaults to a lambda function generating a query based on the provided documents.
+            sampling_strategy (Union[Callable, str], optional): Strategy to sample the documents. If None, the first provided documents are used.
+                If it's a string, it's interpreted as a method of the class (e.g., "sample_uniform" is interpreted as self.sample_uniform). It can also be a custom sampling function. Defaults to None.
+
+        Returns:
+            str: A description of the topic by the model in the form of a string.
         """
+
         completion = self.describe_topic_document_sampling_completion_object(documents, truncate_doc_thresh, n_documents, query_function, sampling_strategy)
         return completion.choices[0].message["content"]
