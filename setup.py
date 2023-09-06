@@ -6,7 +6,7 @@ with open("README.md", 'r', encoding='utf') as f:
 
 setup(
     name='topicgpt',
-    version='0.0.1.dev7',
+    version='0.0.1.dev8',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
@@ -32,6 +32,8 @@ setup(
     author='Arik Reuter',
     author_email='arik_reuter@gmx.de',
     description='A package for integrating LLMs like GPT-3.5 and GPT-4 into topic modelling',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     license="MIT",
     keywords=['Topic Modelling', 'GPT', 'LLM', 'OpenAI', 'Retrieval Augmented Generation', 'Chat-GPT', 'GPT-3', 'GPT-4'],
     classifiers=[
