@@ -43,7 +43,8 @@ class TopicGPT:
                  topword_extraction_methods: list[str] = ["tfidf", "cosine_similarity"], 
                  compute_vocab_hyperparams: dict = {},
                  enhancer: TopwordEnhancement = None,
-                 topic_prompting: TopicPrompting = None
+                 topic_prompting: TopicPrompting = None, 
+                 verbose = True
                  ) -> None:
         
         """
@@ -67,6 +68,7 @@ class TopicGPT:
             compute_vocab_hyperparams: hyperparameters for computing the vocab embeddings. See the file ExtractTopWords/ExtractTopWords.py for more details.
             enhancer: the topword enhancement object. Is used to describe the The class can be found in the "TopwordEnhancement/TopwordEnhancement.py" folder. If None, a topword enhancement object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
             topic_prompting: the topic prompting object. This object is used to formulate the prompts. The class can be found in the "TopicPrompting/TopicPrompting.py" folder. If None, a topic prompting object with default parameters will be used. Note that if an openai model is specified here it will overwrite the openai_prompting_model argument for topic description.
+            verbose: Whether to extensively print what is happening. Is overwritten by arguments in passed objects. 
         """
 
         # Do some checks on the input arguments
@@ -97,7 +99,10 @@ class TopicGPT:
         self.enhancer = enhancer
         self.topic_prompting = topic_prompting	
         self.use_saved_embeddings = use_saved_embeddings
+        self.verbose = verbose
 
+        self.compute_vocab_hyperparams["verbose"] = self.verbose
+        
         # if embeddings have already been downloaded to the folder SavedEmbeddings, then load them
         if self.use_saved_embeddings and os.path.exists(embeddings_path):
             with open(embeddings_path, "rb") as f:
@@ -108,7 +113,7 @@ class TopicGPT:
             assert elem in ["tfidf", "cosine_similarity", "topword_enhancement"], "Invalid topword extraction method. Valid methods are 'tfidf', 'cosine_similarity', and 'topword_enhancement'."
         
         if clusterer is None:
-            self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics)
+            self.clusterer = Clustering_and_DimRed(number_clusters_hdbscan = self.n_topics, verbose = self.verbose)
         else:
             self.n_topics = clusterer.number_clusters_hdbscan
         

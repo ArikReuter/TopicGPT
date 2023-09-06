@@ -6,7 +6,7 @@ with open("README.md", 'r', encoding='utf') as f:
 
 setup(
     name='topicgpt',
-    version='0.0.1.dev9',
+    version='0.0.1',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
@@ -27,7 +27,7 @@ setup(
         'umap-learn',
         'umap-learn[plot]'
         ],
-
+    include_package_data=True,
     # Additional metadata
     author='Arik Reuter',
     author_email='arik_reuter@gmx.de',

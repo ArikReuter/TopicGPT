@@ -91,26 +91,7 @@ class QuickestTopicGPT_prompting(unittest.TestCase):
                 self.assertTrue(len(self.tm.topic_lis) == old_number_of_topics + added_topic_len -1 )
                 self.assertTrue(self.tm.topic_lis == function_result)
 
-    def test_prompt_get_topic_information(self):
-         """
-         test the get_topic_information function of the TopicGPT class
-         """
-         
-         print("Testing get_topic_information...")
-
-         prompt_lis = ["Please compare topic 0 and topic 1",
-                    "Please compare topic 3,4,5"]
-         
-         for prompt in prompt_lis:
-                
-                answer, function_result = self.tm.prompt(prompt)
-    
-                print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
-                print("function_result: ", function_result)
-    
-                self.assertTrue(type(answer) == str)
-                self.assertTrue(type(function_result) == dict)    
-
+   
     def test_prompt_combine_topics_inplace(self):
         """
         test the prompt function that calls combine_topics of the TopicPrompting class

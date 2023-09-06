@@ -3,12 +3,9 @@ import sys
 import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-#print(parentdir)
 
 sys.path.insert(0, f"{parentdir}/src/TopicGPT/Model")
-sys.path.insert(0, f"{parentdir}/src/TopicGPT/TopicRepresentation")
-from TopicGPT import TopicGPT
-from TopicRepresentation import Topic
+from topicgpt.TopicGPT import TopicGPT
 
 sys.path.insert(0, parentdir) 
 
@@ -17,9 +14,11 @@ import pickle
 
 import unittest
 
-from src.TopicGPT.Clustering.Clustering import Clustering_and_DimRed
-from src.TopicGPT.TopwordEnhancement.TopwordEnhancement import TopwordEnhancement
-from src.TopicGPT.TopicPrompting.TopicPrompting import TopicPrompting
+from src.topicgpt.TopicRepresentation import Topic
+
+from src.topicgpt.Clustering import Clustering_and_DimRed
+from src.topicgpt.TopwordEnhancement import TopwordEnhancement
+from src.topicgpt.TopicPrompting import TopicPrompting
 
 
 openai.organization = os.environ.get('OPENAI_ORG')

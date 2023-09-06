@@ -183,7 +183,7 @@ Here are five potential subtopics of topic 6:
 These subtopics were inferred from the words provided and the descriptions of the topics in the corpus used for topic modeling.
 
 ```
-Based on those results we decide to not actually split the topic into 5 subtopics but rather just 3 - One on "religious faith", one on "atheism" and one on "ethics and philisophy".
+Based on those results we decide to not actually split the topic into 5 subtopics but rather just 3 - One on "religious faith", one on "atheism" and one on "ethics and philosophy".
 We also want to actually make those changes to the existing topics, so we tell TopicGPT to do the changes inplace. 
 
 ```python
@@ -227,7 +227,7 @@ We see that TopicGPT performed the splitting as intended. However, the names and
 
 ### Combining topics
 
-Since topics 15 ("Hockey Games") and 17 ("Baseball games and tems") are both about sports, we want to combine them into a single topic.
+Since topics 15 ("Hockey Games") and 17 ("Baseball games and teams") are both about sports, we want to combine them into a single topic.
 
 ```python
 tm.pprompt("Please combine topics 15 and 17. Do this inplace.")
@@ -245,7 +245,7 @@ The topics 15 and 17 have been combined into a new topic called "Sports". This t
 ## Tips and tricks for prompting TopicGPT
 When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
 
-- Explizitly tell the model which function it should use and which paramters to select. (Sometimes the model simply cannot know what you except it to do.) For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a paramter of k = 5 and do this inplace")```
+- Explicitly tell the model which function it should use and which parameters to select. (Sometimes the model simply cannot know what you except it to do.) For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a parameter of k = 5 and do this inplace")```
 
 - Just ask the same prompt again. Since TopicGPT is a stochastic system, calling the same function with the same argument again might yield a different functionality to be used or a different result. 
 
@@ -256,27 +256,62 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 ## How TopicGPT works
 
-## Limitations and caveats
+TopicGPT is centrally built on top of text embeddings and the prompting mechanisms obtained via LLMs and provided by the OpenAI API. Please also see the section [References](#references) for more details on the models and ideas used in TopicGPT.
+
+### Embeddings
+When no embeddings are provided, TopicGPT automatically computes the embeddings of the documents of the provided corpus and also of the vocabulary that is extracted from the corpus. This happens after the fit-method is called. 
+
+The class ```GetEmbeddingsOpenAI``` is used for this purpose.
+
+### Clustering
+In order to identify topics among the documents, TopicGPT reduces the dimensionality of the document embeddings via UMAP and then uses Hdbscan to identify the clusters. Dimensionality reduction is necessary since the document embeddings are of very high dimensionality  and thus the curse of dimensionality would make it very difficult, if not impossible, to identify the clusters.
+
+When not specifying the number of topics in the ```Topic GPT``` class, Hdbscan is used to automatically determine the number of topics. If the number of topics is specified, agglomerative clustering is used on top of the clusters identified by HDBSCAN. 
+
+The class ```Clustering``` is used for this purpose.
+
+### Extraction of Top-Words
+
+After the clusters have been identified, TopicGPT extracts the top-words of each topic. This is done via two different methods:
+- **Tf-idf**: The tf-idf method is based on the idea that words that occur frequently in a topic but rarely in other topics are good indicators for the topic. The top-words are thus the words with the highest tf-idf scores. 
+- **Centroid similarity**: The centroid similarity method is based on the idea that the words that are closest to the centroid of a topic are good indicators for the topic. The top-words are thus the words that are closest to the centroid of the topic.
+
+Note that the Tf-idf heuristic was introduced for the BerTopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) and a similar idea to the centroid similarity method is used in Top2Vec (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)).
+
+Topword extraction is performed with help of the class ```ExtractTopWords```.
+
+### Describing and naming topics
+
+In the next step, all topics are provided with a short name and a description. This is done via prompting an LLM provided by OpenAI with around 500 top-words of each topic. The LLM then generates a short name and a description for each topic.
+
+The class ```TopwordEnhancement``` is used for this purpose.
+
+
+Note that computation of Embeddings, Extraction of Top-Words and Describing and Naming Topics are all performed when calling the ```fit``` method of the ```TopicGPT``` class.	
+
+
+## Limitations and Caveats
 
 It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list is not aimed at being complete, but could provide useful information on what may go wrong when using TopicGPT:
 
-- **Hallucination**: LLMs are well known for yielding incorrect but cohernt and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behaviour through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
+- **Hallucination**: LLMs are well known for yielding incorrect but coherent and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behavior through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
   - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
-  - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable altough the corresponding documents are not actually related.
+  - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable although the corresponding documents are not actually related.
 
-- **Unsdesired Behaviour**: When using the "prompt" or "pprompt" function, TopicGPT may not call the function you intended it to call. This can be alleviated by explizitly telling the model which function to use or directly calling the function yourself. 
+- **Unsdesired Behaviour**: When using the "prompt" or "pprompt" function, TopicGPT may not call the function you intended it to call. This can be alleviated by explicitly telling the model which function to use or directly calling the function yourself. 
 
-- **Stoachasticity**: The behaviour of TopicGPT is not deterministic and exhibits some randomness. There is alwyays some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
-  - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurence of falsely positive results. 
+- **Stoachasticity**: The behavior of TopicGPT is not deterministic and exhibits some randomness. There is always some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
+  - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurrence of falsely positive results. 
   Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination.
 
 - **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
 
 ## References
-The follwing models, software packages and ideas are central for TopicGPT: 
+The following models, software packages and ideas are central for TopicGPT: 
 - **UMAP**: The Uniform Manifold Approximation and Projection for Dimension Reduction algorithm is used for reducing the dimensionality of document- and word embeddings (McInnes, Leland, John Healy, and James Melville. "Umap: Uniform manifold approximation and projection for dimension reduction." arXiv preprint arXiv:1802.03426 (2018).)
-- **HDBSCAN**: Hierarchical density based clusterin is used to identify the clusters among the dimensionality reduced topics (McInnes, Leland, John Healy, and Steve Astels. "hdbscan: Hierarchical density based clustering." J. Open Source Softw. 2.11 (2017): 205.)
-- **Topword extraction**: Even though the corresponding packages are not directly used, the topword extraction methods used for this package are based on very similar ideas as found in the Bertopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)). 
+- **HDBSCAN**: Hierarchical density based clustering is used to identify the clusters among the dimensionality reduced topics (McInnes, Leland, John Healy, and Steve Astels. "hdbscan: Hierarchical density based clustering." J. Open Source Softw. 2.11 (2017): 205.)
+- **Agglomerative Clustering**: The agglomerative clustering functionality from sklearn is used to combine topics in case the identified number of clusters exeeds the number of topics specified by the user (Pedregosa, Fabian, et al. "Scikit-learn: Machine learning in Python." the Journal of machine Learning research 12 (2011): 2825-2830., https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html)
+- **Topword extraction**: Even though the corresponding packages are not directly used, the topword extraction methods used for this package are based on very similar ideas as found in the BerTopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)). 
 - **LLMs from the GPT family**: Some references for the models for computing embeddings and answering the prompts include:
   - Brown, Tom B., et al. “Language Models are Few-Shot Learners.” Advances in Neural Information Processing Systems 33 (2020).
   - Radford, Alec, et al. “GPT-4: Generative Pre-training of Transformers with Discrete Latent Variables.” arXiv preprint arXiv:2302.07413 (2023).
