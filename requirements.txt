@@ -14,3 +14,5 @@ tokenizers
 tqdm
 umap-learn
 umap-learn[plot]
+sphinx
+sphinx_rtd_theme
