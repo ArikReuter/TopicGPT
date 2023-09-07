@@ -14,4 +14,3 @@ tokenizers
 tqdm
 umap-learn
 umap-learn[plot]
-topicgpt

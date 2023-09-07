@@ -20,7 +20,22 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
 templates_path = ['_templates']
 exclude_patterns = []
 
-
+autodoc_mock_imports = ["gensim",
+"hdbscan",
+"nltk",
+"numpy",
+"openai",
+"pandas",
+"plotly",
+"regex",
+"scikit-learn",
+"seaborn",
+"sentence-transformers",
+"tiktoken",
+"tokenizers",
+"tqdm",
+"umap-learn",
+"umap-learn[plot]"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
