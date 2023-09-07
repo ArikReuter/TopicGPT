@@ -16,4 +16,4 @@ umap-learn
 umap-learn[plot]
 sphinx
 sphinx_rtd_theme
-topicgpt
+topicgpt==0.0.2

@@ -34,7 +34,6 @@ class QuickestTopicGPT_prompting(unittest.TestCase):
         cls.tm = TopicGPT(openai_api_key = api_key, n_topics = 1)
         cls.tm.fit(cls.corpus)
 
-
     def test_repr_topics(self):
         """
         test the repr_topics function of the TopicGPT class

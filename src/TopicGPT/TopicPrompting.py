@@ -765,7 +765,7 @@ class TopicPrompting:
         
         return res
 
-    def combine_topics(self, topic_idx_list: list[int], inplace: bool = False) -> list[Topic]:
+    def combine_topics(self, topic_idx_lis: list[int], inplace: bool = False) -> list[Topic]:
         """
         Combines several topics into one topic.
 
@@ -961,7 +961,7 @@ class TopicPrompting:
    
         return new_topics
 	
-    def get_topic_information(self, topic_idx_list: list[int], max_number_topwords: int = 500) -> dict:
+    def get_topic_information(self, topic_idx_lis: list[int], max_number_topwords: int = 500) -> dict:
         """
         Get detailed information on topics by their indices.
 
