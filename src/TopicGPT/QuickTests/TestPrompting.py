@@ -31,7 +31,6 @@ class QuickestTopicGPT_prompting(unittest.TestCase):
 
         cls.corpus = corpus
 
-
         cls.tm = TopicGPT(openai_api_key = api_key, n_topics = 1)
         cls.tm.fit(cls.corpus)
 

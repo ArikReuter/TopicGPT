@@ -8,6 +8,8 @@ import umap.plot
 from copy import deepcopy
 from sklearn.cluster import AgglomerativeClustering
 
+from typing import Tuple
+
 class Clustering_and_DimRed():
 
     """

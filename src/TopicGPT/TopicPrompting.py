@@ -36,10 +36,10 @@ class TopicPrompting:
     """
 
     def __init__(self, 
-             topic_list: list[Topic], 
+             topic_lis: list[Topic], 
              openai_key: str, 
              openai_prompting_model: str = "gpt-3.5-turbo-16k", 
-             max_context_length_prompting: int = 16000, 
+             max_context_length_promting: int = 16000, 
              openai_model_temperature_prompting: float = 0.5,
              openai_embedding_model: str = "text-embedding-ada-002",
              max_context_length_embedding: int = 8191, 

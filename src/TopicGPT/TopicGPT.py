@@ -76,7 +76,7 @@ class TopicGPT:
         assert openai_api_key is not None, "You need to provide an OpenAI API key."
         assert n_topics is None or n_topics > 0, "The number of topics needs to be a positive integer."
         assert max_number_of_tokens > 0, "The maximum number of tokens needs to be a positive integer."
-        assert max_numer_of_tokens_embedding > 0, "The maximum number of tokens for the embedding model needs to be a positive integer."
+        assert max_number_of_tokens_embedding > 0, "The maximum number of tokens for the embedding model needs to be a positive integer."
         assert n_topwords > 0, "The number of top words needs to be a positive integer."
         assert n_topwords_description > 0, "The number of top words for the topic description needs to be a positive integer."
         assert len(topword_extraction_methods) > 0, "You need to provide at least one topword extraction method."
@@ -90,8 +90,8 @@ class TopicGPT:
         self.document_embeddings = document_embeddings
         self.vocab_embeddings = vocab_embeddings
         self.embedding_model = embedding_model
-        self.max_numer_of_tokens_embedding = max_numer_of_tokens_embedding
-        self.embedder = GetEmbeddingsOpenAI(api_key = self.openai_api_key, embedding_model = self.embedding_model, max_tokens = self.max_numer_of_tokens_embedding)
+        self.max_number_of_tokens_embedding = max_number_of_tokens_embedding
+        self.embedder = GetEmbeddingsOpenAI(api_key = self.openai_api_key, embedding_model = self.embedding_model, max_tokens = self.max_number_of_tokens_embedding)
         self.clusterer = clusterer
         self.n_topwords = n_topwords
         self.n_topwords_description = n_topwords_description
@@ -122,7 +122,7 @@ class TopicGPT:
             self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens, corpus_instruction = self.corpus_instruction)
 
         if topic_prompting is None:
-            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_numer_of_tokens_embedding, corpus_instruction = corpus_instruction)
+            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_number_of_tokens_embedding, corpus_instruction = corpus_instruction)
         
         self.extractor = ExtractTopWords()
     

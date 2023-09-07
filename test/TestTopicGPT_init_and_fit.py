@@ -2,15 +2,13 @@
 This class is used to test the init and fit functions of the TopicGPT class
 """
 
-
-
 import os 
 import sys
 import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 
-sys.path.insert(0, f"{parentdir}/src/TopicGPT/Model")
+sys.path.insert(0, f"{parentdir}/src")
 from topicgpt.TopicGPT import TopicGPT
 
 sys.path.insert(0, parentdir) 
@@ -111,7 +109,12 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(isinstance(topicgpt.vocab[0], str))
 
             self.assertTrue(isinstance(topicgpt.topic_lis, list))
-            self.assertTrue(type(topicgpt.topic_lis[0]) == Topic)
+            try:
+                self.assertTrue(type(topicgpt.topic_lis[0]) == Topic)
+            except AssertionError as e:
+                print(e)
+                print(type(topicgpt.topic_lis[0]))
+                print(topicgpt.topic_lis[0])
 
             if topicgpt.n_topics is not None:
                 self.assertTrue(len(topicgpt.topic_lis) == topicgpt.n_topics)

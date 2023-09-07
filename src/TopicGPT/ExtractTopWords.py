@@ -10,6 +10,8 @@ import umap
 from collections import Counter
 import warnings
 
+from typing import List
+
 # make sure the import works even if the package has not been installed and just the files are used
 try:
     from topicgpt.GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
@@ -21,21 +23,22 @@ nltk.download('punkt')
 
 class ExtractTopWords:
     
-    def extract_centroid(self, embeddings: np.ndarray) -> np.ndarray:
+    def extract_centroids(self, embeddings: np.ndarray, labels: np.ndarray) -> dict:
         """
-        Extract the single centroid of a cluster.
+        Extract centroids of clusters.
 
         Args:
-            embeddings (np.ndarray): Embeddings to extract the centroid from.
+            embeddings (np.ndarray): Embeddings to cluster and reduce.
+            labels (np.ndarray): Cluster labels. -1 means outlier.
 
         Returns:
-            np.ndarray: The centroid of the cluster.
+            dict: Dictionary of cluster labels and their centroids.
         """
 
         centroid_dict = {}
         for label in np.unique(labels):
             if label != -1:
-                centroid_dict[label] = np.mean(embedddings[labels == label], axis = 0)
+                centroid_dict[label] = np.mean(embeddings[labels == label], axis = 0)
 
         return centroid_dict
     
@@ -279,19 +282,20 @@ class ExtractTopWords:
 
         return word_topic_mat
     
-    def compute_word_topic_mat_old(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers: bool = False) -> np.ndarray:
+    def compute_word_topic_mat(self, corpus: list[str], vocab: list[str], labels: np.ndarray, consider_outliers=False) -> np.ndarray:
         """
-        Compute the word-topic matrix.
+        Compute the word-topic matrix efficiently.
 
         Args:
             corpus (list[str]): List of documents.
-            vocab (list[str]): List of words in the corpus sorted alphabetically.
-            labels (np.ndarray): Cluster labels. -1 means outlier.
-            consider_outliers (bool, optional): Whether to consider outliers when computing the top words.
+            vocab (list[str]): List of words in the corpus, sorted alphabetically.
+            labels (np.ndarray): Cluster labels. -1 indicates outliers.
+            consider_outliers (bool, optional): Whether to consider outliers when computing the top words. Defaults to False.
 
         Returns:
             np.ndarray: Word-topic matrix.
         """
+
 
         corpus_arr = np.array(corpus) 
 

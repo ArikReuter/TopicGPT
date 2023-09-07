@@ -9,7 +9,7 @@ import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 
-sys.path.insert(0, f"{parentdir}/src/TopicGPT/Model")
+sys.path.insert(0, f"{parentdir}/src")
 from topicgpt.TopicGPT import TopicGPT
 
 sys.path.insert(0, parentdir) 
