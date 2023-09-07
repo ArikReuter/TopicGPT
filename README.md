@@ -22,6 +22,12 @@ You can install topicgpt via [PyPI](https://pypi.org/project/topicgpt/)
 pip install topicgpt
 ```
 
+## Further Documentation
+
+You can find detailed documentation of the available classes and functions [here](https://lmu-seminar-llms.github.io/TopicGPT/).
+
+
+
 ## Example 
 
 The following example demonstrates how TopicGPT can be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
