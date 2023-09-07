@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+master_doc = 'index'
 project = 'topicgpt'
 copyright = '2023, ArikReuter'
 author = 'ArikReuter'

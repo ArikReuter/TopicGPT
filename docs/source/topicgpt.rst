@@ -28,14 +28,6 @@ topicgpt.GetEmbeddingsOpenAI module
    :undoc-members:
    :show-inheritance:
 
-topicgpt.Metrics module
------------------------
-
-.. automodule:: topicgpt.Metrics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 topicgpt.TopicGPT module
 ------------------------
 
