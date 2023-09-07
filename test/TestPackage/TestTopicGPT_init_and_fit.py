@@ -31,7 +31,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         cls.api_key_openai = os.environ.get('OPENAI_API_KEY')
         openai.organization = os.environ.get('OPENAI_ORG')
 
-        with open("Data/Emebeddings/embeddings_20ng_raw.pkl", "rb")  as f:
+        with open("../../Data/Emebeddings/embeddings_20ng_raw.pkl", "rb")  as f:
             data_raw = pickle.load(f)
 
         corpus = data_raw["corpus"]
@@ -43,7 +43,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
 
         print("Using {} out of {} documents".format(n_docs, len(data_raw["corpus"])))
 
-        with open("Data/Emebeddings/embeddings_20ng_vocab.pkl", "rb") as f:
+        with open("../../Data/Emebeddings/embeddings_20ng_vocab.pkl", "rb") as f:
             cls.embeddings_vocab = pickle.load(f)
 
     def test_init(self):

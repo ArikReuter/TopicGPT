@@ -6,7 +6,7 @@ with open("README.md", 'r', encoding='utf') as f:
 
 setup(
     name='topicgpt',
-    version='0.0.3',
+    version='0.0.4',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
