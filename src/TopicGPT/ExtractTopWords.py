@@ -95,7 +95,7 @@ class ExtractTopWords:
     def compute_corpus_vocab(self, 
                         corpus: list[str],
                         remove_stopwords: bool = True, 
-                        remove_punctuation: bool = True, 
+                        remove_punction: bool = True, 
                         min_word_length: int = 3,
                         max_word_length: int = 20, 
                         remove_short_words: bool = True, 
@@ -110,7 +110,7 @@ class ExtractTopWords:
         Args:
             corpus (list[str]): List of documents.
             remove_stopwords (bool, optional): Whether to remove stopwords.
-            remove_punctuation (bool, optional): Whether to remove punctuation.
+            remove_punction (bool, optional): Whether to remove punctuation.
             min_word_length (int, optional): Minimum word length to retain.
             max_word_length (int, optional): Maximum word length to retain.
             remove_short_words (bool, optional): Whether to remove short words.

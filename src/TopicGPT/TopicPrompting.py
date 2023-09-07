@@ -330,7 +330,7 @@ class TopicPrompting:
         for idx, topic in enumerate(self.topic_lis):
             topic.topic_idx = idx
 
-    def reindex_topic_list(self, topic_list: list[Topic]) -> list[Topic]:
+    def reindex_topic_lis(self, topic_list: list[Topic]) -> list[Topic]:
         """
         Reindexes the topics in the provided topic list to assign correct new indices.
 
@@ -347,7 +347,7 @@ class TopicPrompting:
             topic.topic_idx = idx
         return topic_list
 
-    def show_topic_list(self) -> str:
+    def show_topic_lis(self) -> str:
         """
         Returns a string representation of the list of topics.
 
@@ -364,7 +364,7 @@ class TopicPrompting:
 
         print(res)
 
-    def get_topic_list(self) -> list[Topic]:
+    def get_topic_lis(self) -> list[Topic]:
         """
         Returns the list of topics stored in the instance.
 
@@ -377,7 +377,7 @@ class TopicPrompting:
         self.reindex_topics()
         return self.topic_lis
     
-    def set_topic_list(self, topic_list: list[Topic]) -> None:
+    def set_topic_lis(self, topic_list: list[Topic]) -> None:
         """
         Sets the list of topics for the instance.
 
