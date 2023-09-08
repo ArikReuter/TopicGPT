@@ -18,8 +18,8 @@ try:
 except:
     from GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
 
-nltk.download('stopwords')
-nltk.download('punkt')
+nltk.download('stopwords', quiet=True)  # download stopwords
+nltk.download('punkt', quiet=True) # download tokenizer
 
 class ExtractTopWords:
     
