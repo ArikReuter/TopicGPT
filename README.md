@@ -279,10 +279,6 @@ When using the "pprompt" or "prompt" function, TopicGPT can behave differently t
 
 -  In case of hallucination of facts it may help to use GPT-4 for TopicGPT
 
-### Testing 
-
-To ensure that TopicGPT runs as intended, you can install the package and run the two test files under test/TestPackage. Note that you need to provide your api-key to the scripts via the keyword argument "--api-key". Note that it is possible that some tests fail because of the stochasticity of the model or errors of the OpenAI API. You can try to run those tests again and see if they work on the second try.
-
 ## How TopicGPT works
 
 TopicGPT is centrally built on top of text embeddings and the prompting mechanisms obtained via LLMs and provided by the OpenAI API. Please also see the section [References](#references) for more details on the models and ideas used in TopicGPT.
