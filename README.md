@@ -1,7 +1,7 @@
 # TopicGPT
 TopicGPT integrates the remarkable capabilities of current LLMs such as GPT-3.5 and GPT-4 into topic modelling. 
 
-While traditional topic models extract topics as simple lists of top-words, such as ["Lion", "Leopard", "Rhino", "Elephant", "Buffalo"], TopicGPT offers rich and dynamic topic representations that can be intuitively understood, extensively investigated and modified in various ways via a simple text commands. 
+While traditional topic models extract topics as simple lists of top-words, such as ["Lion", "Leopard", "Rhino", "Elephant", "Buffalo"], TopicGPT offers rich and dynamic topic representations that can be intuitively understood, extensively investigated and modified in various ways via a simple text commands in natural language. 
 
 More specifically, it provides the following core functionalities: 
 - Identification of clusters within document-embeddings and top-word extraction
@@ -12,11 +12,11 @@ More specifically, it provides the following core functionalities:
 - Addition of new topics based on keywords
 - Deletion of topics
   
-It is further possible, to directly interact with TopicGPT via prompting and without explicitly calling  functions - an LLM autonomously decides which functionality to use.
+When directly interacting with TopicGPT via prompting and without explicitly calling  functions, an LLM autonomously decides which functionality to use.
 
 ## Installation
 
-You can install topicgpt via [PyPI](https://pypi.org/project/topicgpt/)
+You can install TopicGPT via [PyPI](https://pypi.org/project/topicgpt/)
 
 ```
 pip install topicgpt
@@ -29,7 +29,7 @@ You can find detailed documentation of the available classes and functions [here
 
 ## Example 
 
-The following example demonstrates how TopicGPT can be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
+The following shoort example demonstrates how TopicGPT could be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
 
 Further example-notebooks can be found under examples/ in the repository.
 
@@ -249,10 +249,29 @@ GPT wants to the call the function:  {
 The topics 15 and 17 have been combined into a new topic called "Sports". This topic includes aspects and sub-topics related to sports such as team and players, games and seasons, performance and skills, fans and audience, and statistics and records. Some of the common words found in this topic include "team," "players," "hockey," "baseball," "game," "games," "season," "playoffs," "good," "better," "win," "hit," "score," "fans," "series," "watch," "fan," "stats," "record," "pts," and "career".
 ```
 
+## Limitations and Caveats
+
+It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. LLMs are Machine Learning models and as such, they are not perfect at solving the intended tasks; They may be useful because they are correct reasonably often, but they can always fail. The following list is not complete, but may provide useful information on what may go wrong when using TopicGPT:
+
+- **Hallucination**: LLMs are well known for yielding incorrect but coherent and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behavior through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
+  - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
+  - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable although the corresponding documents are not actually related.
+
+- **Unsdesired Behaviour**: When using the "prompt" or "pprompt" function, TopicGPT may not call the function you intended it to call. This can be alleviated by explicitly telling the model which function to use or directly calling the function yourself. It sometimes also tires to call invalid functions or functions with invalid arguments.
+
+- **Stoachasticity**: The behavior of TopicGPT is not deterministic and exhibits some randomness. There is always some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
+  - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurrence of falsely positive results. 
+  Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination.
+
+- **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
+
+- **Size of the dataset**: TopicGPT might fail when the dataset is too small (less than 1000 documents). This is because then the identified topics might become very small and noisy. The RAG aspect will also likely not work as intended. Datasets of more than 10,000 documents are recommended. Note that the processing of very large datasets might not fit into the main memory of your computer.
+
+
 ## Tips and tricks for prompting TopicGPT
 When using the "pprompt" or "prompt" function, TopicGPT can behave differently than intended. To alleviate those issues some simple tricks can help: 
 
-- Explicitly tell the model which function it should use and which parameters to select. (Sometimes the model simply cannot know what you except it to do.) For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a parameter of k = 5 and do this inplace")```
+- Explicitly tell the model which function it should use and which parameters to select. (Sometimes the model simply cannot know what you expect it to do.) For example, instead of using ```tm.pprompt("What are the subtopic of topic 13?")```, use something like ```tm.pprompt("What are the subtopic of topic 13? Please use the function that uses the k-means algorithm to split the topic. Use a parameter of k = 5 and do this inplace")```
 
 - Just ask the same prompt again. Since TopicGPT is a stochastic system, calling the same function with the same argument again might yield a different functionality to be used or a different result. 
 
@@ -296,29 +315,27 @@ The class ```TopwordEnhancement``` is used for this purpose.
 
 Note that computation of Embeddings, Extraction of Top-Words and Describing and Naming Topics are all performed when calling the ```fit``` method of the ```TopicGPT``` class.	
 
+### Prompting of TopicGPT
 
-## Limitations and Caveats
+When formalizing a prompt via the ```pprompt``` or ```prompt``` function, TopicGPT uses the following steps:  
 
-It is important to note that, as a model built on top of inherently stochastic LLMs and all their shortcomings, TopicGPT has several limitations and shortcomings as well. The following list is not aimed at being complete, but could provide useful information on what may go wrong when using TopicGPT:
+1. The prompt, together with basic model- and corpus-information, is sent to an LLM provided by OpenAI. The LLM then decides which function of the ```TopicPrompting``` class to call. The LLM also decides which arguments to use for the function.
+2. The function is called according to the information by the LLM. The full result of the function will be returned to the user.
+3. Parts of the results of the function are returned to the LLM. The LLM then generates a short answer of the original prompt with help of the function result and returns it to the user.
 
-- **Hallucination**: LLMs are well known for yielding incorrect but coherent and plausible answers that seem convincing but are actually just made up. Although we tried to minimize this undesired behavior through carefully designing the used prompts, we found that TopicGPT may hallucinate (especially) with respect to the following aspects:
-  - Making up, distorting or misinterpreting content of documents retrieved via knn-search. 
-  - Incorrectly naming and describing topics based on top-words. Specifically, the model can identify topics that seem coherent and reasonable although the corresponding documents are not actually related.
-
-- **Unsdesired Behaviour**: When using the "prompt" or "pprompt" function, TopicGPT may not call the function you intended it to call. This can be alleviated by explicitly telling the model which function to use or directly calling the function yourself. 
-
-- **Stoachasticity**: The behavior of TopicGPT is not deterministic and exhibits some randomness. There is always some probability that certain actions do not work as intended at the first try because some components of the LLM do not function as desired. Simply trying again should mostly help with those issues. 
-  - On the other hand, TopicGPT may also be overly cautious and report that no relevant information has been found or no topic exists that matches a certain keyword even though it does. This could be caused by designing prompts to prevent massive occurrence of falsely positive results. 
-  Note that using GPT-4 in TopicGPT can help to significantly alleviate issues with hallucination.
-
-- **Erroneous embeddings**: The document- and word-embeddings used in TopicGPT may not always reflect the actual semantics of the texts correctly. More specifically, the embeddings sometimes reflect, for instance, grammatical or orthographical aspects such that clusters based on those aspects may be identified.
 
 ## References
+
 The following models, software packages and ideas are central for TopicGPT: 
+
 - **UMAP**: The Uniform Manifold Approximation and Projection for Dimension Reduction algorithm is used for reducing the dimensionality of document- and word embeddings (McInnes, Leland, John Healy, and James Melville. "Umap: Uniform manifold approximation and projection for dimension reduction." arXiv preprint arXiv:1802.03426 (2018).)
+
 - **HDBSCAN**: Hierarchical density based clustering is used to identify the clusters among the dimensionality reduced topics (McInnes, Leland, John Healy, and Steve Astels. "hdbscan: Hierarchical density based clustering." J. Open Source Softw. 2.11 (2017): 205.)
+
 - **Agglomerative Clustering**: The agglomerative clustering functionality from sklearn is used to combine topics in case the identified number of clusters exeeds the number of topics specified by the user (Pedregosa, Fabian, et al. "Scikit-learn: Machine learning in Python." the Journal of machine Learning research 12 (2011): 2825-2830., https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html)
+
 - **Topword extraction**: Even though the corresponding packages are not directly used, the topword extraction methods used for this package are based on very similar ideas as found in the BerTopic Model (Grootendorst, Maarten. "BERTopic: Neural topic modeling with a class-based TF-IDF procedure." arXiv preprint arXiv:2203.05794 (2022)) in the case of the tf-idf method and in Top2Vec for the centroid-similarity method (Angelov, Dimo. "Top2vec: Distributed representations of topics." arXiv preprint arXiv:2008.09470 (2020)). 
+
 - **LLMs from the GPT family**: Some references for the models for computing embeddings and answering the prompts include:
   - Brown, Tom B., et al. “Language Models are Few-Shot Learners.” Advances in Neural Information Processing Systems 33 (2020).
   - Radford, Alec, et al. “GPT-4: Generative Pre-training of Transformers with Discrete Latent Variables.” arXiv preprint arXiv:2302.07413 (2023).
