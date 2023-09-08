@@ -29,7 +29,7 @@ You can find detailed documentation of the available classes and functions [here
 
 ## Example 
 
-The following shoort example demonstrates how TopicGPT could be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
+The following short example demonstrates how TopicGPT could be used on a real-world dataset. The Twenty Newsgroups corpus (https://scikit-learn.org/0.19/datasets/twenty_newsgroups.html) is used for this purpose. 
 
 Further example-notebooks can be found under examples/ in the repository.
 
