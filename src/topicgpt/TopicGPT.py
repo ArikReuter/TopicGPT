@@ -31,6 +31,7 @@ class TopicGPT:
              embedding_model: str = "text-embedding-ada-002",
              max_number_of_tokens_embedding: int = 8191,
              use_saved_embeddings: bool = True,
+             path_saved_embeddings: str = embeddings_path,
              clusterer: Clustering_and_DimRed = None,
              n_topwords: int = 2000,
              n_topwords_description: int = 500,
@@ -53,7 +54,8 @@ class TopicGPT:
             vocab_embeddings (dict[str, np.ndarray], optional): Vocabulary embeddings for the corpus in a dictionary format where keys are words and values are embeddings. If None, they will be computed using the OpenAI API.
             embedding_model (str, optional): Name of the embedding model to use. See https://beta.openai.com/docs/api-reference/text-embedding for available models.
             max_number_of_tokens_embedding (int, optional): Maximum number of tokens to use for the OpenAI API when computing embeddings.
-            use_saved_embeddings (bool, optional): Whether to use saved embeddings. If True, embeddings are loaded from the file 'SavedEmbeddings/embeddings.pkl'. If False, embeddings are computed using the OpenAI API and saved to the file.
+            use_saved_embeddings (bool, optional): Whether to use saved embeddings. If True, embeddings are loaded from the file 'SavedEmbeddings/embeddings.pkl' or path_saved_embeddings if different. If False, embeddings are computed using the OpenAI API and saved to the file.
+            path_saved_embeddings (str, optional): Path to the saved embeddings file.
             clusterer (Clustering_and_DimRed, optional): Clustering and dimensionality reduction object. Find the class in the "Clustering/Clustering" folder. If None, a clustering object with default parameters is used. Note that providing document and vocab embeddings and an embedding object at the same time is not sensible; the number of topics specified in the clusterer will overwrite the n_topics argument.
             n_topwords (int, optional): Number of top words to extract and save for each topic. Note that fewer top words might be used later.
             n_topwords_description (int, optional): Number of top words to provide to the LLM (Language Model) to describe the topic.
@@ -101,10 +103,9 @@ class TopicGPT:
         self.compute_vocab_hyperparams["verbose"] = self.verbose
         
         # if embeddings have already been downloaded to the folder SavedEmbeddings, then load them
-        if self.use_saved_embeddings and os.path.exists(embeddings_path):
-            with open(embeddings_path, "rb") as f:
+        if self.use_saved_embeddings and os.path.exists(path_saved_embeddings):
+            with open(path_saved_embeddings, "rb") as f:
                 self.document_embeddings, self.vocab_embeddings = pickle.load(f)
-
 
         for elem in topword_extraction_methods:
             assert elem in ["tfidf", "cosine_similarity", "topword_enhancement"], "Invalid topword extraction method. Valid methods are 'tfidf', 'cosine_similarity', and 'topword_enhancement'."
@@ -238,18 +239,21 @@ class TopicGPT:
         if verbose:
             print("Removed " + str(len_before_removing - len_after_removing) + " empty documents.")
 
-        if verbose:
-                print("Computing vocabulary...")
         if self.vocab_embeddings is None:
+            if verbose:
+                print("Computing vocabulary...")
+
             self.vocab = self.extractor.compute_corpus_vocab(self.corpus, **self.compute_vocab_hyperparams)
         else:
+            print('Vocab already computed')
             self.vocab = list(self.vocab_embeddings.keys())
 
         if self.vocab_embeddings is None or self.document_embeddings is None:  
             if verbose:
                 print("Computing embeddings...")
             self.compute_embeddings(corpus = self.corpus)
-        
+        else:
+            print('Embeddings already computed')
         if verbose: 
             print("Extracting topics...")
         self.topic_lis = self.extract_topics(corpus = self.corpus)
@@ -326,7 +330,7 @@ class TopicGPT:
 
         result = self.topic_prompting.general_prompt(query)
 
-        answer = result[0][-1]["choices"][0]["message"]["content"]
+        answer = result[0][-1].choices[0].message.content
         function_result = result[1]
         self.topic_prompting._fix_dictionary_topwords()
         self.topic_lis = self.topic_prompting.topic_lis
