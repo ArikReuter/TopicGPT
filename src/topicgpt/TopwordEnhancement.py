@@ -1,12 +1,14 @@
 import tiktoken
-import openai
+from openai import OpenAI
+
+
 from typing import Callable
 import numpy as np
 
 basic_instruction =  "You are a helpful assistant. You are excellent at inferring topics from top-words extracted via topic-modelling. You make sure that everything you output is strictly based on the provided text."
 
 class TopwordEnhancement:
-    
+
     def __init__(
     self,
     openai_key: str,
@@ -42,6 +44,7 @@ class TopwordEnhancement:
         self.openai_model_temperature = openai_model_temperature
         self.basic_model_instruction = basic_model_instruction
         self.corpus_instruction = f" The following information is available about the corpus used to identify the topics: {corpus_instruction}"
+        self.client = OpenAI(api_key=openai_key)
 
     def __str__(self) -> str:
         repr = f"TopwordEnhancement(openai_model = {self.openai_model})"
@@ -50,7 +53,7 @@ class TopwordEnhancement:
     def __repr__(self) -> str:
         repr = f"TopwordEnhancement(openai_model = {self.openai_model})"
         return repr
-    
+
     def count_tokens_api_message(self, messages: list[dict[str]]) -> int:
         """
         Count the number of tokens in the API messages.
@@ -67,13 +70,13 @@ class TopwordEnhancement:
             for key, value in message.items():
                 if key == "content":
                     n_tokens += len(encoding.encode(value))
-        
+
         return n_tokens
-    
+
     def describe_topic_topwords_completion_object(self, 
                                topwords: list[str], 
                                n_words: int = None,
-                               query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
+                               query_function: Callable = lambda tws: f"Please give me the common topic of those words: {tws}. Also describe the various aspects and sub-topics of the topic.") :
         """
         Describe the given topic based on its topwords using the OpenAI model.
 
@@ -88,13 +91,13 @@ class TopwordEnhancement:
 
         if n_words is None:
             n_words = len(topwords)
-        
+
         if type(topwords) == dict:
             topwords = topwords[0]
 
         topwords = topwords[:n_words]
         topwords = np.array(topwords)
-    
+
 
         # if too many topwords are given, use only the first part of the topwords that fits into the context length
         tokens_cumsum = np.cumsum([len(tiktoken.encoding_for_model(self.openai_model).encode(tw + ", ")) for tw in topwords]) + len(tiktoken.encoding_for_model(self.openai_model).encode(self.basic_model_instruction + " " + self.corpus_instruction))
@@ -105,17 +108,15 @@ class TopwordEnhancement:
 
 
 
-        completion = openai.ChatCompletion.create(
-            model=self.openai_model,
-            messages=[
-                {"role": "system", "content":  self.basic_model_instruction + " " + self.corpus_instruction},
-                {"role": "user", "content": query_function(topwords)},
-            ],
-            temperature = self.openai_model_temperature
-        )
+        completion = client.chat.completions.create(model=self.openai_model,
+        messages=[
+            {"role": "system", "content":  self.basic_model_instruction + " " + self.corpus_instruction},
+            {"role": "user", "content": query_function(topwords)},
+        ],
+        temperature = self.openai_model_temperature)
 
         return completion
-    
+
     def describe_topic_topwords_str(self, 
                                topwords: list[str], 
                                n_words: int = None,
@@ -133,8 +134,8 @@ class TopwordEnhancement:
         """
 
         completion = self.describe_topic_topwords_completion_object(topwords, n_words, query_function)
-        return completion.choices[0].message["content"]
-    
+        return completion.choices[0].message.content
+
     def generate_topic_name_str(self,
                             topwords: list[str],
                             n_words: int = None,
@@ -157,7 +158,7 @@ class TopwordEnhancement:
                                                documents: list[str],
                                                truncate_doc_thresh=100,
                                                n_documents: int = None,
-                                               query_function: Callable = lambda docs: f"Please give me the common topic of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.") -> openai.ChatCompletion:
+                                               query_function: Callable = lambda docs: f"Please give me the common topic of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic."):
         """
         Describe the given topic based on its documents using the OpenAI model.
 
@@ -190,19 +191,17 @@ class TopwordEnhancement:
             print("Too many documents given. Using only the first part of the documents that fits into the context length. Number of documents used: ", np.argmax(tokens_cumsum > self.max_context_length))
             n_documents = np.argmax(tokens_cumsum > self.max_context_length)
             documents = documents[:n_documents]
-        
-        completion = openai.ChatCompletion.create(
-            model=self.openai_model,
-            messages=[
-                {"role": "system", "content": self.basic_model_instruction + " " + self.corpus_instruction},
-                {"role": "user", "content": query_function(documents)},
-            ],
-            temperature = self.openai_model_temperature
-        )
+
+        completion = client.chat.completions.create(model=self.openai_model,
+        messages=[
+            {"role": "system", "content": self.basic_model_instruction + " " + self.corpus_instruction},
+            {"role": "user", "content": query_function(documents)},
+        ],
+        temperature = self.openai_model_temperature)
 
         return completion
-    
-    
+
+
     @staticmethod
     def sample_identity(n_docs: int) -> np.ndarray:
         """
@@ -216,7 +215,7 @@ class TopwordEnhancement:
         """
 
         return np.arange(n_docs)
-    
+
 
     @staticmethod
     def sample_uniform(n_docs: int) -> np.ndarray:
@@ -231,7 +230,7 @@ class TopwordEnhancement:
         """
 
         return np.random.permutation(n_docs)
-    
+
     @staticmethod
     def sample_poisson(n_docs: int) -> np.ndarray:
         """
@@ -245,14 +244,14 @@ class TopwordEnhancement:
         """
 
         return np.random.poisson(1, n_docs)
-    
+
     def describe_topic_documents_sampling_completion_object(
         self,
         documents: list[str],
         truncate_doc_thresh=100,
         n_documents: int = None,
         query_function: Callable = lambda docs: f"Please give me the common topic of the sample of those documents: {docs}. Note that the documents are truncated if they are too long. Also describe the various aspects and sub-topics of the topic.",
-        sampling_strategy: str = None,) -> openai.ChatCompletion:
+        sampling_strategy: str = None,):
         """
         Describe a topic based on a sample of its documents by using the openai model.
 
@@ -277,12 +276,12 @@ class TopwordEnhancement:
                 sampling_strategy = self.sample_uniform
             elif sampling_strategy=="poisson":
                 sampling_strategy = self.sample_poisson
-        
+
         new_documents = [documents[i] for i in sampling_strategy(n_documents)]
 
         result = self.describe_topic_documents_completion_object(new_documents, truncate_doc_thresh, n_documents, query_function)
         return result
-    
+
     def describe_topic_document_sampling_str(
     self,
     documents: list[str],
@@ -306,4 +305,4 @@ class TopwordEnhancement:
         """
 
         completion = self.describe_topic_document_sampling_completion_object(documents, truncate_doc_thresh, n_documents, query_function, sampling_strategy)
-        return completion.choices[0].message["content"]
+        return completion.choices[0].message.content

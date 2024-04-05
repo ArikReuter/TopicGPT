@@ -6,7 +6,7 @@ with open("README.md", 'r', encoding='utf') as f:
 
 setup(
     name='topicgpt',
-    version='0.0.4',
+    version='0.0.5',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     install_requires=[
@@ -14,7 +14,7 @@ setup(
         'hdbscan',
         'nltk',
         'numpy', 
-        'openai',
+        'openai==1.16.2',
         'pandas',
         'plotly',
         'regex',

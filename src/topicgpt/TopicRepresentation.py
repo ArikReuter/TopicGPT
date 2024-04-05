@@ -9,14 +9,9 @@ import json
 
 # make sure the import works even if the package has not been installed and just the files are used
 
-try:
-    from topicgpt.Clustering import Clustering_and_DimRed
-    from topicgpt.ExtractTopWords import ExtractTopWords
-    from topicgpt.TopwordEnhancement import TopwordEnhancement
-except:
-    from Clustering import Clustering_and_DimRed
-    from ExtractTopWords import ExtractTopWords
-    from TopwordEnhancement import TopwordEnhancement
+from topicgpt.Clustering import Clustering_and_DimRed
+from topicgpt.ExtractTopWords import ExtractTopWords
+from topicgpt.TopwordEnhancement import TopwordEnhancement
 
 class Topic:
     """

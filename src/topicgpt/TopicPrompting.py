@@ -1,8 +1,10 @@
 import openai
+from openai import OpenAI
 import numpy as np
 import json
 import tiktoken
 import openai
+from openai import OpenAI
 import re
 import sklearn
 import hdbscan
@@ -81,6 +83,7 @@ class TopicPrompting:
         self.vocab = vocab
         self.vocab_embeddings = vocab_embeddings
         self.random_state = random_state
+        self.client = OpenAI(api_key=self.openai_key)
 
 
 
@@ -316,7 +319,7 @@ class TopicPrompting:
             "get_topic_information": self._get_topic_information_openai,
             "split_topic_hdbscan": self._split_topic_hdbscan_openai
         }
-    
+
     def reindex_topics(self) -> None:
         """
         Reindexes the topics in self.topic_list to assign correct new indices.
@@ -376,7 +379,7 @@ class TopicPrompting:
 
         self.reindex_topics()
         return self.topic_lis
-    
+
     def set_topic_lis(self, topic_list: list[Topic]) -> None:
         """
         Sets the list of topics for the instance.
@@ -411,7 +414,7 @@ class TopicPrompting:
 
         topic = self.topic_lis[topic_index]
 
-        query_embedding = openai.Embedding.create(input = [query], model = self.openai_embedding_model)["data"][0]["embedding"]
+        query_embedding = self.client.embeddings.create(input = [query], model = self.openai_embedding_model)["data"][0]["embedding"]
 
         query_similarities = topic.document_embeddings_hd @ query_embedding / (np.linalg.norm(topic.document_embeddings_hd, axis = 1) * np.linalg.norm(query_embedding))
 
@@ -436,7 +439,7 @@ class TopicPrompting:
 
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
-    
+
     def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries: int = 3) -> (str, tuple[list[str], list[int]]):
         """
         Uses the Language Model (LLM) to answer the llm_query based on the documents belonging to the topic.
@@ -466,12 +469,11 @@ class TopicPrompting:
             ]
         for _ in range(n_tries):
             try: 
-                response_message = openai.ChatCompletion.create(
-                    model = self.openai_prompting_model,
-                    messages = messages,
-                    functions = [self.function_descriptions["knn_search"]],
-                    function_call = "auto")["choices"][0]["message"]
-                
+                response_message = self.client.chat.completions.create(model = self.openai_prompting_model,
+                messages = messages,
+                functions = [self.function_descriptions["knn_search"]],
+                function_call = "auto")["choices"][0]["message"]
+
                 # Step 2: check if GPT wanted to call a function
                 function_call = response_message.get("function_call")
                 if function_call is not None:
@@ -492,8 +494,8 @@ class TopicPrompting:
 
                     # Step 4: send the info on the function call and function response to GPT
                     messages.append(response_message)  # extend conversation with assistant's reply
-                    
-                
+
+
                     messages.append(
                         {
                             "role": "function",
@@ -503,16 +505,14 @@ class TopicPrompting:
                     )  # extend conversation with function response
 
                     #print(messages)
-                    second_response = openai.ChatCompletion.create(
-                        model=self.openai_prompting_model,
-                        messages=messages,
-                    )  # get a new response from GPT where it can see the function response
-            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                    second_response = self.client.chat.completions.create(model=self.openai_prompting_model,
+                    messages=messages)  # get a new response from GPT where it can see the function response
+            except (TypeError, ValueError, openai.APIError, openai.APIConnectionError) as error:
                 print("Error occured: ", error)
                 print("Trying again...")
-            
+
             return second_response, function_response_return_output
-        
+
     def identify_topic_idx(self, query: str, n_tries: int = 3) -> int:
         """
         Identifies the index of the topic that the query is most likely about.
@@ -533,9 +533,9 @@ class TopicPrompting:
             description = topic.topic_description
             description = f"""Topic index: {i}: \n {description} \n \n"""
             topic_descriptions_str += description
-        
+
         system_prompt = f"""You are a helpful assistant."""
-        
+
         user_prompt = f""" Please find the index of the topic that is about the following query: {query}. 
         Those are the given topics: '''{topic_descriptions_str}'''.
         Please make sure to reply ONLY with an integer number between 0 and {len(self.topic_lis) - 1}!
@@ -555,18 +555,15 @@ class TopicPrompting:
             ]
         for _ in range(n_tries):
             try: 
-                response_message = openai.ChatCompletion.create(
-                model = self.openai_prompting_model,
-                messages = messages
-                
-                )["choices"][0]["message"]
+                response_message = self.client.chat.completions.create(model = self.openai_prompting_model,
+                messages = messages)["choices"][0]["message"]
 
-            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+            except (TypeError, ValueError, openai.APIError, openai.APIConnectionError) as error:
                 print("Error occured: ", error)
                 print("Trying again...")
 
 
-        
+
         response_text = response_message["content"]
         # find integer number in response text
         try:
@@ -575,10 +572,10 @@ class TopicPrompting:
         except:  # in case the LLM does not find any topic that fits the query, return None
             topic_index = None
 
-            
+
         if topic_index is None:
             raise ValueError("No integer number found in response text! The model gave the following response: ", response_text)
-        
+
         if topic_index == -1: 
             return None
         else:
@@ -605,7 +602,7 @@ class TopicPrompting:
             raise(ValueError("Need to provide vocab_embeddings to Topic prompting class to split a topic!"))
         if self.enhancer is None:
             raise(ValueError("Need to provide enhancer to Topic prompting class to split a topic!"))
-        
+
         vocab_embedding_dict = self.vocab_embeddings
         enhancer = self.enhancer
 
@@ -640,10 +637,10 @@ class TopicPrompting:
         new_topic_lis.pop(topic_idx)
         new_topic_lis += new_topics
         new_topic_lis = self.reindex_topic_lis(new_topic_lis)
-        
+
         if inplace:
             self.topic_lis = new_topic_lis
-        
+
         return new_topic_lis
 
     def split_topic_kmeans(self, topic_idx: int, n_clusters: int = 2, inplace: bool = False) -> list[Topic]:
@@ -670,7 +667,7 @@ class TopicPrompting:
         new_topics = self.split_topic_new_assignments(topic_idx, cluster_labels, inplace)
 
         return new_topics
-    
+
     def split_topic_hdbscan(self, topic_idx: int, min_cluster_size: int = 100, inplace: bool = False) -> list[Topic]:
         """
         Splits an existing topic into several subtopics using HDBSCAN clustering on the document embeddings of the topic.
@@ -701,7 +698,7 @@ class TopicPrompting:
             self.topic_lis = new_topics
 
         return new_topics
-    
+
     def split_topic_keywords(self, topic_idx: int, keywords: str, inplace: bool = False) -> list[Topic]:
         """
         Splits the topic into subtopics according to the provided keywords.
@@ -720,12 +717,12 @@ class TopicPrompting:
         assert len(keywords) > 1, "Need at least two keywords to split the topic! Otherwise use the split_topic_single_keyword function!"
         keyword_embeddings = []
         for keyword in keywords:
-            keyword_embeddings.append(openai.Embedding.create(input = [keyword], model = self.openai_embedding_model)["data"][0]["embedding"])
+            keyword_embeddings.append(self.client.embeddings.create(input = [keyword], model = self.openai_embedding_model)["data"][0]["embedding"])
         keyword_embeddings = np.array(keyword_embeddings)
 
         old_topic = self.topic_lis[topic_idx]
         document_embeddings = old_topic.document_embeddings_hd
-        
+
         document_embeddings = document_embeddings / np.linalg.norm(document_embeddings, axis = 1)[:, np.newaxis]
         keyword_embeddings = keyword_embeddings / np.linalg.norm(keyword_embeddings, axis = 1)[:, np.newaxis]
         similarities = document_embeddings @ keyword_embeddings.T
@@ -762,7 +759,7 @@ class TopicPrompting:
         keywords = [self.topic_lis[topic_idx].topic_name, keyword]
 
         res = self.split_topic_keywords(topic_idx, keywords, inplace)
-        
+
         return res
 
     def combine_topics(self, topic_idx_lis: list[int], inplace: bool = False) -> list[Topic]:
@@ -788,7 +785,7 @@ class TopicPrompting:
             new_topic_docs += topic.documents
             new_topic_words += topic.words
             new_topic_document_embeddings_hd.append(topic.document_embeddings_hd)
-        
+
         new_topic_document_embeddings_hd = np.concatenate(new_topic_document_embeddings_hd, axis = 0)
 
         new_topic = extract_and_describe_topic_cos_sim(
@@ -813,15 +810,15 @@ class TopicPrompting:
         if inplace:
             self.topic_lis = new_topic_lis
             self.reindex_topics()
-        
+
         return new_topic_lis
-        
+
     def add_new_topic_keyword(self, keyword: str, inplace: bool = False, rename_new_topic: bool = False) -> list[Topic]:
         """
         Create a new topic based on a keyword and recompute topic topwords.
 
         This method removes all documents belonging to other topics from them and adds them to the new topic. It computes new topwords using both the tf-idf and the cosine-similarity method.
-        
+
         Args:
             keyword (str): Keyword to create the new topic from.
             inplace (bool, optional): If True, the topic is updated in place. Otherwise, a new list of topics is created and returned (default is False).
@@ -833,7 +830,7 @@ class TopicPrompting:
 
         umap_mapper = self.topic_lis[0].umap_mapper
 
-        keyword_embedding_hd = openai.Embedding.create(input = [keyword], model = self.openai_embedding_model)["data"][0]["embedding"]
+        keyword_embedding_hd = self.client.embeddings.create(input = [keyword], model = self.openai_embedding_model)["data"][0]["embedding"]
         keyword_embedding_hd = np.array(keyword_embedding_hd).reshape(1, -1)
         keyword_embedding_ld = umap_mapper.transform(keyword_embedding_hd)[0]
 
@@ -857,7 +854,7 @@ class TopicPrompting:
 
             new_document_assignments = np.where(new_centroid_is_closer, new_topic_idx, i)
             new_doc_topic_assignments.append(new_document_assignments)
-        
+
         new_doc_topic_assignments = np.concatenate(new_doc_topic_assignments, axis = 0)
 
         assert len(doc_lis) == len(new_doc_topic_assignments), "Number of documents must be equal to the number of document assignments!"
@@ -868,7 +865,7 @@ class TopicPrompting:
         for topic in self.topic_lis:
             new_embeddings_hd.append(topic.document_embeddings_hd)
             new_embeddings_ld.append(topic.document_embeddings_ld)
-        
+
         new_embeddings_hd = np.concatenate(new_embeddings_hd, axis = 0)
         new_embeddings_ld = np.concatenate(new_embeddings_ld, axis = 0)
 
@@ -890,7 +887,7 @@ class TopicPrompting:
 
         if inplace:
             self.topic_lis = new_topics
-   
+
         return new_topics
 
     def delete_topic(self, topic_idx: int, inplace: bool = False) -> list[Topic]:
@@ -914,14 +911,14 @@ class TopicPrompting:
         old_centroids_ld = []
         for topic in topic_lis_new:
             old_centroids_ld.append(topic.centroid_ld)
-        
+
         old_centroids_ld = np.array(old_centroids_ld)
-        
+
         document_embeddings_ld = []
 
         for topic in self.topic_lis:
             document_embeddings_ld.append(topic.document_embeddings_ld)
-        
+
         document_embeddings_ld = np.concatenate(document_embeddings_ld, axis = 0) # has shape (n_documents, n_topics)
 
         centroid_similarities = document_embeddings_ld @ old_centroids_ld.T / (np.linalg.norm(document_embeddings_ld, axis = 1)[:, np.newaxis] * np.linalg.norm(old_centroids_ld, axis = 1))
@@ -933,16 +930,16 @@ class TopicPrompting:
         for topic in self.topic_lis:
             new_embeddings_hd.append(topic.document_embeddings_hd)
             new_embeddings_ld.append(topic.document_embeddings_ld)
-        
+
         new_embeddings_hd = np.concatenate(new_embeddings_hd, axis = 0)
         new_embeddings_ld = np.concatenate(new_embeddings_ld, axis = 0)
 
         doc_lis = []
         for topic in self.topic_lis:
             doc_lis += topic.documents
-        
 
-    
+
+
         new_topics = extract_describe_topics_labels_vocab(
             corpus = doc_lis,
             document_embeddings_hd = new_embeddings_hd,
@@ -958,9 +955,9 @@ class TopicPrompting:
 
         if inplace:
             self.topic_lis = new_topics
-   
+
         return new_topics
-	
+
     def get_topic_information(self, topic_idx_lis: list[int], max_number_topwords: int = 500) -> dict:
         """
         Get detailed information on topics by their indices.
@@ -1000,7 +997,7 @@ class TopicPrompting:
         topic_info = {idx: tiktoken.encoding_for_model(self.openai_prompting_model).decode(pruned_encodings[idx]) for idx in topic_idx_lis}
 
         return topic_info
-    
+
     def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
         """
         A version of the knn_search function that returns a JSON file to be used with the OpenAI API.
@@ -1023,7 +1020,7 @@ class TopicPrompting:
             "indices of top-k documents": list(topk_doc_indices)
         })
         return json_obj, (topk_docs, topk_doc_indices)
-    
+
     def _identify_topic_idx_openai(self, query: str, n_tries: int = 3) -> (json, int):
         """
         A version of the identify_topic_idx function that returns a JSON file to be used with the OpenAI API.
@@ -1042,7 +1039,7 @@ class TopicPrompting:
             "topic index": topic_index
         })
         return json_obj, topic_index
-    
+
     def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the split_topic_hdbscan function that returns a JSON file to be used with the OpenAI API.
@@ -1062,7 +1059,7 @@ class TopicPrompting:
             "new topics": [topic.to_dict() for topic in new_topics][-len(new_topics):]
         })
         return json_obj, new_topics
-    
+
     def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the split_topic_kmeans function that returns a JSON file to be used with the OpenAI API.
@@ -1082,7 +1079,7 @@ class TopicPrompting:
             "new topics": [topic.to_dict() for topic in new_topics][-n_clusters:]
         })
         return json_obj, new_topics
-    
+
     def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the split_topic_keywords function that returns a JSON file to be used with the OpenAI API.
@@ -1102,7 +1099,7 @@ class TopicPrompting:
             "new topics": [topic.to_dict() for topic in new_topics][-len(keywords):]
         })
         return json_obj, new_topics
-    
+
     def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the split_topic_single_keyword function that returns a JSON file to be used with the OpenAI API.
@@ -1122,7 +1119,7 @@ class TopicPrompting:
             "new topics": [topic.to_dict() for topic in new_topics][-2:]
         })
         return json_obj, new_topics
-    
+
     def _combine_topics_openai(self, topic_idx_lis: list[int], inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the combine_topics function that returns a JSON file to be used with the OpenAI API.
@@ -1161,7 +1158,7 @@ class TopicPrompting:
             "new topics": [topic.to_dict() for topic in new_topics][-1]
         })
         return json_obj, new_topics
-    
+
     def _delete_topic_openai(self, topic_idx: int, inplace: bool = False) -> (json, list[Topic]):
         """
         A version of the delete_topic function that returns a JSON file to be used with the OpenAI API.
@@ -1198,7 +1195,7 @@ class TopicPrompting:
             "topic info": topic_info
         })
         return json_obj, topic_info
-    
+
     def _fix_dictionary_topwords(self):
         """
         Fix an issue with the topic representation where the topwords are nested within another dictionary in the actual dictionary defining them.
@@ -1211,7 +1208,7 @@ class TopicPrompting:
     def general_prompt(self, prompt: str, n_tries: int = 2) -> (list[str], object):
         """
         Prompt the Language Model (LLM) with a general prompt and return the response. Allow the LLM to call any function defined in the class.
-        
+
         Use n_tries in case the LLM does not provide a valid response.
 
         Args:
@@ -1233,16 +1230,15 @@ class TopicPrompting:
                 "content": prompt
             }
             ]
-        
+
         functions = [self.function_descriptions[key] for key in self.function_descriptions.keys()]
         for _ in range(n_tries):
             try: 
-                response_message = openai.ChatCompletion.create(
-                    model = self.openai_prompting_model,
-                    messages = messages,
-                    functions = functions,
-                    function_call = "auto")["choices"][0]["message"]
-                
+                response_message = self.client.chat.completions.create(model = self.openai_prompting_model,
+                messages = messages,
+                functions = functions,
+                function_call = "auto")["choices"][0]["message"]
+
                 # Step 2: check if GPT wanted to call a function
                 function_call = response_message.get("function_call")
                 if function_call is not None:
@@ -1259,7 +1255,7 @@ class TopicPrompting:
 
                     # Step 4: send the info on the function call and function response to GPT
                     messages.append(response_message)  # extend conversation with assistant's reply
-                
+
                     messages.append(
                         {
                             "role": "function",
@@ -1268,12 +1264,10 @@ class TopicPrompting:
                         }
                     )  # extend conversation with function response
 
-                    second_response = openai.ChatCompletion.create(
-                        model=self.openai_prompting_model,
-                        messages=messages,
-                    )  # get a new response from GPT where it can see the function response
-            except (TypeError, ValueError, openai.error.APIError, openai.error.APIConnectionError) as error:
+                    second_response = self.client.chat.completions.create(model=self.openai_prompting_model,
+                    messages=messages)  # get a new response from GPT where it can see the function response
+            except (TypeError, ValueError, openai.APIError, openai.APIConnectionError) as error:
                 print("Error occured: ", error)
                 print("Trying again...")
-            
+
         return [response_message, second_response], function_response_return_output

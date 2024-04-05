@@ -36,7 +36,8 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         """
         print("Setting up class...")
         cls.api_key_openai = os.environ.get('OPENAI_API_KEY')
-        openai.organization = os.environ.get('OPENAI_ORG')
+        # TODO: The 'openai.organization' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(organization=os.environ.get('OPENAI_ORG'))'
+        # openai.organization = os.environ.get('OPENAI_ORG')
 
         with open("Data/Emebeddings/embeddings_20ng_raw.pkl", "rb")  as f:
             data_raw = pickle.load(f)
@@ -64,7 +65,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                             n_topics= 20)
         self.assertTrue(isinstance(topicgpt, TopicGPT))
-        
+
         topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                             n_topics= 20,
                             corpus_instruction="This is a corpus instruction", 
@@ -86,13 +87,13 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
                                 n_topics= 0,
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
-            
+
         with self.assertRaises(AssertionError):
             topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
                                 n_topics= 20,
                                 max_number_of_tokens=0,
                                 corpus_instruction="This is a corpus instruction")
-            
+
     def test_fit(self):
         """
         test the fit function of the TopicGPT class
@@ -123,17 +124,17 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(topicgpt.vocab == topicgpt.topic_prompting.vocab)
             self.assertTrue(topicgpt.vocab_embeddings == topicgpt.topic_prompting.vocab_embeddings)
 
-        
+
         topicgpt1 = TopicGPT(openai_api_key = self.api_key_openai, 
                             n_topics= 20,
                             document_embeddings = self.doc_embeddings,
                             vocab_embeddings = self.embeddings_vocab)
-    
+
         topicgpt2 = TopicGPT(openai_api_key = self.api_key_openai,
                              n_topics= None,
                                 document_embeddings = self.doc_embeddings, 
                                 vocab_embeddings = self.embeddings_vocab)
-        
+
         topicgpt3 = TopicGPT(openai_api_key=self.api_key_openai, 
                               n_topics = 1,
                                 document_embeddings = self.doc_embeddings,
@@ -141,7 +142,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
                                 n_topwords=10,
                                 n_topwords_description=10,
                                 topword_extraction_methods=["cosine_similarity"])
-        
+
         clusterer4 = Clustering_and_DimRed(
             n_dims_umap = 10,
             n_neighbors_umap = 20,
@@ -163,13 +164,13 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
                                     topic_prompting = topic_prompting4,
                                     clusterer = clusterer4,
                                     topword_extraction_methods=["tfidf"])
-                        
+
 
         topic_gpt_list = [topicgpt1, topicgpt2, topicgpt3, topicgpt4]
 
         for topic_gpt in topic_gpt_list:
             instance_test(topic_gpt)
-        
+
 
 
 
