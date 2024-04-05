@@ -1236,18 +1236,18 @@ class TopicPrompting:
                 response_message = self.client.chat.completions.create(model = self.openai_prompting_model,
                 messages = messages,
                 functions = functions,
-                function_call = "auto")["choices"][0]["message"]
+                function_call = "auto").choices[0].message
 
                 # Step 2: check if GPT wanted to call a function
-                function_call = response_message.get("function_call")
+                function_call = response_message.function_call
                 if function_call is not None:
                     print("GPT wants to the call the function: ", function_call)
                     # Step 3: call the function
                     # Note: the JSON response may not always be valid; be sure to handle errors
 
-                    function_name = function_call["name"]
+                    function_name = function_call.name
                     function_to_call = self.functionNames2Functions[function_name]
-                    function_args = json.loads(function_call["arguments"])
+                    function_args = json.loads(function_call.arguments)
                     function_response = function_to_call(**function_args)
                     function_response_json = function_response[0]
                     function_response_return_output = function_response[1]
