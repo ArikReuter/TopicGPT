@@ -39,7 +39,8 @@ class TopicPrompting:
 
     def __init__(self, 
              topic_lis: list[Topic], 
-             openai_key: str, 
+             client,
+             azure_config: dict = {},
              openai_prompting_model: str = "gpt-3.5-turbo-16k", 
              max_context_length_promting: int = 16000, 
              openai_model_temperature_prompting: float = 0.5,
@@ -56,7 +57,7 @@ class TopicPrompting:
 
         Args:
             topic_list (list[Topic]): List of Topic objects.
-            openai_key (str): OpenAI API key.
+            client: Client.
             openai_prompting_model (str, optional): OpenAI model to use for prompting (default is "gpt-3.5-turbo-16k").
             max_context_length_prompting (int, optional): Maximum context length for the prompting model (default is 16000).
             openai_model_temperature_prompting (float, optional): Temperature for the prompting model (default is 0.5).
@@ -71,7 +72,7 @@ class TopicPrompting:
         """
 
         self.topic_lis = topic_lis
-        self.openai_key = openai_key
+        self.client = client
         self.openai_prompting_model = openai_prompting_model
         self.max_context_length_promting = max_context_length_promting
         self.openai_model_temperature_prompting = openai_model_temperature_prompting
@@ -83,8 +84,6 @@ class TopicPrompting:
         self.vocab = vocab
         self.vocab_embeddings = vocab_embeddings
         self.random_state = random_state
-        self.client = OpenAI(api_key=self.openai_key)
-
 
 
         self.function_descriptions = {

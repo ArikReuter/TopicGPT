@@ -8,6 +8,7 @@ from topicgpt.TopwordEnhancement import TopwordEnhancement
 from topicgpt.GetEmbeddingsOpenAI import GetEmbeddingsOpenAI
 from topicgpt.TopicPrompting import TopicPrompting
 from topicgpt.TopicRepresentation import Topic
+from topicgpt.Client import Client
 import topicgpt.TopicRepresentation as TopicRepresentation
 
 
@@ -19,7 +20,8 @@ class TopicGPT:
     """
 
     def __init__(self,
-             openai_api_key: str,
+             api_key: str = "",
+             azure_endpoint: dict = {},
              n_topics: int = None,
              openai_prompting_model: str = "gpt-3.5-turbo-16k",
              max_number_of_tokens: int = 16384,
@@ -42,7 +44,7 @@ class TopicGPT:
         Initializes the main class for conducting topic modeling with TopicGPT.
 
         Args:
-            openai_api_key (str): Your OpenAI API key. Obtain this key from https://beta.openai.com/account/api-keys.
+            api_key (str): Your OpenAI API key. Obtain this key from https://beta.openai.com/account/api-keys.
             n_topics (int, optional): Number of topics to discover. If None, the Hdbscan algorithm (https://pypi.org/project/hdbscan/) is used to determine the number of topics automatically. Otherwise, agglomerative clustering is used. Note that with insufficient data, fewer topics may be found than specified.
             openai_prompting_model (str, optional): Model provided by OpenAI for topic description and prompts. Refer to https://platform.openai.com/docs/models for available models.
             max_number_of_tokens (int, optional): Maximum number of tokens to use for the OpenAI API.
@@ -65,7 +67,7 @@ class TopicGPT:
 
 
         # Do some checks on the input arguments
-        assert openai_api_key is not None, "You need to provide an OpenAI API key."
+        assert api_key is not None, "You need to provide an OpenAI API key."
         assert n_topics is None or n_topics > 0, "The number of topics needs to be a positive integer."
         assert max_number_of_tokens > 0, "The maximum number of tokens needs to be a positive integer."
         assert max_number_of_tokens_embedding > 0, "The maximum number of tokens for the embedding model needs to be a positive integer."
@@ -74,7 +76,9 @@ class TopicGPT:
         assert len(topword_extraction_methods) > 0, "You need to provide at least one topword extraction method."
         assert n_topwords_description <= n_topwords, "The number of top words for the topic description needs to be smaller or equal to the number of top words."
 
-        self.openai_api_key = openai_api_key
+        self.client = Client(api_key = api_key, azure_endpoint = azure_endpoint)
+
+
         self.n_topics = n_topics
         self.openai_prompting_model = openai_prompting_model
         self.max_number_of_tokens = max_number_of_tokens
@@ -83,7 +87,7 @@ class TopicGPT:
         self.vocab_embeddings = vocab_embeddings
         self.embedding_model = embedding_model
         self.max_number_of_tokens_embedding = max_number_of_tokens_embedding
-        self.embedder = GetEmbeddingsOpenAI(api_key = self.openai_api_key, embedding_model = self.embedding_model, max_tokens = self.max_number_of_tokens_embedding)
+        self.embedder = GetEmbeddingsOpenAI(client = self.client, embedding_model = self.embedding_model, max_tokens = self.max_number_of_tokens_embedding)
         self.clusterer = clusterer
         self.n_topwords = n_topwords
         self.n_topwords_description = n_topwords_description
@@ -111,10 +115,10 @@ class TopicGPT:
             self.n_topics = clusterer.number_clusters_hdbscan
         
         if enhancer is None:
-            self.enhancer = TopwordEnhancement(openai_key = self.openai_api_key, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens, corpus_instruction = self.corpus_instruction)
+            self.enhancer = TopwordEnhancement(client = self.client, openai_model = self.openai_prompting_model, max_context_length = self.max_number_of_tokens, corpus_instruction = self.corpus_instruction)
 
         if topic_prompting is None:
-            self.topic_prompting = TopicPrompting(topic_lis = [], openai_key = self.openai_api_key, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_number_of_tokens_embedding, corpus_instruction = corpus_instruction)
+            self.topic_prompting = TopicPrompting(topic_lis = [], client = self.client, openai_prompting_model = "gpt-3.5-turbo-16k",  max_context_length_promting = 16000, enhancer = self.enhancer, openai_embedding_model = self.embedding_model, max_context_length_embedding = self.max_number_of_tokens_embedding, corpus_instruction = corpus_instruction)
         
         self.extractor = ExtractTopWords()
     
@@ -152,7 +156,7 @@ class TopicGPT:
         
         self.document_embeddings = self.embedder.get_embeddings(corpus)["embeddings"]
 
-        self.vocab_embeddings = self.extractor.embed_vocab_openAI(self.openai_api_key, self.vocab, embedder = self.embedder)
+        self.vocab_embeddings = self.extractor.embed_vocab_openAI(self.client, self.vocab, embedder = self.embedder)
 
         return self.document_embeddings, self.vocab_embeddings
     
@@ -227,14 +231,13 @@ class TopicGPT:
         self.corpus = corpus 
         
         # remove empty documents
-        n_empty = 0
         len_before_removing = len(self.corpus)
         while '' in self.corpus:
             corpus.remove('')
         len_after_removing = len(self.corpus)
         if verbose:
             print("Removed " + str(len_before_removing - len_after_removing) + " empty documents.")
-            
+
         if verbose:
                 print("Computing vocabulary...")
         if self.vocab_embeddings is None:

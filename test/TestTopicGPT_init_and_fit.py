@@ -35,7 +35,7 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         load the necessary data and only keep a sample of it 
         """
         print("Setting up class...")
-        cls.api_key_openai = os.environ.get('OPENAI_API_KEY')
+        cls.api_key_openai = os.environ.get('api_key')
         # TODO: The 'openai.organization' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(organization=os.environ.get('OPENAI_ORG'))'
         # openai.organization = os.environ.get('OPENAI_ORG')
 
@@ -59,14 +59,14 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         test the init function of the TopicGPT class
         """
         print("Testing init...")
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai)
+        topicgpt = TopicGPT(api_key = self.api_key_openai)
         self.assertTrue(isinstance(topicgpt, TopicGPT))
 
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+        topicgpt = TopicGPT(api_key = self.api_key_openai, 
                             n_topics= 20)
         self.assertTrue(isinstance(topicgpt, TopicGPT))
 
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+        topicgpt = TopicGPT(api_key = self.api_key_openai, 
                             n_topics= 20,
                             corpus_instruction="This is a corpus instruction", 
                             document_embeddings = self.doc_embeddings,
@@ -76,20 +76,20 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
         # check if assertions are triggered
 
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = None, 
+            topicgpt = TopicGPT(api_key = None, 
                                 n_topics= 32,
                                 openai_prompting_model="gpt-4",
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
 
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+            topicgpt = TopicGPT(api_key = self.api_key_openai, 
                                 n_topics= 0,
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
 
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+            topicgpt = TopicGPT(api_key = self.api_key_openai, 
                                 n_topics= 20,
                                 max_number_of_tokens=0,
                                 corpus_instruction="This is a corpus instruction")
@@ -125,17 +125,17 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(topicgpt.vocab_embeddings == topicgpt.topic_prompting.vocab_embeddings)
 
 
-        topicgpt1 = TopicGPT(openai_api_key = self.api_key_openai, 
+        topicgpt1 = TopicGPT(api_key = self.api_key_openai, 
                             n_topics= 20,
                             document_embeddings = self.doc_embeddings,
                             vocab_embeddings = self.embeddings_vocab)
 
-        topicgpt2 = TopicGPT(openai_api_key = self.api_key_openai,
+        topicgpt2 = TopicGPT(api_key = self.api_key_openai,
                              n_topics= None,
                                 document_embeddings = self.doc_embeddings, 
                                 vocab_embeddings = self.embeddings_vocab)
 
-        topicgpt3 = TopicGPT(openai_api_key=self.api_key_openai, 
+        topicgpt3 = TopicGPT(api_key=self.api_key_openai, 
                               n_topics = 1,
                                 document_embeddings = self.doc_embeddings,
                                 vocab_embeddings = self.embeddings_vocab,
@@ -150,14 +150,14 @@ class TestTopicGPT_init_and_fit(unittest.TestCase):
             number_clusters_hdbscan= 10 # use only 10 clusters
         )
 
-        topword_enhancement4 = TopwordEnhancement(openai_key = self.api_key_openai)
+        topword_enhancement4 = TopwordEnhancement(api_key = self.api_key_openai)
         topic_prompting4 = TopicPrompting(
-            openai_key = self.api_key_openai,
+            api_key = self.api_key_openai,
             enhancer = topword_enhancement4,
             topic_lis = None
         )
 
-        topicgpt4 = TopicGPT(openai_api_key=self.api_key_openai,
+        topicgpt4 = TopicGPT(api_key=self.api_key_openai,
                                 n_topics= None,
                                     document_embeddings = self.doc_embeddings, 
                                     vocab_embeddings = self.embeddings_vocab,

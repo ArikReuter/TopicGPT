@@ -11,7 +11,7 @@ class TopwordEnhancement:
 
     def __init__(
     self,
-    openai_key: str,
+    client,
     openai_model: str = "gpt-3.5-turbo",
     max_context_length: int = 4000,
     openai_model_temperature: float = 0.5,
@@ -21,7 +21,7 @@ class TopwordEnhancement:
         Initialize the OpenAIAssistant with the specified parameters.
 
         Args:
-            openai_key (str): Your OpenAI API key.
+            client: Client.
             openai_model (str, optional): The OpenAI model to use (default is "gpt-3.5-turbo").
             max_context_length (int, optional): The maximum length of the context for the OpenAI model (default is 4000).
             openai_model_temperature (float, optional): The softmax temperature to use for the OpenAI model (default is 0.5).
@@ -33,18 +33,16 @@ class TopwordEnhancement:
         """
 
         # do some checks on the input arguments
-        assert openai_key is not None, "Please provide an openai key"
         assert openai_model is not None, "Please provide an openai model"
         assert max_context_length > 0, "Please provide a positive max_context_length"
         assert openai_model_temperature > 0, "Please provide a positive openai_model_temperature"
 
-        self.openai_key = openai_key
+        self.client = client
         self.openai_model = openai_model
         self.max_context_length = max_context_length
         self.openai_model_temperature = openai_model_temperature
         self.basic_model_instruction = basic_model_instruction
         self.corpus_instruction = f" The following information is available about the corpus used to identify the topics: {corpus_instruction}"
-        self.client = OpenAI(api_key=openai_key)
 
     def __str__(self) -> str:
         repr = f"TopwordEnhancement(openai_model = {self.openai_model})"

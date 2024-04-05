@@ -209,12 +209,12 @@ class ExtractTopWords:
 
         return words_per_topic
                     
-    def embed_vocab_openAI(self, api_key: str, vocab: list[str], embedder: GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
+    def embed_vocab_openAI(self, client, vocab: list[str], embedder: GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
         """
         Embed the vocabulary using the OpenAI embedding API.
 
         Args:
-            api_key (str): OpenAI API key.
+            client: Client.
             vocab (list[str]): List of words in the corpus sorted alphabetically.
             embedder (GetEmbeddingsOpenAI, optional): Embedding object.
 
@@ -224,7 +224,7 @@ class ExtractTopWords:
 
         vocab = sorted(list(set(vocab)))
         if embedder is None: 
-            embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(api_key)
+            embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(client)
         result = embedder.get_embeddings(vocab)
 
         res_dict = {}

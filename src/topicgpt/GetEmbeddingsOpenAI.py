@@ -9,12 +9,12 @@ class GetEmbeddingsOpenAI:
     This class allows to compute embeddings of text using the OpenAI API.
     """
 
-    def __init__(self, api_key: str, embedding_model: str = "text-embedding-ada-002", tokenizer: str = None, max_tokens: int = 8191) -> None:
+    def __init__(self, client, azure_config: dict = {}, embedding_model: str = "text-embedding-ada-002", tokenizer: str = None, max_tokens: int = 8191) -> None:
         """
         Constructor of the class.
 
         Args:
-            api_key (str): API key to use the OpenAI API.
+            client: Client.
             embedding_model (str, optional): Name of the embedding model to use.
             tokenizer (str, optional): Name of the tokenizer to use.
             max_tokens (int, optional): Maximum number of tokens to use.
@@ -23,12 +23,9 @@ class GetEmbeddingsOpenAI:
             By default, the embedding model "text-embedding-ada-002" is used with the corresponding tokenizer "cl100k_base" and a maximum number of tokens of 8191.
         """
 
-        self.api_key = api_key
+        self.client = client
         self.embedding_model = embedding_model
-
         self.tokenizer_str = tokenizer
-
-
         self.max_tokens = max_tokens
 
     @staticmethod
@@ -126,8 +123,7 @@ class GetEmbeddingsOpenAI:
         Returns:
             API response: The response from the API.
         """
-        client = OpenAI(api_key=self.api_key)
-        response = client.embeddings.create(input = [text], model = self.embedding_model)
+        response = self.client.embeddings.create(input = [text], model = self.embedding_model)
         return response
 
 
