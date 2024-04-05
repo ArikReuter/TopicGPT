@@ -1,5 +1,4 @@
 import openai
-from openai.embeddings_utils import get_embedding
 import tiktoken
 from tqdm import tqdm
 import numpy as np
