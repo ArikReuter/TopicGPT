@@ -228,13 +228,13 @@ class TopicGPT:
         
         # remove empty documents
         n_empty = 0
-        for doc in self.corpus:
-            if doc == "":
-                self.corpus.remove(doc)
-                n_empty += 1
-        if verbose: 
-            print("Removed " + str(n_empty) + " empty documents.")
-
+        len_before_removing = len(self.corpus)
+        while '' in self.corpus:
+            corpus.remove('')
+        len_after_removing = len(self.corpus)
+        if verbose:
+            print("Removed " + str(len_before_removing - len_after_removing) + " empty documents.")
+            
         if verbose:
                 print("Computing vocabulary...")
         if self.vocab_embeddings is None:
