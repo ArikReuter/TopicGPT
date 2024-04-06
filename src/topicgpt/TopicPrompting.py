@@ -40,7 +40,6 @@ class TopicPrompting:
     def __init__(self, 
              topic_lis: list[Topic], 
              client,
-             azure_config: dict = {},
              openai_prompting_model: str = "gpt-3.5-turbo-16k", 
              max_context_length_promting: int = 16000, 
              openai_model_temperature_prompting: float = 0.5,
