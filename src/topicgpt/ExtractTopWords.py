@@ -393,7 +393,7 @@ class ExtractTopWords:
         similarity = vocab_arr @ centroid_arr.T # cosine similarity
         return similarity
     
-    def extract_topwords_centroid_similarity(self, word_topic_mat: np.ndarray, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False, consider_outliers: bool = False) -> (dict, np.ndarray):
+    def extract_topwords_centroid_similarity(self, word_topic_mat: np.ndarray, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False, consider_outliers: bool = False) -> tuple[dict, np.ndarray]:
         """
         Extract the top words for each cluster by computing the cosine similarity of the words that occur in the corpus to the centroid of the cluster.
 

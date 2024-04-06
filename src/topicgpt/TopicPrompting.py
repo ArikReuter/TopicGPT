@@ -394,7 +394,7 @@ class TopicPrompting:
         self.topic_lis = topic_list
         self.reindex_topics()
 
-    def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> (list[str], list[int]):
+    def knn_search(self, topic_index: int, query: str, k: int = 20, doc_cutoff_threshold: int = 1000) -> tuple[list[str], list[int]]:
         """
         Finds the k nearest neighbors of the query in the given topic based on cosine similarity in the original embedding space.
 
@@ -438,7 +438,7 @@ class TopicPrompting:
 
         return topk_docs, [int(elem) for elem in topk_doc_indices]
 
-    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries: int = 3) -> (str, tuple[list[str], list[int]]):
+    def prompt_knn_search(self, llm_query: str, topic_index: int = None, n_tries: int = 3) -> tuple[str, tuple[list[str], list[int]]]:
         """
         Uses the Language Model (LLM) to answer the llm_query based on the documents belonging to the topic.
 
@@ -996,7 +996,7 @@ class TopicPrompting:
 
         return topic_info
 
-    def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> (json, (list[str], list[int])):
+    def _knn_search_openai(self, topic_index: int, query: str, k: int = 20) -> tuple[str, (list[str], list[int])]:
         """
         A version of the knn_search function that returns a JSON file to be used with the OpenAI API.
 
@@ -1019,7 +1019,7 @@ class TopicPrompting:
         })
         return json_obj, (topk_docs, topk_doc_indices)
 
-    def _identify_topic_idx_openai(self, query: str, n_tries: int = 3) -> (json, int):
+    def _identify_topic_idx_openai(self, query: str, n_tries: int = 3) -> tuple[str, int]:
         """
         A version of the identify_topic_idx function that returns a JSON file to be used with the OpenAI API.
 
@@ -1038,7 +1038,7 @@ class TopicPrompting:
         })
         return json_obj, topic_index
 
-    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace: bool = False) -> (json, list[Topic]):
+    def _split_topic_hdbscan_openai(self, topic_idx: int, min_cluster_size: int = 10, inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the split_topic_hdbscan function that returns a JSON file to be used with the OpenAI API.
 
@@ -1058,7 +1058,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace: bool = False) -> (json, list[Topic]):
+    def _split_topics_kmeans_openai(self, topic_idx: list[int], n_clusters: int = 2, inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the split_topic_kmeans function that returns a JSON file to be used with the OpenAI API.
 
@@ -1078,7 +1078,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace: bool = False) -> (json, list[Topic]):
+    def _split_topic_keywords_openai(self, topic_idx: int, keywords: str, inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the split_topic_keywords function that returns a JSON file to be used with the OpenAI API.
 
@@ -1098,7 +1098,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace: bool = False) -> (json, list[Topic]):
+    def _split_topic_single_keyword_openai(self, topic_idx: int, keyword: str, inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the split_topic_single_keyword function that returns a JSON file to be used with the OpenAI API.
 
@@ -1118,7 +1118,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace: bool = False) -> (json, list[Topic]):
+    def _combine_topics_openai(self, topic_idx_lis: list[int], inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the combine_topics function that returns a JSON file to be used with the OpenAI API.
 
@@ -1137,7 +1137,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _add_new_topic_keyword_openai(self, keyword: str, inplace: bool = False, rename_new_topic: bool = False) -> (json, list[Topic]):
+    def _add_new_topic_keyword_openai(self, keyword: str, inplace: bool = False, rename_new_topic: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the add_new_topic_keyword function that returns a JSON file to be used with the OpenAI API.
 
@@ -1157,7 +1157,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _delete_topic_openai(self, topic_idx: int, inplace: bool = False) -> (json, list[Topic]):
+    def _delete_topic_openai(self, topic_idx: int, inplace: bool = False) -> tuple[str, list[Topic]]:
         """
         A version of the delete_topic function that returns a JSON file to be used with the OpenAI API.
 
@@ -1176,7 +1176,7 @@ class TopicPrompting:
         })
         return json_obj, new_topics
 
-    def _get_topic_information_openai(self, topic_idx_lis: list[int]) -> (json, dict):
+    def _get_topic_information_openai(self, topic_idx_lis: list[int]) -> tuple[str, dict]:
         """
         A version of the get_topic_information function that returns a JSON file suitable for use with the OpenAI API.
 
@@ -1203,7 +1203,7 @@ class TopicPrompting:
             if type(topic.top_words["cosine_similarity"]) == dict:
                 topic.top_words["cosine_similarity"] = topic.top_words["cosine_similarity"][0]
 
-    def general_prompt(self, prompt: str, n_tries: int = 2) -> (list[str], object):
+    def general_prompt(self, prompt: str, n_tries: int = 2) -> tuple[list[str], object]:
         """
         Prompt the Language Model (LLM) with a general prompt and return the response. Allow the LLM to call any function defined in the class.
 

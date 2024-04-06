@@ -141,7 +141,7 @@ class TopicGPT:
 
         return repr
 
-    def compute_embeddings(self, corpus: list[str]) -> (np.ndarray, dict[str, np.ndarray]):
+    def compute_embeddings(self, corpus: list[str]) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         """
         Computes document and vocabulary embeddings for the given corpus.
 
@@ -311,7 +311,7 @@ class TopicGPT:
    
         print(self.repr_topics())
 
-    def prompt(self, query: str) -> (str, object):
+    def prompt(self, query: str) -> tuple[str, object]:
         """
         Prompts the model with the given query.
 
