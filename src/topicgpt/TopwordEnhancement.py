@@ -190,7 +190,7 @@ class TopwordEnhancement:
             n_documents = np.argmax(tokens_cumsum > self.max_context_length)
             documents = documents[:n_documents]
 
-        completion = client.chat.completions.create(model=self.openai_model,
+        completion = self.client.chat.completions.create(model=self.openai_model,
         messages=[
             {"role": "system", "content": self.basic_model_instruction + " " + self.corpus_instruction},
             {"role": "user", "content": query_function(documents)},
