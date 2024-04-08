@@ -51,9 +51,20 @@ Note that an OpenAi API-Key is needed to compute the embeddings and execute the 
 from topicgpt.TopicGPT import TopicGPT
 
 tm = TopicGPT(
-    openai_api_key = <your-openai-api-key>,
+    api_key = <your-openai-api-key>,
     n_topics = 20 # select 20 topics since the true number of topics is 20 
 )
+
+# Or, to use with Azure
+# tm = TopicGPT(
+#     api_key = <your-azure-openai-api-key>,
+#     azure_endpoint = {
+#          "endpoint": <your-azure-openai-endpoint-url>,
+#          "api_version": <api-version>
+#      },
+#     n_topics = 20 # select 20 topics since the true number of topics is 20 
+# )
+
 ```
 
 ### Fit the model 
@@ -248,6 +259,25 @@ GPT wants to the call the function:  {
 }
 The topics 15 and 17 have been combined into a new topic called "Sports". This topic includes aspects and sub-topics related to sports such as team and players, games and seasons, performance and skills, fans and audience, and statistics and records. Some of the common words found in this topic include "team," "players," "hockey," "baseball," "game," "games," "season," "playoffs," "good," "better," "win," "hit," "score," "fans," "series," "watch," "fan," "stats," "record," "pts," and "career".
 ```
+
+### Saving and Reusing Embeddings
+
+After generating embeddings with `tm.fit(corpus)`, save them with `tm.save_embeddings()`. By default, they are stored in `SavedEmbeddings/embeddings.pkl`. Enable reuse by setting `use_saved_embeddings=True` in `TopicGPT` initialization.
+
+```python
+tm.fit(corpus)
+tm.save_embeddings()  # Default path
+
+# Reuse saved embeddings
+tm2 = TopicGPT(use_saved_embeddings=True)
+
+# For a custom path:
+tm.save_embeddings(path='your/custom/path.pkl')
+tm3 = TopicGPT(use_saved_embeddings=True, path_saved_embeddings='your/custom/path.pkl')
+```
+
+This approach saves time by avoiding re-calculation of embeddings for large datasets.
+
 
 ## Limitations and Caveats
 
