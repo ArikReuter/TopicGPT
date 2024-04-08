@@ -56,15 +56,14 @@ tm = TopicGPT(
 )
 
 # Or, to use with Azure
-# tm = TopicGPT(
-#     api_key = <your-azure-openai-api-key>,
-#     azure_endpoint = {
-#          "endpoint": <your-azure-openai-endpoint-url>,
-#          "api_version": <api-version>
-#      },
-#     n_topics = 20 # select 20 topics since the true number of topics is 20 
-# )
-
+tm = TopicGPT(
+    api_key = <your-azure-openai-api-key>,
+    azure_endpoint = {
+         "endpoint": <your-azure-openai-endpoint-url>,
+         "api_version": <api-version>
+     },
+    n_topics = 20
+)
 ```
 
 ### Fit the model 

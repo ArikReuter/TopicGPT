@@ -14,7 +14,7 @@ setup(
         'hdbscan',
         'nltk',
         'numpy', 
-        'openai==1.16.2',
+        'openai>=1.0.0',
         'pandas',
         'plotly',
         'regex',
