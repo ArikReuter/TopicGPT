@@ -37,14 +37,14 @@ class QuickTestTopicGPT_init_and_fit(unittest.TestCase):
         test the init function of the TopicGPT class
         """
         print("Testing init...")
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai)
+        topicgpt = TopicGPT(api_key = self.api_key_openai)
         self.assertTrue(isinstance(topicgpt, TopicGPT))
 
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+        topicgpt = TopicGPT(api_key = self.api_key_openai, 
                             n_topics= 20)
         self.assertTrue(isinstance(topicgpt, TopicGPT))
         
-        topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+        topicgpt = TopicGPT(api_key = self.api_key_openai, 
                             n_topics= 20,
                             corpus_instruction="This is a corpus instruction")
         self.assertTrue(isinstance(topicgpt, TopicGPT))
@@ -52,20 +52,20 @@ class QuickTestTopicGPT_init_and_fit(unittest.TestCase):
         # check if assertions are triggered
 
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = None, 
+            topicgpt = TopicGPT(api_key = None, 
                                 n_topics= 32,
                                 openai_prompting_model="gpt-4",
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
 
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+            topicgpt = TopicGPT(api_key = self.api_key_openai, 
                                 n_topics= 0,
                                 max_number_of_tokens=8000,
                                 corpus_instruction="This is a corpus instruction")
             
         with self.assertRaises(AssertionError):
-            topicgpt = TopicGPT(openai_api_key = self.api_key_openai, 
+            topicgpt = TopicGPT(api_key = self.api_key_openai, 
                                 n_topics= 20,
                                 max_number_of_tokens=0,
                                 corpus_instruction="This is a corpus instruction")
@@ -97,7 +97,7 @@ class QuickTestTopicGPT_init_and_fit(unittest.TestCase):
             self.assertTrue(topicgpt.vocab_embeddings == topicgpt.topic_prompting.vocab_embeddings)
 
         
-        topicgpt1 = TopicGPT(openai_api_key = self.api_key_openai, n_topics = 1)
+        topicgpt1 = TopicGPT(api_key = self.api_key_openai, n_topics = 1)
 
         topic_gpt_list = [topicgpt1]
 

@@ -26,7 +26,8 @@ from src.topicgpt.TopwordEnhancement import TopwordEnhancement
 from src.topicgpt.TopicPrompting import TopicPrompting
 
 
-openai.organization = os.environ.get('OPENAI_ORG')
+# TODO: The 'openai.organization' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(organization=os.environ.get('OPENAI_ORG'))'
+# openai.organization = os.environ.get('OPENAI_ORG')
 
 class TestTopicGPT_prompting(unittest.TestCase):
     """
@@ -68,11 +69,11 @@ class TestTopicGPT_prompting(unittest.TestCase):
         test the ppromt function that calls knn_search of the TopicPrompting class
         """
         print("Testing ppromt_knn_search...")
-        
+
         prompt_lis = ["Is topic 0 about Bananas? Use knn Search",
                       "Is topic 0 about Space? Use knn Search",
                       "Is topic 13 about Space exploration? Use knn Search"]
-        
+
         for prompt in prompt_lis:
 
             answer, function_result = self.topicgpt.prompt(prompt)
@@ -133,12 +134,12 @@ class TestTopicGPT_prompting(unittest.TestCase):
         added_topic_lis_len  = [2, 3, 4]
 
         for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -157,12 +158,12 @@ class TestTopicGPT_prompting(unittest.TestCase):
         old_number_of_topics = len(self.topicgpt.topic_lis)
 
         for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -182,12 +183,12 @@ class TestTopicGPT_prompting(unittest.TestCase):
                         "Split topic 2 into subtopics using hdbscan"]
 
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -202,12 +203,12 @@ class TestTopicGPT_prompting(unittest.TestCase):
         prompt_lis = ["Split topic 4 into subtopics using hdbscan. Do this inplace"]
 
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -223,15 +224,15 @@ class TestTopicGPT_prompting(unittest.TestCase):
 
          prompt_lis = ["Split topic 0 into 2 subtopics based on the keywords Technology and Computers",
                         "Split topic 14 into two subbtopics based on the keywords Space and Exploration"]
-        
+
          added_topic_lis_len  = [2, 2]   
          for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 print(type(function_result[0]))
@@ -242,24 +243,24 @@ class TestTopicGPT_prompting(unittest.TestCase):
             """
             test the prompt function that calls split_topic_keywords of the TopicPrompting class. This test works almost the same as the test_prompt_split_topic_kmeans
             """
-    
+
             print("Testing ppromt_split_topic_keywords...")
-    
+
             prompt_lis = ["Split topic 0 into 2 subtopics based on the keywords Technology and Computers. Do this inplace"]
-            
+
             added_topic_lis_len  = [2]   
             old_number_of_topics = len(self.topicgpt.topic_lis)
             for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
-                    
+
                     answer, function_result = self.topicgpt.prompt(prompt)
-        
+
                     print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                     print("function_result: ", function_result)
-        
+
                     self.assertTrue(type(answer) == str)
                     self.assertTrue(type(function_result) == list)
                     self.assertTrue(type(function_result[0]) == Topic)
-    
+
                     self.assertTrue(len(self.topicgpt.topic_lis) == old_number_of_topics + added_topic_len -1 )
                     self.assertTrue(self.topicgpt.topic_lis == function_result)
 
@@ -272,15 +273,15 @@ class TestTopicGPT_prompting(unittest.TestCase):
 
          prompt_lis = ["Split topic into two topics using the additional keyword 'Technology'",
                         "Split topic into two topics using the additional keyword 'Space'"]
-         
+
          added_topic_lis_len  = [2, 2]
 
          for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
                     answer, function_result = self.topicgpt.prompt(prompt)
-        
+
                     print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                     print("function_result: ", function_result)
-        
+
                     self.assertTrue(type(answer) == str)
                     self.assertTrue(type(function_result) == list)
                     self.assertTrue(type(function_result[0]) == Topic)
@@ -290,24 +291,24 @@ class TestTopicGPT_prompting(unittest.TestCase):
             """
             test the prompt function that calls split_topic_keywords of the TopicPrompting class. This test works almost the same as the test_prompt_split_topic_kmeans
             """
-    
+
             print("Testing ppromt_split_topic_keywords...")
-    
+
             prompt_lis = ["Split topic 0 into 2 subtopics based on the keywords Technology and Computers. Do this inplace"]
-            
+
             added_topic_lis_len  = [2]   
             old_number_of_topics = len(self.topicgpt.topic_lis)
             for prompt, added_topic_len in zip(prompt_lis, added_topic_lis_len):
-                    
+
                     answer, function_result = self.topicgpt.prompt(prompt)
-        
+
                     print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                     print("function_result: ", function_result)
-        
+
                     self.assertTrue(type(answer) == str)
                     self.assertTrue(type(function_result) == list)
                     self.assertTrue(type(function_result[0]) == Topic)
-    
+
                     self.assertTrue(len(self.topicgpt.topic_lis) == old_number_of_topics + added_topic_len -1 )
                     self.assertTrue(self.topicgpt.topic_lis == function_result)
 
@@ -321,14 +322,14 @@ class TestTopicGPT_prompting(unittest.TestCase):
         prompt_lis = ["Combine topic 0 and topic 1 into one topic",
                         "Combine topic 1 and topic 2 into one topic",
                         "Combine topic 2 and topic 3 into one topic"]
-        
+
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -345,13 +346,13 @@ class TestTopicGPT_prompting(unittest.TestCase):
         old_number_topics = len(self.topicgpt.topic_lis)
 
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
                 print("topic_gpt_topic_list: ", self.topicgpt.topic_lis)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -368,14 +369,14 @@ class TestTopicGPT_prompting(unittest.TestCase):
          prompt_lis = ["Add a new topic with the keyword 'Politics'",
                     "Add a new topic with the keyword 'Climate Change'",
                     "Add a new topic with the keyword 'Computers'"]
-        
+
          for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 print(type(function_result[0]))
@@ -393,9 +394,9 @@ class TestTopicGPT_prompting(unittest.TestCase):
         old_number_topics = len(self.topicgpt.topic_lis)
 
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
 
@@ -415,14 +416,14 @@ class TestTopicGPT_prompting(unittest.TestCase):
         prompt_lis = ["Delete topic 0",
                         "Delete topic 1",
                         "Delete topic 2"]
-        
+
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == list)
                 self.assertTrue(type(function_result[0]) == Topic)
@@ -439,9 +440,9 @@ class TestTopicGPT_prompting(unittest.TestCase):
         old_number_topics = len(self.topicgpt.topic_lis)
 
         for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
 
@@ -455,19 +456,19 @@ class TestTopicGPT_prompting(unittest.TestCase):
          """
          test the get_topic_information function of the TopicGPT class
          """
-         
+
          print("Testing get_topic_information...")
 
          prompt_lis = ["Please compare topic 0 and topic 1",
                     "Please compare topic 3,4,5"]
-         
+
          for prompt in prompt_lis:
-                
+
                 answer, function_result = self.topicgpt.prompt(prompt)
-    
+
                 print(f"Answer to the prompt '{prompt}' \n is \n '{answer}'")
                 print("function_result: ", function_result)
-    
+
                 self.assertTrue(type(answer) == str)
                 self.assertTrue(type(function_result) == dict) 
 

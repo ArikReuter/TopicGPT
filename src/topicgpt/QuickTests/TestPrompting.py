@@ -20,7 +20,7 @@ class QuickestTopicGPT_prompting(unittest.TestCase):
         """
         download the necessary data and only keep a sample of it 
         params: 
-            api_key: the openai api key
+            client: Client.
             sample_size: the number of documents to use for the test
         """
 
@@ -31,7 +31,7 @@ class QuickestTopicGPT_prompting(unittest.TestCase):
 
         cls.corpus = corpus
 
-        cls.tm = TopicGPT(openai_api_key = api_key, n_topics = 1)
+        cls.tm = TopicGPT(client = client, n_topics = 1)
         cls.tm.fit(cls.corpus)
 
     def test_repr_topics(self):

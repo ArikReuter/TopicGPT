@@ -2,7 +2,7 @@ gensim
 hdbscan
 nltk
 numpy
-openai
+openai >= 1.0.0
 pandas
 plotly
 regex

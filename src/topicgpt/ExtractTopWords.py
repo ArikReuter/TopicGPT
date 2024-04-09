@@ -209,12 +209,12 @@ class ExtractTopWords:
 
         return words_per_topic
                     
-    def embed_vocab_openAI(self, api_key: str, vocab: list[str], embedder: GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
+    def embed_vocab_openAI(self, client, vocab: list[str], embedder: GetEmbeddingsOpenAI = None) -> dict[str, np.ndarray]:
         """
         Embed the vocabulary using the OpenAI embedding API.
 
         Args:
-            api_key (str): OpenAI API key.
+            client: Client.
             vocab (list[str]): List of words in the corpus sorted alphabetically.
             embedder (GetEmbeddingsOpenAI, optional): Embedding object.
 
@@ -224,7 +224,7 @@ class ExtractTopWords:
 
         vocab = sorted(list(set(vocab)))
         if embedder is None: 
-            embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(api_key)
+            embedder = GetEmbeddingsOpenAI.GetEmbeddingsOpenAI(client)
         result = embedder.get_embeddings(vocab)
 
         res_dict = {}
@@ -393,7 +393,7 @@ class ExtractTopWords:
         similarity = vocab_arr @ centroid_arr.T # cosine similarity
         return similarity
     
-    def extract_topwords_centroid_similarity(self, word_topic_mat: np.ndarray, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False, consider_outliers: bool = False) -> (dict, np.ndarray):
+    def extract_topwords_centroid_similarity(self, word_topic_mat: np.ndarray, vocab: list[str], vocab_embedding_dict: dict, centroid_dict: dict, umap_mapper: umap.UMAP, top_n_words: int = 10, reduce_vocab_embeddings: bool = True, reduce_centroid_embeddings: bool = False, consider_outliers: bool = False) -> tuple[dict, np.ndarray]:
         """
         Extract the top words for each cluster by computing the cosine similarity of the words that occur in the corpus to the centroid of the cluster.
 

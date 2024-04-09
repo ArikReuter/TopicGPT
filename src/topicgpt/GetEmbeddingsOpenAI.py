@@ -1,5 +1,5 @@
-import openai
-from openai.embeddings_utils import get_embedding
+from openai import OpenAI
+
 import tiktoken
 from tqdm import tqdm
 import numpy as np
@@ -9,12 +9,12 @@ class GetEmbeddingsOpenAI:
     This class allows to compute embeddings of text using the OpenAI API.
     """
 
-    def __init__(self, api_key: str, embedding_model: str = "text-embedding-ada-002", tokenizer: str = None, max_tokens: int = 8191) -> None:
+    def __init__(self, client, azure_config: dict = {}, embedding_model: str = "text-embedding-ada-002", tokenizer: str = None, max_tokens: int = 8191) -> None:
         """
         Constructor of the class.
 
         Args:
-            api_key (str): API key to use the OpenAI API.
+            client: Client.
             embedding_model (str, optional): Name of the embedding model to use.
             tokenizer (str, optional): Name of the tokenizer to use.
             max_tokens (int, optional): Maximum number of tokens to use.
@@ -23,13 +23,9 @@ class GetEmbeddingsOpenAI:
             By default, the embedding model "text-embedding-ada-002" is used with the corresponding tokenizer "cl100k_base" and a maximum number of tokens of 8191.
         """
 
-        self.api_key = api_key
-        openai.api_key = api_key
+        self.client = client
         self.embedding_model = embedding_model
-
         self.tokenizer_str = tokenizer
-        
-    
         self.max_tokens = max_tokens
 
     @staticmethod
@@ -68,9 +64,9 @@ class GetEmbeddingsOpenAI:
         num_tokens = 0
         for document in tqdm(corpus):
             num_tokens += self.num_tokens_from_string(document, tokenizer)
-        
+
         return num_tokens
-        
+
     def split_doc(self, text):
         """
         Splits a single document that is longer than the maximum number of tokens into a list of smaller documents.
@@ -89,7 +85,7 @@ class GetEmbeddingsOpenAI:
             split_text.append(text[i * self.max_tokens:(i + 1) * self.max_tokens])
         split_text.append(text[(len(text) // self.max_tokens) * self.max_tokens:])
         return split_text
-    
+
     def split_long_docs(self, text: list[str]) -> list[list[str]]:
         """
         Splits all documents that are longer than the maximum number of tokens into a list of smaller documents.
@@ -106,8 +102,8 @@ class GetEmbeddingsOpenAI:
             tokenizer = tiktoken.encoding_for_model(self.embedding_model)
         else:
             tokenizer = tiktoken.get_encoding(self.tokenizer_str)
-    
-         
+
+
         split_text = []
         for document in tqdm(text):
             if self.num_tokens_from_string(document, tokenizer) > self.max_tokens:
@@ -115,7 +111,7 @@ class GetEmbeddingsOpenAI:
             else:
                 split_text.append([document])
         return split_text   
-    
+
     def make_api_call(self, text: str):
         """
         Makes an API call to the OpenAI API to embed a text string.
@@ -127,11 +123,11 @@ class GetEmbeddingsOpenAI:
         Returns:
             API response: The response from the API.
         """
-        response = openai.Embedding.create(input = [text], model = self.embedding_model)
+        response = self.client.embeddings.create(input = [text], model = self.embedding_model)
         return response
 
 
-    
+
     def get_embeddings_doc_split(self, corpus: list[list[str]], n_tries=3) -> list[dict]:
         """
         Computes the embeddings of a corpus for split documents.
@@ -167,13 +163,13 @@ class GetEmbeddingsOpenAI:
                                 api_res_doc.append(
                                     {"api_res": None, 
                                     "error": e })
-                        
+
 
             # average the embeddings of the chunks
             emb_lis = []
             for api_res in api_res_doc:
                 if api_res["api_res"] is not None:
-                    emb_lis.append(np.array(api_res["api_res"]["data"][0]["embedding"]))
+                    emb_lis.append(np.array(api_res["api_res"].data[0].embedding))
             text = " ".join(chunk_lis)
             embedding = np.mean(emb_lis, axis = 0)
             api_res_list.append(
@@ -182,7 +178,7 @@ class GetEmbeddingsOpenAI:
                 "errors": [api_res["error"] for api_res in api_res_doc]}
                 )
         return api_res_list
-    
+
     def convert_api_res_list(self, api_res_list: list[dict]) -> dict:
         """
         Converts the api_res list into a dictionary containing the embeddings as a matrix and the corpus as a list of strings.
@@ -201,7 +197,7 @@ class GetEmbeddingsOpenAI:
         errors = [api_res["errors"] for api_res in api_res_list]
         return {"embeddings": embeddings, "corpus": corpus, "errors": errors}
 
-    
+
     def get_embeddings(self, corpus: list[str]) -> dict:
         """
         Computes the embeddings of a corpus.
