@@ -14,6 +14,10 @@ More specifically, it provides the following core functionalities:
   
 When directly interacting with TopicGPT via prompting and without explicitly calling  functions, an LLM autonomously decides which functionality to use.
 
+## Paper
+
+To read more about the model, checkout the corresponding [paper](https://arxiv.org/abs/2403.03628): https://arxiv.org/abs/2403.03628
+
 ## Installation
 
 You can install TopicGPT via [PyPI](https://pypi.org/project/topicgpt/)
