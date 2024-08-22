@@ -298,7 +298,7 @@ def extract_topics_no_new_vocab_computation(corpus: list[str], vocab: list[str],
     centroid_arr = np.array(list(centroid_dict.values()))
     if centroid_arr.ndim == 1:
         centroid_arr = centroid_arr.reshape(-1, 1)
-    dim_red_centroids = umap_mapper.transform(np.array(list(centroid_dict.values())))  # map the centroids to low dimensional space
+    dim_red_centroids = umap_mapper.transform(centroid_arr)  # map the centroids to low dimensional space
 
     dim_red_centroid_dict = {label: centroid for label, centroid in zip(centroid_dict.keys(), dim_red_centroids)}
 
